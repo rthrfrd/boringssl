@@ -135,10 +135,6 @@ TEST(PKCS12Test, TestNoEncryption) {
 }
 
 TEST(PKCS12Test, TestEmptyPassword) {
-#if defined(BORINGSSL_UNSAFE_FUZZER_MODE)
-  return;  // The MAC check always passes in fuzzer mode.
-#endif
-
   // Generated with
   //   openssl pkcs12 -export -inkey ecdsa_p256_key.pem -in ecdsa_p256_cert.pem -password pass:  
   std::string data = GetTestData("crypto/pkcs8/test/empty_password.p12");
@@ -164,10 +160,6 @@ TEST(PKCS12Test, TestEmptyPassword) {
 }
 
 TEST(PKCS12Test, TestNullPassword) {
-#if defined(BORINGSSL_UNSAFE_FUZZER_MODE)
-  return;  // The MAC check always passes in fuzzer mode.
-#endif
-
   // Generated with
   //   openssl pkcs12 -export -inkey ecdsa_p256_key.pem -in ecdsa_p256_cert.pem -password pass:
   // But with OpenSSL patched to pass NULL into PKCS12_create and

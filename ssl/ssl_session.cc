@@ -364,21 +364,21 @@ static int ssl_encrypt_ticket_with_cipher_ctx(SSL_HANDSHAKE *hs, CBB *out,
   }
 
   size_t total = 0;
-#if defined(BORINGSSL_UNSAFE_FUZZER_MODE)
-  OPENSSL_memcpy(ptr, session_buf, session_len);
-  total = session_len;
-#else
-  int len;
-  if (!EVP_EncryptUpdate(ctx.get(), ptr + total, &len, session_buf,
-                         session_len)) {
-    return 0;
+  if (CRYPTO_fuzzer_mode_enabled()) {
+    OPENSSL_memcpy(ptr, session_buf, session_len);
+    total = session_len;
+  } else {
+    int len;
+    if (!EVP_EncryptUpdate(ctx.get(), ptr + total, &len, session_buf,
+                           session_len)) {
+      return 0;
+    }
+    total += len;
+    if (!EVP_EncryptFinal_ex(ctx.get(), ptr + total, &len)) {
+      return 0;
+    }
+    total += len;
   }
-  total += len;
-  if (!EVP_EncryptFinal_ex(ctx.get(), ptr + total, &len)) {
-    return 0;
-  }
-  total += len;
-#endif
   if (!CBB_did_write(out, total)) {
     return 0;
   }

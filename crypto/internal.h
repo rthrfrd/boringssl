@@ -1404,6 +1404,7 @@ inline int CRYPTO_is_ARMv8_SHA512_capable(void) {
 
 #endif  // OPENSSL_ARM || OPENSSL_AARCH64
 
+
 #if defined(BORINGSSL_DISPATCH_TEST)
 // Runtime CPU dispatch testing support
 
@@ -1420,6 +1421,7 @@ inline int CRYPTO_is_ARMv8_SHA512_capable(void) {
 extern uint8_t BORINGSSL_function_hit[8];
 #endif  // BORINGSSL_DISPATCH_TEST
 
+
 // OPENSSL_vasprintf_internal is just like |vasprintf(3)|. If |system_malloc| is
 // 0, memory will be allocated with |OPENSSL_malloc| and must be freed with
 // |OPENSSL_free|. Otherwise the system |malloc| function is used and the memory
@@ -1427,6 +1429,19 @@ extern uint8_t BORINGSSL_function_hit[8];
 OPENSSL_EXPORT int OPENSSL_vasprintf_internal(char **str, const char *format,
                                               va_list args, int system_malloc)
     OPENSSL_PRINTF_FORMAT_FUNC(2, 0);
+
+
+// Fuzzer mode.
+
+#if defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+// CRYPTO_fuzzer_mode_enabled returns whether fuzzer mode is enabled. See
+// |CRYPTO_set_fuzzer_mode|. In non-fuzzer builds, this function statically
+// returns zero so the codepaths will be deleted by the optimizer.
+int CRYPTO_fuzzer_mode_enabled(void);
+#else
+inline int CRYPTO_fuzzer_mode_enabled(void) { return 0; }
+#endif
+
 
 #if defined(__cplusplus)
 }  // extern C

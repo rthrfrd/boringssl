@@ -385,6 +385,7 @@ set(
   crypto/evp/sign.cc
   crypto/ex_data.cc
   crypto/fipsmodule/fips_shared_support.cc
+  crypto/fuzzer_mode.cc
   crypto/hpke/hpke.cc
   crypto/hrss/hrss.cc
   crypto/kyber/kyber.cc
@@ -1112,6 +1113,7 @@ set(
   fuzz/bn_mod_exp.cc
   fuzz/cert.cc
   fuzz/client.cc
+  fuzz/client_no_fuzzer_mode.cc
   fuzz/conf.cc
   fuzz/crl_getcrlstatusforcert_fuzzer.cc
   fuzz/crl_parse_crl_certificatelist_fuzzer.cc
@@ -1133,6 +1135,7 @@ set(
   fuzz/privkey.cc
   fuzz/read_pem.cc
   fuzz/server.cc
+  fuzz/server_no_fuzzer_mode.cc
   fuzz/session.cc
   fuzz/spki.cc
   fuzz/ssl_ctx_api.cc

@@ -1,4 +1,4 @@
-// Copyright 2017 The BoringSSL Authors
+// Copyright 2025 The BoringSSL Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,12 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../ssl/test/fuzzer.h"
+#include <openssl/crypto.h>
+
+#include "internal.h"
 
 
-static TLSFuzzer g_fuzzer(TLSFuzzer::kDTLS, TLSFuzzer::kServer,
-                          TLSFuzzer::kFuzzerModeOn);
+#if defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+static CRYPTO_atomic_u32 fuzzer_mode_enabled = 0;
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
-  return g_fuzzer.TestOneInput(buf, len);
+int CRYPTO_fuzzer_mode_enabled(void) {
+  return CRYPTO_atomic_load_u32(&fuzzer_mode_enabled);
 }
+
+void CRYPTO_set_fuzzer_mode(int enabled) {
+  CRYPTO_atomic_store_u32(&fuzzer_mode_enabled, !!enabled);
+}
+#endif  // FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION

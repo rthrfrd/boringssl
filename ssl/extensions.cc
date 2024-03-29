@@ -775,9 +775,9 @@ static bool ext_ri_parse_serverhello(SSL_HANDSHAKE *hs, uint8_t *out_alert,
                     ssl->s3->previous_client_finished.size()) &&
       CBS_mem_equal(&server_verify, ssl->s3->previous_server_finished.data(),
                     ssl->s3->previous_server_finished.size());
-#if defined(BORINGSSL_UNSAFE_FUZZER_MODE)
-  ok = true;
-#endif
+  if (CRYPTO_fuzzer_mode_enabled()) {
+    ok = true;
+  }
   if (!ok) {
     OPENSSL_PUT_ERROR(SSL, SSL_R_RENEGOTIATION_MISMATCH);
     *out_alert = SSL_AD_HANDSHAKE_FAILURE;
@@ -4276,9 +4276,9 @@ static enum ssl_ticket_aead_result_t decrypt_ticket_with_cipher_ctx(
   HMAC_Final(hmac_ctx, mac, NULL);
   assert(mac_len == ticket_mac.size());
   bool mac_ok = CRYPTO_memcmp(mac, ticket_mac.data(), mac_len) == 0;
-#if defined(BORINGSSL_UNSAFE_FUZZER_MODE)
-  mac_ok = true;
-#endif
+  if (CRYPTO_fuzzer_mode_enabled()) {
+    mac_ok = true;
+  }
   if (!mac_ok) {
     return ssl_ticket_aead_ignore_ticket;
   }
@@ -4286,26 +4286,26 @@ static enum ssl_ticket_aead_result_t decrypt_ticket_with_cipher_ctx(
   // Decrypt the session data.
   auto ciphertext = ticket.subspan(SSL_TICKET_KEY_NAME_LEN + iv_len);
   Array<uint8_t> plaintext;
-#if defined(BORINGSSL_UNSAFE_FUZZER_MODE)
-  if (!plaintext.CopyFrom(ciphertext)) {
-    return ssl_ticket_aead_error;
+  if (CRYPTO_fuzzer_mode_enabled()) {
+    if (!plaintext.CopyFrom(ciphertext)) {
+      return ssl_ticket_aead_error;
+    }
+  } else {
+    if (ciphertext.size() >= INT_MAX) {
+      return ssl_ticket_aead_ignore_ticket;
+    }
+    if (!plaintext.InitForOverwrite(ciphertext.size())) {
+      return ssl_ticket_aead_error;
+    }
+    int len1, len2;
+    if (!EVP_DecryptUpdate(cipher_ctx, plaintext.data(), &len1,
+                           ciphertext.data(), (int)ciphertext.size()) ||
+        !EVP_DecryptFinal_ex(cipher_ctx, plaintext.data() + len1, &len2)) {
+      ERR_clear_error();
+      return ssl_ticket_aead_ignore_ticket;
+    }
+    plaintext.Shrink(static_cast<size_t>(len1) + len2);
   }
-#else
-  if (ciphertext.size() >= INT_MAX) {
-    return ssl_ticket_aead_ignore_ticket;
-  }
-  if (!plaintext.InitForOverwrite(ciphertext.size())) {
-    return ssl_ticket_aead_error;
-  }
-  int len1, len2;
-  if (!EVP_DecryptUpdate(cipher_ctx, plaintext.data(), &len1, ciphertext.data(),
-                         (int)ciphertext.size()) ||
-      !EVP_DecryptFinal_ex(cipher_ctx, plaintext.data() + len1, &len2)) {
-    ERR_clear_error();
-    return ssl_ticket_aead_ignore_ticket;
-  }
-  plaintext.Shrink(static_cast<size_t>(len1) + len2);
-#endif
 
   *out = std::move(plaintext);
   return ssl_ticket_aead_success;
@@ -4625,10 +4625,10 @@ bool tls1_verify_channel_id(SSL_HANDSHAKE *hs, const SSLMessage &msg) {
   }
 
   bool sig_ok = ECDSA_do_verify(digest, digest_len, sig.get(), key.get());
-#if defined(BORINGSSL_UNSAFE_FUZZER_MODE)
-  sig_ok = true;
-  ERR_clear_error();
-#endif
+  if (CRYPTO_fuzzer_mode_enabled()) {
+    sig_ok = true;
+    ERR_clear_error();
+  }
   if (!sig_ok) {
     OPENSSL_PUT_ERROR(SSL, SSL_R_CHANNEL_ID_SIGNATURE_INVALID);
     ssl_send_alert(ssl, SSL3_AL_FATAL, SSL_AD_DECRYPT_ERROR);

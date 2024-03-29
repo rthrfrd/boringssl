@@ -1458,6 +1458,9 @@ func runTest(dispatcher *shimDispatcher, statusChan chan statusMsg, test *testCa
 	if len(*shimExtraFlags) > 0 {
 		flags = strings.Split(*shimExtraFlags, ";")
 	}
+	if *fuzzer {
+		flags = append(flags, "-fuzzer-mode")
+	}
 	if test.testType == serverTest {
 		flags = append(flags, "-server")
 	}

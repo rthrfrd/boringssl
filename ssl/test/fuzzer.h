@@ -24,6 +24,7 @@
 
 #include <openssl/bio.h>
 #include <openssl/bytestring.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/hpke.h>
@@ -275,10 +276,20 @@ class TLSFuzzer {
     kServer,
   };
 
-  TLSFuzzer(Protocol protocol, Role role)
+  enum FuzzerMode {
+    kFuzzerModeOn,
+    kFuzzerModeOff,
+  };
+
+  TLSFuzzer(Protocol protocol, Role role, FuzzerMode fuzzer_mode)
       : debug_(getenv("BORINGSSL_FUZZER_DEBUG") != nullptr),
         protocol_(protocol),
         role_(role) {
+#if defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+    if (fuzzer_mode == kFuzzerModeOn) {
+      CRYPTO_set_fuzzer_mode(1);
+    }
+#endif
     if (!Init()) {
       abort();
     }
@@ -298,7 +309,9 @@ class TLSFuzzer {
   }
 
   int TestOneInput(const uint8_t *buf, size_t len) {
+#if defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
     RAND_reset_for_fuzzing();
+#endif
 
     CBS cbs;
     CBS_init(&cbs, buf, len);

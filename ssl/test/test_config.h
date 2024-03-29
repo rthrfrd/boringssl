@@ -57,6 +57,9 @@ struct TestConfig {
   bool is_quic = false;
   int resume_count = 0;
   std::string write_settings;
+#if defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+  bool fuzzer_mode = false;
+#endif
   bool fallback_scsv = false;
   std::vector<uint16_t> signing_prefs;
   std::vector<uint16_t> verify_prefs;

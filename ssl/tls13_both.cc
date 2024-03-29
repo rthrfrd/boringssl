@@ -393,9 +393,9 @@ bool tls13_process_finished(SSL_HANDSHAKE *hs, const SSLMessage &msg,
 
   bool finished_ok =
       CBS_mem_equal(&msg.body, verify_data.data(), verify_data.size());
-#if defined(BORINGSSL_UNSAFE_FUZZER_MODE)
-  finished_ok = true;
-#endif
+  if (CRYPTO_fuzzer_mode_enabled()) {
+    finished_ok = true;
+  }
   if (!finished_ok) {
     ssl_send_alert(ssl, SSL3_AL_FATAL, SSL_AD_DECRYPT_ERROR);
     OPENSSL_PUT_ERROR(SSL, SSL_R_DIGEST_CHECK_FAILED);

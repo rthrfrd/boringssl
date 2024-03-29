@@ -1413,8 +1413,13 @@ int main(int argc, char **argv) {
 #endif
   }
 
-  bssl::UniquePtr<SSL_CTX> ssl_ctx;
+#if defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+  if (initial_config.fuzzer_mode) {
+    CRYPTO_set_fuzzer_mode(1);
+  }
+#endif
 
+  bssl::UniquePtr<SSL_CTX> ssl_ctx;
   bssl::UniquePtr<SSL_SESSION> session;
   for (int i = 0; i < initial_config.resume_count + 1; i++) {
     bool is_resume = i > 0;

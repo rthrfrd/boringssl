@@ -321,6 +321,9 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         BoolFlag("-quic", &TestConfig::is_quic),
         IntFlag("-resume-count", &TestConfig::resume_count),
         StringFlag("-write-settings", &TestConfig::write_settings),
+#if defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+        BoolFlag("-fuzzer-mode", &TestConfig::fuzzer_mode),
+#endif
         BoolFlag("-fallback-scsv", &TestConfig::fallback_scsv),
         IntVectorFlag("-verify-prefs", &TestConfig::verify_prefs),
         IntVectorFlag("-expect-peer-verify-pref",

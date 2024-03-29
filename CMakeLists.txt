@@ -241,13 +241,8 @@ if(FUZZ)
     message(FATAL_ERROR "You need Clang ≥ 6.0.0")
   endif()
 
-  add_definitions(-DBORINGSSL_UNSAFE_DETERMINISTIC_MODE)
-  set(RUNNER_ARGS "-deterministic")
-
-  if(NOT NO_FUZZER_MODE)
-    add_definitions(-DBORINGSSL_UNSAFE_FUZZER_MODE)
-    set(RUNNER_ARGS ${RUNNER_ARGS} "-fuzzer" "-shim-config" "fuzzer_mode.json")
-  endif()
+  add_definitions(-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+  set(RUNNER_ARGS "-deterministic" "-fuzzer" "-shim-config" "fuzzer_mode.json")
 
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address,fuzzer-no-link -fsanitize-coverage=edge,indirect-calls")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,fuzzer-no-link -fsanitize-coverage=edge,indirect-calls")

@@ -3586,10 +3586,6 @@ static bool GetServerTicketTime(long *out, const SSL_SESSION *session) {
   size_t len = ticket_len - 16 - 16 - SHA256_DIGEST_LENGTH;
   auto plaintext = std::make_unique<uint8_t[]>(len);
 
-#if defined(BORINGSSL_UNSAFE_FUZZER_MODE)
-  // Fuzzer-mode tickets are unencrypted.
-  OPENSSL_memcpy(plaintext.get(), ciphertext, len);
-#else
   static const uint8_t kZeros[16] = {0};
   const uint8_t *iv = ticket + 16;
   bssl::ScopedEVP_CIPHER_CTX ctx;
@@ -3603,7 +3599,6 @@ static bool GetServerTicketTime(long *out, const SSL_SESSION *session) {
   }
 
   len = static_cast<size_t>(len1 + len2);
-#endif
 
   bssl::UniquePtr<SSL_CTX> ssl_ctx(SSL_CTX_new(TLS_method()));
   if (!ssl_ctx) {
@@ -8230,16 +8225,6 @@ static void WriteHelloRequest(SSL *server) {
 
   // Encrypt a HelloRequest.
   uint8_t in[] = {SSL3_MT_HELLO_REQUEST, 0, 0, 0};
-#if defined(BORINGSSL_UNSAFE_FUZZER_MODE)
-  // Fuzzer-mode records are unencrypted.
-  uint8_t record[5 + sizeof(in)];
-  record[0] = SSL3_RT_HANDSHAKE;
-  record[1] = 3;
-  record[2] = 3;  // TLS 1.2
-  record[3] = 0;
-  record[4] = sizeof(record) - 5;
-  memcpy(record + 5, in, sizeof(in));
-#else
   // Extract key material from |server|.
   static const size_t kKeyLen = 32;
   static const size_t kNonceLen = 12;
@@ -8281,7 +8266,6 @@ static void WriteHelloRequest(SSL *server) {
                                 sizeof(record) - 5, nonce.data(), nonce.size(),
                                 in, sizeof(in), ad, sizeof(ad)));
   ASSERT_EQ(sizeof(record) - 5, len);
-#endif  // BORINGSSL_UNSAFE_FUZZER_MODE
 
   ASSERT_EQ(int(sizeof(record)),
             BIO_write(SSL_get_wbio(server), record, sizeof(record)));
