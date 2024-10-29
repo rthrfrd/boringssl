@@ -827,6 +827,26 @@ OPENSSL_EXPORT int SSL_CREDENTIAL_set1_cert_chain(SSL_CREDENTIAL *cred,
 OPENSSL_EXPORT int SSL_CREDENTIAL_set1_ocsp_response(SSL_CREDENTIAL *cred,
                                                      CRYPTO_BUFFER *ocsp);
 
+// SSL_CREDENTIAL_set1_certificate_properties parses
+// |certificate_property_list| as a CertificatePropertyList (see Section 6 of
+// draft-ietf-tls-trust-anchor-ids-00) and applies recognized properties to
+// |cred|. It returns one on success and zero on error. It is an error if
+// |certificate_property_list| does not parse correctly, or if any recognized
+// properties from |certificate_property_list| cannot be applied to |cred|.
+//
+// CertificatePropertyList is an extensible structure which allows serving
+// properties of a certificate chain to be passed from a CA, through an
+// application's issuance and configuration pipeline, and to the TLS serving
+// logic, without requiring application changes for each property defined.
+//
+// BoringSSL currently supports the following properties:
+// * trust_anchor_identifier (see |SSL_CREDENTIAL_set1_trust_anchor_id|)
+//
+// Note this function does not automatically enable issuer matching. Callers
+// must separately call |SSL_CREDENTIAL_set_must_match_issuer| if desired.
+OPENSSL_EXPORT int SSL_CREDENTIAL_set1_certificate_properties(
+    SSL_CREDENTIAL *cred, CRYPTO_BUFFER *cert_property_list);
+
 // SSL_CREDENTIAL_set1_signed_cert_timestamp_list sets |cred|'s list of signed
 // certificate timestamps |sct_list|. |sct_list| must contain one or more SCT
 // structures serialised as a SignedCertificateTimestampList (see
@@ -841,18 +861,20 @@ OPENSSL_EXPORT int SSL_CREDENTIAL_set1_signed_cert_timestamp_list(
 // if the peer supports the certificate chain's issuer.
 //
 // If |match| is non-zero, |cred| will only be applicable when the certificate
-// chain is issued by some CA requested by the peer, e.g. in the
-// certificate_authorities extension. This can be used for certificate chains
-// that may not be usable by all peers, e.g. chains with fewer cross-signs or
-// issued from a newer CA.
+// chain is issued by some CA requested by the peer in the
+// certificate_authorities extension or, if |cred| has a trust anchor ID (see
+// |SSL_CREDENTIAL_set1_trust_anchor_id|), the trust_anchors extension. |cred|'s
+// certificate chain must then be a correctly ordered certification path.
 //
 // If |match| is zero (default), |cred| will not be conditioned on the peer's
 // requested CAs. This can be used for certificate chains that are assumed to be
 // usable by most peers.
 //
-// The credential list is tried in order, so more specific credentials that
-// enable issuer matching should generally be ordered before less specific
-// credentials that do not.
+// This setting can be used for certificate chains that may not be usable by all
+// peers, e.g. chains with fewer cross-signs or issued from a newer CA. The
+// credential list is tried in order, so more specific credentials that enable
+// issuer matching should generally be ordered before less specific credentials
+// that do not.
 OPENSSL_EXPORT void SSL_CREDENTIAL_set_must_match_issuer(SSL_CREDENTIAL *cred,
                                                          int match);
 
@@ -2974,6 +2996,95 @@ OPENSSL_EXPORT int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *out,
 // |SSL_add_file_cert_subjects_to_stack| but reads from |bio|.
 OPENSSL_EXPORT int SSL_add_bio_cert_subjects_to_stack(STACK_OF(X509_NAME) *out,
                                                       BIO *bio);
+
+
+// Trust Anchor Identifiers.
+//
+// The trust_anchors extension, like certificate_authorities, allows clients to
+// communicate supported CAs to guide server certificate selection, or vice
+// versa. It better supports larger PKIs by referring to CAs by short "trust
+// anchor IDs" and, in the server certificate direction, allowing a client to
+// advertise only a subset of its full list, with DNS hinting and a retry
+// mechanism to manage the subset.
+//
+// See https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids/
+//
+// BoringSSL currently only implements this for server certificates, and not yet
+// client certificates.
+
+// SSL_CREDENTIAL_set1_trust_anchor_id sets |cred|'s trust anchor ID to |id|, or
+// clears it if |id_len| is zero. It returns one on success and zero on
+// error. If not clearing, |id| must be in binary format (Section 3 of
+// draft-ietf-tls-trust-anchor-ids-00) of length |id_len|, and describe the
+// issuer of the final certificate in |cred|'s certificate chain.
+//
+// Additionally, |cred| must enable issuer matching (see
+// SSL_CREDENTIAL_set_must_match_issuer|) for this value to take effect.
+//
+// For better extensibility, callers are recommended to configure this
+// information with a CertificatePropertyList instead. See
+// |SSL_CREDENTIAL_set1_certificate_properties|.
+OPENSSL_EXPORT int SSL_CREDENTIAL_set1_trust_anchor_id(SSL_CREDENTIAL *cred,
+                                                       const uint8_t *id,
+                                                       size_t id_len);
+
+// SSL_CTX_set1_requested_trust_anchors configures |ctx| to request a
+// certificate issued by one of the trust anchors in |ids|. It returns one on
+// success and zero on error. |ids| must be a list of trust anchor IDs in
+// wire-format (a series of non-empty, 8-bit length-prefixed strings).
+//
+// The list may describe application's full list of supported trust anchors, or
+// a, possibly empty, subset. Applications can select this subset using
+// out-of-band information, such as the DNS hint in Section 5 of
+// draft-ietf-tls-trust-anchor-ids-00. Client applications sending a subset
+// should use |SSL_get0_peer_available_trust_anchors| to implement the retry
+// flow from Section 4.3 of draft-ietf-tls-trust-anchor-ids-00.
+//
+// If empty (|ids_len| is zero), the trust_anchors extension will still be sent
+// in ClientHello. This may be used by a client application to signal support
+// for the retry flow without requesting specific trust anchors.
+//
+// This function does not directly impact certificate verification, only the
+// list of trust anchors sent to the peer.
+OPENSSL_EXPORT int SSL_CTX_set1_requested_trust_anchors(SSL_CTX *ctx,
+                                                        const uint8_t *ids,
+                                                        size_t ids_len);
+
+// SSL_set1_requested_trust_anchors behaves like
+// |SSL_CTX_set1_requested_trust_anchors| but configures the value on |ssl|.
+OPENSSL_EXPORT int SSL_set1_requested_trust_anchors(SSL *ssl,
+                                                    const uint8_t *ids,
+                                                    size_t ids_len);
+
+// SSL_peer_matched_trust_anchor returns one if the peer reported that its
+// certificate chain matched one of the trust anchor IDs requested by |ssl|, and
+// zero otherwise.
+//
+// This value is only available during the handshake and is expected to be
+// called during certificate verification, e.g. during |SSL_set_custom_verify|
+// or |SSL_CTX_set_cert_verify_callback| callbacks. If the value is one, callers
+// can safely treat the peer's certificate chain as a pre-built path and skip
+// path-building in certificate verification.
+OPENSSL_EXPORT int SSL_peer_matched_trust_anchor(const SSL *ssl);
+
+// SSL_get0_peer_available_trust_anchors gets the peer's available trust anchor
+// IDs. It sets |*out| and |*out_len| so that |*out| points to |*out_len| bytes
+// containing the list in wire format (i.e. a series of non-empty
+// 8-bit-length-prefixed strings). If the peer did not provide a list, the
+// function will output zero bytes. Only servers can provide available trust
+// anchor IDs, so this API will only output a list when |ssl| is a client.
+//
+// This value is only available during the handshake and is expected to be
+// called in the event of certificate verification failure. Client applications
+// can use it to retry the connection, requesting different trust anchors. See
+// Section 4.3 of draft-ietf-tls-trust-anchor-ids-00 for details.
+// |CBS_get_u8_length_prefixed| may be used to iterate over the format.
+//
+// If needed in other contexts, callers may save the value during certificate
+// verification, or at |SSL_CB_HANDSHAKE_DONE| with |SSL_CTX_set_info_callback|.
+OPENSSL_EXPORT void SSL_get0_peer_available_trust_anchors(const SSL *ssl,
+                                                          const uint8_t **out,
+                                                          size_t *out_len);
 
 
 // Server name indication.
@@ -6210,6 +6321,8 @@ BSSL_NAMESPACE_END
 #define SSL_R_PAKE_EXHAUSTED 325
 #define SSL_R_PEER_PAKE_MISMATCH 326
 #define SSL_R_UNSUPPORTED_CREDENTIAL_LIST 327
+#define SSL_R_INVALID_TRUST_ANCHOR_LIST 328
+#define SSL_R_INVALID_CERTIFICATE_PROPERTY_LIST 329
 #define SSL_R_SSLV3_ALERT_CLOSE_NOTIFY 1000
 #define SSL_R_SSLV3_ALERT_UNEXPECTED_MESSAGE 1010
 #define SSL_R_SSLV3_ALERT_BAD_RECORD_MAC 1020

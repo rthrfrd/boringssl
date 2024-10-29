@@ -132,6 +132,11 @@ extern "C" {
 // This is not an IANA defined extension number
 #define TLSEXT_TYPE_channel_id 30032
 
+// This is not an IANA defined extension number
+// TODO(crbug.com/398275713): Replace with the final codepoint once
+// standardization completes.
+#define TLSEXT_TYPE_trust_anchors 0xca34
+
 // status request value from RFC 3546
 #define TLSEXT_STATUSTYPE_nothing (-1)
 #define TLSEXT_STATUSTYPE_ocsp 1

@@ -180,6 +180,7 @@ const (
 	extensionQUICTransportParamsLegacy  uint16 = 0xffa5 // draft-ietf-quic-tls-32 and earlier
 	extensionChannelID                  uint16 = 30032  // not IANA assigned
 	extensionPAKE                       uint16 = 35387  // not IANA assigned
+	extensionTrustAnchors               uint16 = 0xca34 // not IANA assigned
 	extensionDuplicate                  uint16 = 0xffff // not IANA assigned
 	extensionEncryptedClientHello       uint16 = 0xfe0d // not IANA assigned
 	extensionECHOuterExtensions         uint16 = 0xfd00 // not IANA assigned
@@ -682,6 +683,14 @@ type Config struct {
 	// header includes a length field. The default is to include the length
 	// field.
 	DTLSRecordHeaderOmitLength bool
+
+	// RequestTrustAnchors, if not nil, is the list of trust anchor IDs to
+	// request in ClientHello.
+	RequestTrustAnchors [][]byte
+
+	// AvailableTrustAnchors, if not empty, is the list of trust anchor IDs
+	// to report as available in EncryptedExtensions.
+	AvailableTrustAnchors [][]byte
 
 	// Bugs specifies optional misbehaviour to be used for testing other
 	// implementations.
@@ -1907,6 +1916,37 @@ type ProtocolBugs struct {
 	// request signed certificate timestamps.
 	NoSignedCertificateTimestamps bool
 
+	// ExpectPeerRequestedTrustAnchors, if not nil, causes the server to
+	// require the client to request the specified trust anchors in the
+	// ClientHello.
+	ExpectPeerRequestedTrustAnchors [][]byte
+
+	// ExpectPeerAvailableTrustAnchors, if not nil, causes the client to
+	// require the server to list the specified trust anchors as available
+	// in EncryptedExtensions.
+	ExpectPeerAvailableTrustAnchors [][]byte
+
+	// ExpectPeerMatchTrustAnchor, if not nil, causes the client to require the
+	// server to acknowledge, or not acknowledge the trust_anchors extension in
+	// Certificate.
+	ExpectPeerMatchTrustAnchor *bool
+
+	// AlwaysMatchTrustAnchorID, if true, causes the server to always indicate
+	// a trust anchor ID match in the Certificate message.
+	AlwaysMatchTrustAnchorID bool
+
+	// SendTrustAnchorWrongCertificate sends a trust anchor ID extension
+	// on the second certificate in the Certificate message.
+	SendTrustAnchorWrongCertificate bool
+
+	// SendNonEmptyTrustAnchorMatch sends a non-empty trust anchor ID
+	// extension to indicate a match.
+	SendNonEmptyTrustAnchorMatch bool
+
+	// AlwaysSendAvailableTrustAnchors, if true, causese the server to always
+	// send available trust anchors in EncryptedExtensions, even if unsolicited.
+	AlwaysSendAvailableTrustAnchors bool
+
 	// SendSupportedPointFormats, if not nil, is the list of supported point
 	// formats to send in ClientHello or ServerHello. If set to a non-nil
 	// empty slice, no extension will be sent.
@@ -2335,6 +2375,9 @@ type Credential struct {
 	// OverridePAKECodepoint, if non-zero, causes the runner to send the
 	// specified value instead of the actual PAKE codepoint.
 	OverridePAKECodepoint uint16
+	// TrustAnchorID, if not empty, is the trust anchor ID for the issuer
+	// of the certificate chain.
+	TrustAnchorID []byte
 }
 
 func (c *Credential) WithSignatureAlgorithms(sigAlgs ...signatureAlgorithm) *Credential {
@@ -2366,6 +2409,13 @@ func (c *Credential) signatureAlgorithms() []signatureAlgorithm {
 		return c.SignatureAlgorithms
 	}
 	return supportedSignatureAlgorithms
+}
+
+func (c *Credential) WithTrustAnchorID(id []byte) *Credential {
+	ret := *c
+	ret.TrustAnchorID = id
+	ret.MustMatchIssuer = true
+	return &ret
 }
 
 type handshakeMessage interface {
@@ -2647,3 +2697,6 @@ func generateTestCert(template, issuer *x509.Certificate, key crypto.Signer) *x5
 
 	return cert
 }
+
+// https://github.com/golang/go/issues/45624
+func ptrTo[T any](t T) *T { return &t }

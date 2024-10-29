@@ -56,7 +56,9 @@ SSL_HANDSHAKE::SSL_HANDSHAKE(SSL *ssl_arg)
       apply_jdk11_workaround(false),
       can_release_private_key(false),
       channel_id_negotiated(false),
-      received_hello_verify_request(false) {
+      received_hello_verify_request(false),
+      matched_peer_trust_anchor(false),
+      peer_matched_trust_anchor(false) {
   assert(ssl);
 
   // Draw entropy for all GREASE values at once. This avoids calling

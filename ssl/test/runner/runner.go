@@ -1510,6 +1510,7 @@ func appendCredentialFlags(flags []string, cred *Credential, prefix string, newC
 	if cred.WrongPAKERole {
 		flags = append(flags, prefix+"-wrong-pake-role")
 	}
+	handleBase64Field("trust-anchor-id", cred.TrustAnchorID)
 	return flags
 }
 
@@ -18401,6 +18402,266 @@ func addJDK11WorkaroundTests() {
 	}
 }
 
+func trustAnchorListFlagValue(ids ...[]byte) string {
+	b := cryptobyte.NewBuilder(nil)
+	for _, id := range ids {
+		addUint8LengthPrefixedBytes(b, id)
+	}
+	return base64FlagValue(b.BytesOrPanic())
+}
+
+func addTrustAnchorTests() {
+	id1 := []byte{1}
+	id2 := []byte{2, 2}
+	id3 := []byte{3, 3, 3}
+
+	// Unsolicited trust_anchors extensions should be rejected.
+	testCases = append(testCases, testCase{
+		name: "TrustAnchors-Unsolicited-Certificate",
+		config: Config{
+			MinVersion: VersionTLS13,
+			Bugs: ProtocolBugs{
+				AlwaysMatchTrustAnchorID: true,
+			},
+		},
+		shouldFail:         true,
+		expectedLocalError: "remote error: unsupported extension",
+		expectedError:      ":UNEXPECTED_EXTENSION:",
+	})
+	testCases = append(testCases, testCase{
+		name: "TrustAnchors-Unsolicited-EncryptedExtensions",
+		config: Config{
+			MinVersion:            VersionTLS13,
+			AvailableTrustAnchors: [][]byte{id1, id2},
+			Bugs: ProtocolBugs{
+				AlwaysSendAvailableTrustAnchors: true,
+			},
+		},
+		shouldFail:         true,
+		expectedLocalError: "remote error: unsupported extension",
+		expectedError:      ":UNEXPECTED_EXTENSION:",
+	})
+
+	// Test that the client sends trust anchors when configured, and correctly
+	// reports the server's response.
+	testCases = append(testCases, testCase{
+		name: "TrustAnchors-ClientRequest-Match",
+		config: Config{
+			MinVersion:            VersionTLS13,
+			AvailableTrustAnchors: [][]byte{id1, id2},
+			Credential:            rsaChainCertificate.WithTrustAnchorID(id1),
+			Bugs: ProtocolBugs{
+				ExpectPeerRequestedTrustAnchors: [][]byte{id1, id3},
+			},
+		},
+		flags: []string{
+			"-requested-trust-anchors", trustAnchorListFlagValue(id1, id3),
+			"-expect-peer-match-trust-anchor",
+			"-expect-peer-available-trust-anchors", trustAnchorListFlagValue(id1, id2),
+		},
+	})
+	// The client should not like it if the server indicates the match with a non-empty
+	// extension.
+	testCases = append(testCases, testCase{
+		name: "TrustAnchors-ClientRequest-Match-Non-Empty-Extension",
+		config: Config{
+			MinVersion:            VersionTLS13,
+			AvailableTrustAnchors: [][]byte{id1, id2},
+			Credential:            rsaChainCertificate.WithTrustAnchorID(id1),
+			Bugs: ProtocolBugs{
+				SendNonEmptyTrustAnchorMatch:    true,
+				ExpectPeerRequestedTrustAnchors: [][]byte{id1, id3},
+			},
+		},
+		flags: []string{
+			"-requested-trust-anchors", trustAnchorListFlagValue(id1, id3),
+		},
+		shouldFail:         true,
+		expectedLocalError: "remote error: error decoding message",
+		expectedError:      ":ERROR_PARSING_EXTENSION:",
+	})
+	// The client should not like it if the server indicates the match on the incorrect
+	// certificate in the Certificate message.
+	testCases = append(testCases, testCase{
+		name: "TrustAnchors-ClientRequest-Match-On-Incorrect-Certificate",
+		config: Config{
+			MinVersion:            VersionTLS13,
+			AvailableTrustAnchors: [][]byte{id1, id2},
+			Credential:            rsaChainCertificate.WithTrustAnchorID(id1),
+			Bugs: ProtocolBugs{
+				SendTrustAnchorWrongCertificate: true,
+				ExpectPeerRequestedTrustAnchors: [][]byte{id1, id3},
+			},
+		},
+		flags: []string{
+			"-requested-trust-anchors", trustAnchorListFlagValue(id1, id3),
+		},
+		shouldFail:         true,
+		expectedLocalError: "remote error: unsupported extension",
+		expectedError:      ":UNEXPECTED_EXTENSION:",
+	})
+	testCases = append(testCases, testCase{
+		name: "TrustAnchors-ClientRequest-NoMatch",
+		config: Config{
+			MinVersion:            VersionTLS13,
+			AvailableTrustAnchors: [][]byte{id1, id2},
+			Bugs: ProtocolBugs{
+				ExpectPeerRequestedTrustAnchors: [][]byte{id3},
+			},
+		},
+		flags: []string{
+			"-requested-trust-anchors", trustAnchorListFlagValue(id3),
+			"-expect-no-peer-match-trust-anchor",
+			"-expect-peer-available-trust-anchors", trustAnchorListFlagValue(id1, id2),
+		},
+	})
+
+	// An empty trust anchor ID is a syntax error, so most be rejected in both
+	// ClientHello and EncryptedExtensions.
+	testCases = append(testCases, testCase{
+		testType: serverTest,
+		name:     "TrustAnchors-EmptyID-ClientHello",
+		config: Config{
+			MinVersion:          VersionTLS13,
+			RequestTrustAnchors: [][]byte{{}},
+		},
+		shouldFail:    true,
+		expectedError: ":DECODE_ERROR:",
+	})
+	testCases = append(testCases, testCase{
+		name: "TrustAnchors-EmptyID-EncryptedExtensions",
+		config: Config{
+			MinVersion:            VersionTLS13,
+			AvailableTrustAnchors: [][]byte{{}},
+		},
+		flags:         []string{"-requested-trust-anchors", trustAnchorListFlagValue(id1)},
+		shouldFail:    true,
+		expectedError: ":DECODE_ERROR:",
+	})
+
+	// Test the server selection logic, as well as whether it correctly reports
+	// available trust anchors and the match status. (The general selection flow
+	// is covered in addCertificateSelectionTests.)
+	testCases = append(testCases, testCase{
+		testType: serverTest,
+		name:     "TrustAnchors-ServerSelect-Match",
+		config: Config{
+			MinVersion:          VersionTLS13,
+			RequestTrustAnchors: [][]byte{id2},
+			Bugs: ProtocolBugs{
+				ExpectPeerAvailableTrustAnchors: [][]byte{id1, id2},
+				ExpectPeerMatchTrustAnchor:      ptrTo(true),
+			},
+		},
+		shimCredentials: []*Credential{
+			rsaCertificate.WithTrustAnchorID(id1),
+			rsaCertificate.WithTrustAnchorID(id2),
+		},
+		flags: []string{"-expect-selected-credential", "1"},
+	})
+	testCases = append(testCases, testCase{
+		testType: serverTest,
+		name:     "TrustAnchors-ServerSelect-None",
+		config: Config{
+			MinVersion:          VersionTLS13,
+			RequestTrustAnchors: [][]byte{id1},
+		},
+		shimCredentials: []*Credential{
+			rsaCertificate.WithTrustAnchorID(id2),
+			rsaCertificate.WithTrustAnchorID(id3),
+		},
+		shouldFail:    true,
+		expectedError: ":NO_MATCHING_ISSUER:",
+	})
+	testCases = append(testCases, testCase{
+		testType: serverTest,
+		name:     "TrustAnchors-ServerSelect-Fallback",
+		config: Config{
+			MinVersion:          VersionTLS13,
+			RequestTrustAnchors: [][]byte{id1},
+			Bugs: ProtocolBugs{
+				ExpectPeerAvailableTrustAnchors: [][]byte{id2, id3},
+				ExpectPeerMatchTrustAnchor:      ptrTo(false),
+			},
+		},
+		shimCredentials: []*Credential{
+			rsaCertificate.WithTrustAnchorID(id2),
+			rsaCertificate.WithTrustAnchorID(id3),
+			&rsaCertificate,
+		},
+		flags: []string{"-expect-selected-credential", "2"},
+	})
+
+	// The ClientHello list may be empty. The client must be able to send it and
+	// receive available trust anchors.
+	testCases = append(testCases, testCase{
+		name: "TrustAnchors-ClientRequestEmpty",
+		config: Config{
+			MinVersion:            VersionTLS13,
+			AvailableTrustAnchors: [][]byte{id1, id2},
+			Bugs: ProtocolBugs{
+				ExpectPeerRequestedTrustAnchors: [][]byte{},
+			},
+		},
+		flags: []string{
+			"-requested-trust-anchors", trustAnchorListFlagValue(),
+			"-expect-peer-available-trust-anchors", trustAnchorListFlagValue(id1, id2),
+		},
+	})
+	// The server must be able to process it, and send available trust anchors.
+	testCases = append(testCases, testCase{
+		testType: serverTest,
+		name:     "TrustAnchors-ServerReceiveEmptyRequest",
+		config: Config{
+			MinVersion:          VersionTLS13,
+			RequestTrustAnchors: [][]byte{},
+			Bugs: ProtocolBugs{
+				ExpectPeerAvailableTrustAnchors: [][]byte{id1, id2},
+				ExpectPeerMatchTrustAnchor:      ptrTo(false),
+			},
+		},
+		shimCredentials: []*Credential{
+			rsaCertificate.WithTrustAnchorID(id1),
+			rsaCertificate.WithTrustAnchorID(id2),
+			&rsaCertificate,
+		},
+		flags: []string{"-expect-selected-credential", "2"},
+	})
+
+	// This extension requires TLS 1.3. If a server receives this and negotiates
+	// TLS 1.2, it should ignore the extension and not accidentally send
+	// something in ServerHello (implicitly checked by runner).
+	testCases = append(testCases, testCase{
+		testType: serverTest,
+		name:     "TrustAnchors-TLS12-Server",
+		config: Config{
+			MaxVersion:          VersionTLS12,
+			RequestTrustAnchors: [][]byte{id1},
+		},
+		shimCredentials: []*Credential{
+			rsaCertificate.WithTrustAnchorID(id1),
+			&rsaCertificate,
+		},
+		// The first credential is skipped because the extension is ignored.
+		flags: []string{"-expect-selected-credential", "1"},
+	})
+	// The client should reject the extension in TLS 1.2 ServerHello.
+	testCases = append(testCases, testCase{
+		name: "TrustAnchors-TLS12-Client",
+		config: Config{
+			MaxVersion:            VersionTLS12,
+			AvailableTrustAnchors: [][]byte{id1},
+			Bugs: ProtocolBugs{
+				AlwaysSendAvailableTrustAnchors: true,
+			},
+		},
+		flags:              []string{"-requested-trust-anchors", trustAnchorListFlagValue(id1)},
+		shouldFail:         true,
+		expectedError:      ":UNEXPECTED_EXTENSION:",
+		expectedLocalError: "remote error: unsupported extension",
+	})
+}
+
 func addDelegatedCredentialTests() {
 	p256DC := createDelegatedCredential(&rsaCertificate, delegatedCredentialConfig{
 		dcAlgo: signatureECDSAWithP256AndSHA256,
@@ -21745,7 +22006,7 @@ func addCompliancePolicyTests() {
 
 func canBeShimCertificate(c *Credential) bool {
 	// Some options can only be set with the credentials API.
-	return c.Type == CredentialTypeX509 && !c.MustMatchIssuer
+	return c.Type == CredentialTypeX509 && !c.MustMatchIssuer && c.TrustAnchorID == nil
 }
 
 func addCertificateSelectionTests() {
@@ -22190,6 +22451,56 @@ func addCertificateSelectionTests() {
 			},
 			match:         rsaChainCertificate.WithMustMatchIssuer(true),
 			mismatch:      ecdsaP256Certificate.WithMustMatchIssuer(true),
+			expectedError: ":NO_MATCHING_ISSUER:",
+		},
+
+		// Trust anchor IDs can also be used to match issuers.
+		// TODO(crbug.com/398275713): Implement this for client certificates.
+		{
+			name:       "Server-CheckIssuer-TrustAnchorIDs",
+			testType:   serverTest,
+			minVersion: VersionTLS13,
+			config: Config{
+				RequestTrustAnchors: [][]byte{{1, 1, 1}},
+			},
+			match:         rsaChainCertificate.WithTrustAnchorID([]byte{1, 1, 1}),
+			mismatch:      ecdsaP256Certificate.WithTrustAnchorID([]byte{2, 2, 2}),
+			expectedError: ":NO_MATCHING_ISSUER:",
+		},
+
+		// When an issuer-gated credential fails, a normal credential may be
+		// selected instead.
+		{
+			name:     "Client-CheckIssuerFallback",
+			testType: clientTest,
+			config: Config{
+				ClientAuth: RequestClientCert,
+				ClientCAs:  makeCertPoolFromRoots(&ecdsaP384Certificate),
+			},
+			match:         &rsaChainCertificate,
+			mismatch:      ecdsaP256Certificate.WithMustMatchIssuer(true),
+			expectedError: ":NO_MATCHING_ISSUER:",
+		},
+		{
+			name:     "Server-CheckIssuerFallback",
+			testType: serverTest,
+			config: Config{
+				RootCAs:     makeCertPoolFromRoots(&ecdsaP384Certificate),
+				SendRootCAs: true,
+			},
+			match:         &rsaChainCertificate,
+			mismatch:      ecdsaP256Certificate.WithMustMatchIssuer(true),
+			expectedError: ":NO_MATCHING_ISSUER:",
+		},
+		{
+			name:       "Server-CheckIssuerFallback-TrustAnchorIDs",
+			testType:   serverTest,
+			minVersion: VersionTLS13,
+			config: Config{
+				RequestTrustAnchors: [][]byte{{1, 1, 1}},
+			},
+			match:         &rsaChainCertificate,
+			mismatch:      ecdsaP256Certificate.WithTrustAnchorID([]byte{2, 2, 2}),
 			expectedError: ":NO_MATCHING_ISSUER:",
 		},
 	}
@@ -23690,6 +24001,7 @@ func main() {
 	addCertificateSelectionTests()
 	addKeyUpdateTests()
 	addPAKETests()
+	addTrustAnchorTests()
 
 	toAppend, err := convertToSplitHandshakeTests(testCases)
 	if err != nil {

@@ -513,6 +513,7 @@ func (hs *clientHandshakeState) createClientHello(innerHello *clientHelloMsg, ec
 		omitExtensions:            c.config.Bugs.OmitExtensions,
 		emptyExtensions:           c.config.Bugs.EmptyExtensions,
 		delegatedCredential:       c.config.DelegatedCredentialAlgorithms,
+		trustAnchors:              c.config.RequestTrustAnchors,
 	}
 
 	// Translate the bugs that modify ClientHello extension order into a
@@ -1334,6 +1335,15 @@ func (hs *clientHandshakeState) doTLS13Handshake(msg any) error {
 				return errors.New("tls: unexpected extensions in the server certificate")
 			}
 		}
+		if c.config.RequestTrustAnchors == nil && certMsg.matchedTrustAnchor {
+			return errors.New("tls: unsolicited trust_anchors extension in the server certificate")
+		}
+		if expected := c.config.Bugs.ExpectPeerMatchTrustAnchor; expected != nil && certMsg.matchedTrustAnchor != *expected {
+			if certMsg.matchedTrustAnchor {
+				return errors.New("tls: server certificate unexpectedly matched trust anchor")
+			}
+			return errors.New("tls: server certificate unexpectedly did not match trust anchor")
+		}
 
 		if err := hs.verifyCertificates(certMsg); err != nil {
 			return err
@@ -2036,6 +2046,13 @@ func (hs *clientHandshakeState) processServerExtensions(serverExtensions *server
 
 	if len(serverExtensions.sctList) > 0 && c.config.Bugs.NoSignedCertificateTimestamps {
 		return errors.New("tls: server advertised unrequested SCTs")
+	}
+
+	if len(serverExtensions.trustAnchors) > 0 && c.config.RequestTrustAnchors == nil {
+		return errors.New("tls: server advertised unrequested trust anchor IDs")
+	}
+	if expected := c.config.Bugs.ExpectPeerAvailableTrustAnchors; expected != nil && !slices.EqualFunc(expected, serverExtensions.trustAnchors, slices.Equal) {
+		return errors.New("tls: server advertised trust anchor IDs that did not match expectations")
 	}
 
 	if serverExtensions.srtpProtectionProfile != 0 {

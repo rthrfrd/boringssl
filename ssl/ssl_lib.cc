@@ -531,6 +531,14 @@ SSL *SSL_new(SSL_CTX *ctx) {
     return nullptr;
   }
 
+  if (ctx->requested_trust_anchors) {
+    ssl->config->requested_trust_anchors.emplace();
+    if (!ssl->config->requested_trust_anchors->CopyFrom(
+            *ctx->requested_trust_anchors)) {
+      return nullptr;
+    }
+  }
+
   if (ctx->psk_identity_hint) {
     ssl->config->psk_identity_hint.reset(
         OPENSSL_strdup(ctx->psk_identity_hint.get()));
@@ -3287,4 +3295,51 @@ int SSL_set_compliance_policy(SSL *ssl, enum ssl_compliance_policy_t policy) {
 
 enum ssl_compliance_policy_t SSL_get_compliance_policy(const SSL *ssl) {
   return ssl->config->compliance_policy;
+}
+
+int SSL_peer_matched_trust_anchor(const SSL *ssl) {
+  return ssl->s3->hs != nullptr && ssl->s3->hs->peer_matched_trust_anchor;
+}
+
+void SSL_get0_peer_available_trust_anchors(const SSL *ssl, const uint8_t **out,
+                                           size_t *out_len) {
+  Span<const uint8_t> ret;
+  if (SSL_HANDSHAKE *hs = ssl->s3->hs.get(); hs != nullptr) {
+    ret = hs->peer_available_trust_anchors;
+  }
+  *out = ret.data();
+  *out_len = ret.size();
+}
+
+int SSL_CTX_set1_requested_trust_anchors(SSL_CTX *ctx, const uint8_t *ids,
+                                         size_t ids_len) {
+  auto span = Span(ids, ids_len);
+  if (!ssl_is_valid_trust_anchor_list(span)) {
+    OPENSSL_PUT_ERROR(SSL, SSL_R_INVALID_TRUST_ANCHOR_LIST);
+    return 0;
+  }
+  Array<uint8_t> copy;
+  if (!copy.CopyFrom(span)) {
+    return 0;
+  }
+  ctx->requested_trust_anchors = std::move(copy);
+  return 1;
+}
+
+int SSL_set1_requested_trust_anchors(SSL *ssl, const uint8_t *ids,
+                                     size_t ids_len) {
+  if (!ssl->config) {
+    return 0;
+  }
+  auto span = Span(ids, ids_len);
+  if (!ssl_is_valid_trust_anchor_list(span)) {
+    OPENSSL_PUT_ERROR(SSL, SSL_R_INVALID_TRUST_ANCHOR_LIST);
+    return 0;
+  }
+  Array<uint8_t> copy;
+  if (!copy.CopyFrom(span)) {
+    return 0;
+  }
+  ssl->config->requested_trust_anchors = std::move(copy);
+  return 1;
 }

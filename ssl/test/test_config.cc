@@ -74,6 +74,28 @@ Flag<Config> BoolFlag(const char *name, bool Config::*field,
                       }};
 }
 
+template <typename Config>
+Flag<Config> OptionalBoolTrueFlag(const char *name,
+                                  std::optional<bool> Config::*field,
+                                  bool skip_handshaker = false) {
+  return Flag<Config>{name, false, skip_handshaker,
+                      [=](Config *config, const char *) -> bool {
+                        config->*field = true;
+                        return true;
+                      }};
+}
+
+template <typename Config>
+Flag<Config> OptionalBoolFalseFlag(const char *name,
+                                   std::optional<bool> Config::*field,
+                                   bool skip_handshaker = false) {
+  return Flag<Config>{name, false, skip_handshaker,
+                      [=](Config *config, const char *) -> bool {
+                        config->*field = false;
+                        return true;
+                      }};
+}
+
 template <typename T>
 bool StringToInt(T *out, const char *str) {
   static_assert(std::is_integral<T>::value, "not an integral type");
@@ -192,6 +214,17 @@ Flag<Config> Base64Flag(const char *name, std::vector<uint8_t> Config::*field,
   return Flag<Config>{name, true, skip_handshaker,
                       [=](Config *config, const char *param) -> bool {
                         return DecodeBase64(&(config->*field), param);
+                      }};
+}
+
+template <typename Config>
+Flag<Config> OptionalBase64Flag(
+    const char *name, std::optional<std::vector<uint8_t>> Config::*field,
+    bool skip_handshaker = false) {
+  return Flag<Config>{name, true, skip_handshaker,
+                      [=](Config *config, const char *param) -> bool {
+                        (config->*field).emplace();
+                        return DecodeBase64(&*(config->*field), param);
                       }};
 }
 
@@ -504,6 +537,14 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         BoolFlag("-fips-202205", &TestConfig::fips_202205),
         BoolFlag("-wpa-202304", &TestConfig::wpa_202304),
         BoolFlag("-cnsa-202407", &TestConfig::cnsa_202407),
+        OptionalBoolTrueFlag("-expect-peer-match-trust-anchor",
+                             &TestConfig::expect_peer_match_trust_anchor),
+        OptionalBoolFalseFlag("-expect-no-peer-match-trust-anchor",
+                              &TestConfig::expect_peer_match_trust_anchor),
+        OptionalBase64Flag("-expect-peer-available-trust-anchors",
+                           &TestConfig::expect_peer_available_trust_anchors),
+        OptionalBase64Flag("-requested-trust-anchors",
+                           &TestConfig::requested_trust_anchors),
         OptionalIntFlag("-expect-selected-credential",
                         &TestConfig::expect_selected_credential),
         // Credential flags are stateful. First, use one of the
@@ -546,6 +587,8 @@ const Flag<TestConfig> *FindFlag(const char *name) {
             Base64Flag("-pake-password", &CredentialConfig::pake_password)),
         CredentialFlag(
             BoolFlag("-wrong-pake-role", &CredentialConfig::wrong_pake_role)),
+        CredentialFlag(
+            Base64Flag("-trust-anchor-id", &CredentialConfig::trust_anchor_id)),
         IntFlag("-private-key-delay-ms", &TestConfig::private_key_delay_ms),
     };
     std::sort(ret.begin(), ret.end(), FlagNameComparator{});
@@ -1044,6 +1087,26 @@ static bool CheckVerifyCallback(SSL *ssl) {
     return false;
   }
 
+  if (config->expect_peer_match_trust_anchor.has_value() &&
+      !!SSL_peer_matched_trust_anchor(ssl) !=
+          config->expect_peer_match_trust_anchor.value()) {
+    fprintf(stderr, "Peer unexpected %s a requested trust anchor",
+            SSL_peer_matched_trust_anchor(ssl) ? "matched" : "failed to match");
+    return false;
+  }
+
+  if (config->expect_peer_available_trust_anchors.has_value()) {
+    const uint8_t *peer_ids;
+    size_t peer_ids_len;
+    SSL_get0_peer_available_trust_anchors(ssl, &peer_ids, &peer_ids_len);
+    if (bssl::Span(peer_ids, peer_ids_len) !=
+        *config->expect_peer_available_trust_anchors) {
+      fprintf(stderr,
+              "Peer's available trust anchors did not match expectations.");
+      return false;
+    }
+  }
+
   if (GetTestState(ssl)->cert_verified) {
     fprintf(stderr, "Certificate verified twice.\n");
     return false;
@@ -1484,6 +1547,14 @@ static bssl::UniquePtr<SSL_CREDENTIAL> CredentialFromConfig(
 
   if (cred_config.must_match_issuer) {
     SSL_CREDENTIAL_set_must_match_issuer(cred.get(), 1);
+  }
+
+  if (!cred_config.trust_anchor_id.empty()) {
+    if (!SSL_CREDENTIAL_set1_trust_anchor_id(
+            cred.get(), cred_config.trust_anchor_id.data(),
+            cred_config.trust_anchor_id.size())) {
+      return nullptr;
+    }
   }
 
   if (!SetCredentialInfo(cred.get(), std::move(info))) {
@@ -2339,6 +2410,12 @@ bssl::UniquePtr<SSL> TestConfig::NewSSL(
   }
   if (!srtp_profiles.empty() &&
       !SSL_set_srtp_profiles(ssl.get(), srtp_profiles.c_str())) {
+    return nullptr;
+  }
+  if (requested_trust_anchors.has_value() &&
+      !SSL_set1_requested_trust_anchors(ssl.get(),
+                                        requested_trust_anchors->data(),
+                                        requested_trust_anchors->size())) {
     return nullptr;
   }
   if (enable_ocsp_stapling) {

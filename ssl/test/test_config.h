@@ -44,6 +44,7 @@ struct CredentialConfig {
   std::vector<uint8_t> pake_client_id;
   std::vector<uint8_t> pake_server_id;
   std::vector<uint8_t> pake_password;
+  std::vector<uint8_t> trust_anchor_id;
   bool wrong_pake_role = false;
 };
 
@@ -228,6 +229,9 @@ struct TestConfig {
   bool fips_202205 = false;
   bool wpa_202304 = false;
   bool cnsa_202407 = false;
+  std::optional<bool> expect_peer_match_trust_anchor;
+  std::optional<std::vector<uint8_t>> expect_peer_available_trust_anchors;
+  std::optional<std::vector<uint8_t>> requested_trust_anchors;
   std::optional<int> expect_selected_credential;
   std::vector<CredentialConfig> credentials;
   int private_key_delay_ms = 0;

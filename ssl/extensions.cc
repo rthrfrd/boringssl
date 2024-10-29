@@ -159,7 +159,7 @@ bool ssl_parse_client_hello_with_trailing_data(const SSL *ssl, CBS *cbs,
       CBS_len(&cipher_suites) < 2 || (CBS_len(&cipher_suites) & 1) != 0 ||
       !CBS_get_u8_length_prefixed(cbs, &compression_methods) ||
       CBS_len(&compression_methods) < 1) {
-      OPENSSL_PUT_ERROR(SSL, SSL_R_CLIENTHELLO_PARSE_FAILED);
+    OPENSSL_PUT_ERROR(SSL, SSL_R_CLIENTHELLO_PARSE_FAILED);
     return false;
   }
 
@@ -2510,7 +2510,7 @@ static bool ext_supported_groups_parse_clienthello(SSL_HANDSHAKE *hs,
 static bool ext_certificate_authorities_add_clienthello(
     const SSL_HANDSHAKE *hs, CBB *out, CBB *out_compressible,
     ssl_client_hello_type_t type) {
-  // TODO(crbug.com/399937371) Decide what to do with this for ECH.
+  // TODO(crbug.com/398275713): What should this send in ClientHelloOuter?
   if (ssl_has_CA_names(hs->config)) {
     CBB ca_contents;
     if (!CBB_add_u16(out_compressible,
@@ -2543,6 +2543,124 @@ static bool ext_certificate_authorities_parse_clienthello(SSL_HANDSHAKE *hs,
   return true;
 }
 
+
+// Trust Anchor Identifiers
+//
+// https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids/
+
+bool ssl_is_valid_trust_anchor_list(Span<const uint8_t> in) {
+  CBS ids = in;
+  while (CBS_len(&ids) > 0) {
+    CBS id;
+    if (!CBS_get_u8_length_prefixed(&ids, &id) ||  //
+        CBS_len(&id) == 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+static bool ext_trust_anchors_add_clienthello(const SSL_HANDSHAKE *hs, CBB *out,
+                                              CBB *out_compressible,
+                                              ssl_client_hello_type_t type) {
+  if (!hs->config->requested_trust_anchors.has_value()) {
+    return true;
+  }
+  // TODO(crbug.com/398275713): What should this send in ClientHelloOuter?
+  CBB contents, list;
+  if (!CBB_add_u16(out_compressible, TLSEXT_TYPE_trust_anchors) ||  //
+      !CBB_add_u16_length_prefixed(out_compressible, &contents) ||  //
+      !CBB_add_u16_length_prefixed(&contents, &list) ||             //
+      !CBB_add_bytes(&list, hs->config->requested_trust_anchors->data(),
+                     hs->config->requested_trust_anchors->size()) ||
+      !CBB_flush(out_compressible)) {
+    return false;
+  }
+  return true;
+}
+
+static bool ext_trust_anchors_parse_clienthello(SSL_HANDSHAKE *hs,
+                                                uint8_t *out_alert,
+                                                CBS *contents) {
+  if (contents == nullptr || ssl_protocol_version(hs->ssl) < TLS1_3_VERSION) {
+    return true;
+  }
+
+  CBS child;
+  if (!CBS_get_u16_length_prefixed(contents, &child) ||
+      !ssl_is_valid_trust_anchor_list(child)) {
+    *out_alert = SSL_AD_DECODE_ERROR;
+    OPENSSL_PUT_ERROR(SSL, SSL_R_DECODE_ERROR);
+    return false;
+  }
+
+  hs->peer_requested_trust_anchors.emplace();
+  if (!hs->peer_requested_trust_anchors->CopyFrom(child)) {
+    *out_alert = SSL_AD_INTERNAL_ERROR;
+    return false;
+  }
+  return true;
+}
+
+static bool ext_trust_anchors_add_serverhello(SSL_HANDSHAKE *hs, CBB *out) {
+  SSL *const ssl = hs->ssl;
+  const auto &creds = hs->config->cert->credentials;
+  if (ssl_protocol_version(ssl) < TLS1_3_VERSION ||
+      // Check if any credentials have trust anchor IDs.
+      std::none_of(creds.begin(), creds.end(), [](const auto &cred) {
+        return !cred->trust_anchor_id.empty();
+      })) {
+    return true;
+  }
+  CBB contents, list;
+  if (!CBB_add_u16(out, TLSEXT_TYPE_trust_anchors) ||  //
+      !CBB_add_u16_length_prefixed(out, &contents) ||  //
+      !CBB_add_u16_length_prefixed(&contents, &list)) {
+    return false;
+  }
+  for (const auto &cred : creds) {
+    if (!cred->trust_anchor_id.empty()) {
+      CBB child;
+      if (!CBB_add_u8_length_prefixed(&list, &child) ||  //
+          !CBB_add_bytes(&child, cred->trust_anchor_id.data(),
+                         cred->trust_anchor_id.size()) ||
+          !CBB_flush(&list)) {
+        return false;
+      }
+    }
+  }
+  return CBB_flush(out);
+}
+
+static bool ext_trust_anchors_parse_serverhello(SSL_HANDSHAKE *hs,
+                                                uint8_t *out_alert,
+                                                CBS *contents) {
+  if (contents == nullptr) {
+    return true;
+  }
+
+  if (ssl_protocol_version(hs->ssl) < TLS1_3_VERSION) {
+    OPENSSL_PUT_ERROR(SSL, SSL_R_UNEXPECTED_EXTENSION);
+    *out_alert = SSL_AD_UNSUPPORTED_EXTENSION;
+    return false;
+  }
+
+  CBS child;
+  if (!CBS_get_u16_length_prefixed(contents, &child) ||
+      // The list of available trust anchors may not be empty.
+      CBS_len(&child) == 0 ||  //
+      !ssl_is_valid_trust_anchor_list(child)) {
+    *out_alert = SSL_AD_DECODE_ERROR;
+    OPENSSL_PUT_ERROR(SSL, SSL_R_DECODE_ERROR);
+    return false;
+  }
+
+  if (!hs->peer_available_trust_anchors.CopyFrom(child)) {
+    *out_alert = SSL_AD_INTERNAL_ERROR;
+    return false;
+  }
+  return true;
+}
 
 // QUIC Transport Parameters
 
@@ -3491,6 +3609,13 @@ static const struct tls_extension kExtensions[] = {
         forbid_parse_serverhello,
         ext_pake_parse_clienthello,
         dont_add_serverhello,
+    },
+    {
+        TLSEXT_TYPE_trust_anchors,
+        ext_trust_anchors_add_clienthello,
+        ext_trust_anchors_parse_serverhello,
+        ext_trust_anchors_parse_clienthello,
+        ext_trust_anchors_add_serverhello,
     },
 };
 

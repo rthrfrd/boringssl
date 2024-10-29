@@ -4951,6 +4951,102 @@ TEST(SSLTest, CredentialChains) {
                            {leaf.get(), ca.get()}));
 }
 
+TEST(SSLTest, CredentialCertProperties) {
+  // A CertificatePropertyList containing a trust_anchors property, and an
+  // unknown property 0xbb with 0 bytes of data.
+  bssl::UniquePtr<SSL_CREDENTIAL> cred(SSL_CREDENTIAL_new_x509());
+  ASSERT_TRUE(cred);
+  static const uint8_t kTestProperties1[] = {0x00, 0x0b, 0x00, 0x00, 0x00,
+                                             0x03, 0xba, 0xdb, 0x0b, 0x00,
+                                             0xbb, 0x00, 0x00};
+  bssl::UniquePtr<CRYPTO_BUFFER> pl(
+      CRYPTO_BUFFER_new(kTestProperties1, sizeof(kTestProperties1), nullptr));
+  ASSERT_TRUE(pl);
+  EXPECT_TRUE(
+      SSL_CREDENTIAL_set1_certificate_properties(cred.get(), pl.get()));
+
+  // A CertificatePropertyList containing a trust_anchors property, and an
+  // unknown property 0xbb with 1 byte of data.
+  static const uint8_t kTestProperties2[] = {0x00, 0x0c, 0x00, 0x00, 0x00,
+                                             0x03, 0xba, 0xdb, 0x0b, 0x00,
+                                             0xbb, 0x00, 0x01, 0xba};
+  pl.reset(
+      CRYPTO_BUFFER_new(kTestProperties2, sizeof(kTestProperties2), nullptr));
+  ASSERT_TRUE(pl);
+  EXPECT_TRUE(
+      SSL_CREDENTIAL_set1_certificate_properties(cred.get(), pl.get()));
+
+  // A CertificatePropertyList containing a trust_anchors property, and an
+  // unknown but malformed property 0xbb with missing data.
+  static const uint8_t kTestProperties3[] = {0x00, 0x09, 0x00, 0x00, 0x00, 0x03,
+                                      0xba, 0xdb, 0x0b, 0x00, 0xbb};
+  pl.reset(
+      CRYPTO_BUFFER_new(kTestProperties3, sizeof(kTestProperties3), nullptr));
+  ASSERT_TRUE(pl);
+  EXPECT_FALSE(
+      SSL_CREDENTIAL_set1_certificate_properties(cred.get(), pl.get()));
+  EXPECT_TRUE(ErrorEquals(ERR_get_error(), ERR_LIB_SSL,
+                          SSL_R_INVALID_CERTIFICATE_PROPERTY_LIST));
+
+  // A CertificatePropertyList containing a trust_anchors property, and an
+  // unknown but malformed property 0xbb with incorrect length data.
+  static const uint8_t kTestProperties4[] = {0x00, 0x0c, 0x00, 0x00, 0x00,
+                                             0x03, 0xba, 0xdb, 0x0b, 0x00,
+                                             0xbb, 0x00, 0x03, 0xba};
+  pl.reset(
+      CRYPTO_BUFFER_new(kTestProperties4, sizeof(kTestProperties4), nullptr));
+  ASSERT_TRUE(pl);
+  EXPECT_FALSE(
+      SSL_CREDENTIAL_set1_certificate_properties(cred.get(), pl.get()));
+  EXPECT_TRUE(ErrorEquals(ERR_get_error(), ERR_LIB_SSL,
+                          SSL_R_INVALID_CERTIFICATE_PROPERTY_LIST));
+
+  // A CertificatePropertyList containing a trust_anchors property with 0 bytes
+  // of data.
+  static const uint8_t kTestProperties5[] = {0x00, 0x04, 0x00,
+                                             0x00, 0x00, 0x00};
+  pl.reset(
+      CRYPTO_BUFFER_new(kTestProperties5, sizeof(kTestProperties5), nullptr));
+  ASSERT_TRUE(pl);
+  EXPECT_FALSE(
+      SSL_CREDENTIAL_set1_certificate_properties(cred.get(), pl.get()));
+  EXPECT_TRUE(ErrorEquals(ERR_get_error(), ERR_LIB_SSL,
+                          SSL_R_INVALID_TRUST_ANCHOR_LIST));
+
+  // A CertificatePropertyList containing a trust_anchors property with extra
+  // data.
+  static const uint8_t kTestProperties6[] = {0x00, 0x08, 0x00, 0x00, 0x00,
+                                             0x03, 0xba, 0xdb, 0x0b, 0xbb};
+  pl.reset(
+      CRYPTO_BUFFER_new(kTestProperties6, sizeof(kTestProperties6), nullptr));
+  ASSERT_TRUE(pl);
+  EXPECT_FALSE(
+      SSL_CREDENTIAL_set1_certificate_properties(cred.get(), pl.get()));
+  EXPECT_TRUE(ErrorEquals(ERR_get_error(), ERR_LIB_SSL,
+                          SSL_R_INVALID_CERTIFICATE_PROPERTY_LIST));
+
+  // A CertificatePropertyList containing a trust_anchors property with missing
+  // data.
+  static const uint8_t kTestProperties7[] = {0x00, 0x06, 0x00, 0x00,
+                                             0x00, 0x03, 0xba, 0xdb};
+  pl.reset(
+      CRYPTO_BUFFER_new(kTestProperties7, sizeof(kTestProperties7), nullptr));
+  ASSERT_TRUE(pl);
+  EXPECT_FALSE(
+      SSL_CREDENTIAL_set1_certificate_properties(cred.get(), pl.get()));
+  EXPECT_TRUE(ErrorEquals(ERR_get_error(), ERR_LIB_SSL,
+                          SSL_R_INVALID_CERTIFICATE_PROPERTY_LIST));
+
+  // A CertificatePropertyList containing only a trust_anchors property.
+  static const uint8_t kTestProperties8[] = {0x00, 0x07, 0x00, 0x00, 0x00,
+                                             0x03, 0xba, 0xdb, 0x0b};
+  pl.reset(
+      CRYPTO_BUFFER_new(kTestProperties8, sizeof(kTestProperties8), nullptr));
+  ASSERT_TRUE(pl);
+  EXPECT_TRUE(
+      SSL_CREDENTIAL_set1_certificate_properties(cred.get(), pl.get()));
+}
+
 TEST(SSLTest, SetChainAndKeyCtx) {
   bssl::UniquePtr<SSL_CTX> client_ctx(SSL_CTX_new(TLS_with_buffers_method()));
   ASSERT_TRUE(client_ctx);
