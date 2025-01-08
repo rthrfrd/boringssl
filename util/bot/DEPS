@@ -25,7 +25,6 @@ vars = {
   'checkout_nasm': False,
   'checkout_libcxx': False,
   'checkout_riscv64': False,
-  'vs_version': '2022',
 
   # Run the following command to see the latest builds in CIPD:
   #  cipd describe PACKAGE_NAME -version latest
@@ -39,6 +38,9 @@ vars = {
   'go_version': 'version:3@1.24.1',
   # infra/3pp/tools/perl/windows-amd64
   'perl_version': 'version:3@5.38.2.2',
+  # chrome_internal/third_party/sdk/windows, but if an update switches this to a
+  # new major VS release, keep some bots at the older version.
+  'windows_sdk_version': 'uploaded:2024-01-11',
 
   # Update the following from
   # https://chromium.googlesource.com/chromium/src/+/main/DEPS
@@ -150,6 +152,15 @@ deps = {
       'dep_type': 'cipd',
   },
 
+  'boringssl/util/bot/windows_sdk': {
+    'packages': [{
+      'package': 'chrome_internal/third_party/sdk/windows',
+      'version': Var('windows_sdk_version'),
+    }],
+    'condition': 'host_os == "win"',
+    'dep_type': 'cipd',
+  },
+
   'boringssl/util/bot/tools/clang': {
     'url': Var('chromium_git') + '/chromium/src/tools/clang.git' + '@' + Var('tools_clang_revision'),
     'condition': 'checkout_clang',
@@ -172,16 +183,6 @@ hooks = [
                 '--no_auth',
                 '--bucket', 'chromium-tools',
                 '-s', 'boringssl/util/bot/nasm-win32.exe.sha1',
-    ],
-  },
-  {
-    'name': 'win_toolchain',
-    'pattern': '.',
-    'condition': 'host_os == "win"',
-    'action': [ 'python3',
-                'boringssl/util/bot/vs_toolchain.py',
-                'update',
-                Var('vs_version'),
     ],
   },
   {
