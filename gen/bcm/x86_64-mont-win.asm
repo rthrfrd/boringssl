@@ -248,7 +248,7 @@ $L$copy:
 
 	mov	rsi,QWORD[8+r9*8+rsp]
 
-	mov	rax,1
+
 	mov	r15,QWORD[((-48))+rsi]
 
 	mov	r14,QWORD[((-40))+rsi]
@@ -694,7 +694,7 @@ $L$copy4x:
 	jnz	NEAR $L$copy4x
 	mov	rsi,QWORD[8+r9*8+rsp]
 
-	mov	rax,1
+
 	mov	r15,QWORD[((-48))+rsi]
 
 	mov	r14,QWORD[((-40))+rsi]
@@ -898,7 +898,7 @@ $L$sqr8x_cond_copy:
 	add	r9,32
 	jnz	NEAR $L$sqr8x_cond_copy
 
-	mov	rax,1
+
 	mov	r15,QWORD[((-48))+rsi]
 
 	mov	r14,QWORD[((-40))+rsi]
@@ -1269,7 +1269,7 @@ $L$mulx4x_cond_copy:
 
 	mov	QWORD[rbx],rdx
 
-	mov	rax,1
+
 	mov	r15,QWORD[((-48))+rsi]
 
 	mov	r14,QWORD[((-40))+rsi]

@@ -229,7 +229,7 @@ L$copy:
 
 	movq	8(%rsp,%r9,8),%rsi
 
-	movq	$1,%rax
+
 	movq	-48(%rsi),%r15
 
 	movq	-40(%rsi),%r14
@@ -662,7 +662,7 @@ L$copy4x:
 	jnz	L$copy4x
 	movq	8(%rsp,%r9,8),%rsi
 
-	movq	$1,%rax
+
 	movq	-48(%rsi),%r15
 
 	movq	-40(%rsi),%r14
@@ -853,7 +853,7 @@ L$sqr8x_cond_copy:
 	addq	$32,%r9
 	jnz	L$sqr8x_cond_copy
 
-	movq	$1,%rax
+
 	movq	-48(%rsi),%r15
 
 	movq	-40(%rsi),%r14
@@ -1211,7 +1211,7 @@ L$mulx4x_cond_copy:
 
 	movq	%rdx,(%rbx)
 
-	movq	$1,%rax
+
 	movq	-48(%rsi),%r15
 
 	movq	-40(%rsi),%r14

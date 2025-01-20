@@ -275,14 +275,14 @@ int bn_rand_secret_range(BIGNUM *r, int *out_is_uniform, BN_ULONG min_inclusive,
 #define OPENSSL_BN_ASM_MONT
 // bn_mul_mont writes |ap| * |bp| mod |np| to |rp|, each |num| words
 // long. Inputs and outputs are in Montgomery form. |n0| is a pointer to the
-// corresponding field in |BN_MONT_CTX|. It returns one if |bn_mul_mont| handles
-// inputs of this size and zero otherwise.
+// corresponding field in |BN_MONT_CTX|.
 //
 // If at least one of |ap| or |bp| is fully reduced, |rp| will be fully reduced.
 // If neither is fully-reduced, the output may not be either.
 //
 // This function allocates |num| words on the stack, so |num| should be at most
-// |BN_MONTGOMERY_MAX_WORDS|.
+// |BN_MONTGOMERY_MAX_WORDS|. Additionally, |num| must be at least 128 /
+// |BN_BITS2|.
 //
 // TODO(davidben): The x86_64 implementation expects a 32-bit input and masks
 // off upper bits. The aarch64 implementation expects a 64-bit input and does
@@ -291,39 +291,39 @@ int bn_rand_secret_range(BIGNUM *r, int *out_is_uniform, BN_ULONG min_inclusive,
 //
 // See also discussion in |ToWord| in abi_test.h for notes on smaller-than-word
 // inputs.
-int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
-                const BN_ULONG *np, const BN_ULONG *n0, size_t num);
+void bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
+                 const BN_ULONG *np, const BN_ULONG *n0, size_t num);
 
 #if defined(OPENSSL_X86_64)
 inline int bn_mulx_adx_capable(void) {
   // MULX is in BMI2.
   return CRYPTO_is_BMI2_capable() && CRYPTO_is_ADX_capable();
 }
-int bn_mul_mont_nohw(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
-                     const BN_ULONG *np, const BN_ULONG *n0, size_t num);
+void bn_mul_mont_nohw(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
+                      const BN_ULONG *np, const BN_ULONG *n0, size_t num);
 inline int bn_mul4x_mont_capable(size_t num) {
   return num >= 8 && (num & 3) == 0;
 }
-int bn_mul4x_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
-                  const BN_ULONG *np, const BN_ULONG *n0, size_t num);
+void bn_mul4x_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
+                   const BN_ULONG *np, const BN_ULONG *n0, size_t num);
 inline int bn_mulx4x_mont_capable(size_t num) {
   return bn_mul4x_mont_capable(num) && bn_mulx_adx_capable();
 }
-int bn_mulx4x_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
-                   const BN_ULONG *np, const BN_ULONG *n0, size_t num);
+void bn_mulx4x_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
+                    const BN_ULONG *np, const BN_ULONG *n0, size_t num);
 inline int bn_sqr8x_mont_capable(size_t num) {
   return num >= 8 && (num & 7) == 0;
 }
-int bn_sqr8x_mont(BN_ULONG *rp, const BN_ULONG *ap, BN_ULONG mulx_adx_capable,
-                  const BN_ULONG *np, const BN_ULONG *n0, size_t num);
+void bn_sqr8x_mont(BN_ULONG *rp, const BN_ULONG *ap, BN_ULONG mulx_adx_capable,
+                   const BN_ULONG *np, const BN_ULONG *n0, size_t num);
 #elif defined(OPENSSL_ARM)
 inline int bn_mul8x_mont_neon_capable(size_t num) {
   return (num & 7) == 0 && CRYPTO_is_NEON_capable();
 }
-int bn_mul8x_mont_neon(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
-                       const BN_ULONG *np, const BN_ULONG *n0, size_t num);
-int bn_mul_mont_nohw(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
-                     const BN_ULONG *np, const BN_ULONG *n0, size_t num);
+void bn_mul8x_mont_neon(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
+                        const BN_ULONG *np, const BN_ULONG *n0, size_t num);
+void bn_mul_mont_nohw(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
+                      const BN_ULONG *np, const BN_ULONG *n0, size_t num);
 #endif
 
 #endif  // OPENSSL_BN_ASM_MONT

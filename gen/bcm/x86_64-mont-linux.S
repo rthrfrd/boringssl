@@ -229,7 +229,7 @@ _CET_ENDBR
 
 	movq	8(%rsp,%r9,8),%rsi
 .cfi_def_cfa	%rsi,8
-	movq	$1,%rax
+
 	movq	-48(%rsi),%r15
 .cfi_restore	%r15
 	movq	-40(%rsi),%r14
@@ -662,7 +662,7 @@ _CET_ENDBR
 	jnz	.Lcopy4x
 	movq	8(%rsp,%r9,8),%rsi
 .cfi_def_cfa	%rsi, 8
-	movq	$1,%rax
+
 	movq	-48(%rsi),%r15
 .cfi_restore	%r15
 	movq	-40(%rsi),%r14
@@ -855,7 +855,7 @@ _CET_ENDBR
 	addq	$32,%r9
 	jnz	.Lsqr8x_cond_copy
 
-	movq	$1,%rax
+
 	movq	-48(%rsi),%r15
 .cfi_restore	%r15
 	movq	-40(%rsi),%r14
@@ -1213,7 +1213,7 @@ _CET_ENDBR
 
 	movq	%rdx,(%rbx)
 
-	movq	$1,%rax
+
 	movq	-48(%rsi),%r15
 .cfi_restore	%r15
 	movq	-40(%rsi),%r14
