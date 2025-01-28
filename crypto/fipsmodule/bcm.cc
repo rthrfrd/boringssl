@@ -44,7 +44,6 @@
 #include "aes/key_wrap.cc.inc"
 #include "aes/mode_wrappers.cc.inc"
 #include "aes/ofb.cc.inc"
-#include "aes/polyval.cc.inc"
 #include "bn/add.cc.inc"
 #include "bn/asm/x86_64-gcc.cc.inc"
 #include "bn/bn.cc.inc"

@@ -29,7 +29,6 @@ bcm_internal_headers = [
     "crypto/fipsmodule/aes/key_wrap.cc.inc",
     "crypto/fipsmodule/aes/mode_wrappers.cc.inc",
     "crypto/fipsmodule/aes/ofb.cc.inc",
-    "crypto/fipsmodule/aes/polyval.cc.inc",
     "crypto/fipsmodule/bn/add.cc.inc",
     "crypto/fipsmodule/bn/asm/x86_64-gcc.cc.inc",
     "crypto/fipsmodule/bn/bn.cc.inc",

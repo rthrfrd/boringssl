@@ -571,32 +571,6 @@ size_t CRYPTO_cts128_encrypt_block(const uint8_t *in, uint8_t *out, size_t len,
                                    block128_f block);
 
 
-// POLYVAL.
-//
-// POLYVAL is a polynomial authenticator that operates over a field very
-// similar to the one that GHASH uses. See
-// https://www.rfc-editor.org/rfc/rfc8452.html#section-3.
-
-struct polyval_ctx {
-  uint8_t S[16];
-  u128 Htable[16];
-  gmult_func gmult;
-  ghash_func ghash;
-};
-
-// CRYPTO_POLYVAL_init initialises |ctx| using |key|.
-void CRYPTO_POLYVAL_init(struct polyval_ctx *ctx, const uint8_t key[16]);
-
-// CRYPTO_POLYVAL_update_blocks updates the accumulator in |ctx| given the
-// blocks from |in|. Only a whole number of blocks can be processed so |in_len|
-// must be a multiple of 16.
-void CRYPTO_POLYVAL_update_blocks(struct polyval_ctx *ctx, const uint8_t *in,
-                                  size_t in_len);
-
-// CRYPTO_POLYVAL_finish writes the accumulator from |ctx| to |out|.
-void CRYPTO_POLYVAL_finish(const struct polyval_ctx *ctx, uint8_t out[16]);
-
-
 }  // extern C
 
 #endif  // OPENSSL_HEADER_AES_INTERNAL_H
