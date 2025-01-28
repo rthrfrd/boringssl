@@ -261,6 +261,7 @@ bssl_internal_headers = [
 ]
 
 crypto_sources = [
+    "crypto/aes/aes.cc",
     "crypto/asn1/a_bitstr.cc",
     "crypto/asn1/a_bool.cc",
     "crypto/asn1/a_d2i_fp.cc",

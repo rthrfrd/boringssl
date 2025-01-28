@@ -198,7 +198,7 @@ int BORINGSSL_integrity_test(void) {
   const uint8_t *const start = BORINGSSL_bcm_text_start;
   const uint8_t *const end = BORINGSSL_bcm_text_end;
 
-  assert_within(start, reinterpret_cast<const void *>(AES_encrypt), end);
+  assert_within(start, reinterpret_cast<const void *>(BCM_aes_encrypt), end);
   assert_within(start, reinterpret_cast<const void *>(RSA_sign), end);
   assert_within(start, reinterpret_cast<const void *>(BCM_rand_bytes), end);
   assert_within(start, reinterpret_cast<const void *>(EC_GROUP_cmp), end);

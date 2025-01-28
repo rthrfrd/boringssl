@@ -15,7 +15,10 @@
 #ifndef OPENSSL_HEADER_CRYPTO_BCM_INTERFACE_H
 #define OPENSSL_HEADER_CRYPTO_BCM_INTERFACE_H
 
+// For the moment, we reach out for AES_KEY.
+#include <openssl/aes.h>
 #include <openssl/bcm_public.h>
+
 
 // This header will eventually become the interface between BCM and the
 // rest of libcrypto. More cleanly separating the two is still a work in
@@ -787,6 +790,32 @@ OPENSSL_EXPORT bcm_status BCM_slhdsa_sha2_128s_prehash_verify(
     const uint8_t public_key[BCM_SLHDSA_SHA2_128S_PUBLIC_KEY_BYTES],
     const uint8_t *hashed_msg, size_t hashed_msg_len, int hash_nid,
     const uint8_t *context, size_t context_len);
+
+
+// AES
+
+// BCM_aes_encrypt encrypts a single block from |in| to |out| with |key|. The
+// |in| and |out| pointers may overlap.
+OPENSSL_EXPORT bcm_infallible BCM_aes_encrypt(const uint8_t *in, uint8_t *out,
+                                              const AES_KEY *key);
+// BCM_aes_decrypt decrypts a single block from |in| to |out| with |key|. The
+// |in| and |out| pointers may overlap.
+OPENSSL_EXPORT bcm_infallible BCM_aes_decrypt(const uint8_t *in, uint8_t *out,
+                                              const AES_KEY *key);
+
+// BCM_aes_set_encrypt_key configures |aeskey| to encrypt with the |bits|-bit
+// key, |key|. |key| must point to |bits|/8 bytes. It will return failure if
+// |bits| is an invalid AES key size.
+OPENSSL_EXPORT bcm_status BCM_aes_set_encrypt_key(const uint8_t *key,
+                                                  unsigned bits,
+                                                  AES_KEY *aeskey);
+
+// BCM_aes_set_decrypt_key configures |aeskey| to decrypt with the |bits|-bit
+// key, |key|. |key| must point to |bits|/8 bytes. It will return failure if
+// |bits| is an invalid AES key size.
+OPENSSL_EXPORT bcm_status BCM_aes_set_decrypt_key(const uint8_t *key,
+                                                  unsigned bits,
+                                                  AES_KEY *aeskey);
 
 
 #if defined(__cplusplus)

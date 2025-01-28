@@ -17,8 +17,7 @@
 
 #include <stdlib.h>
 
-#include <openssl/aes.h>
-
+#include "../bcm_interface.h"
 #include "../../internal.h"
 
 extern "C" {
@@ -29,7 +28,7 @@ extern "C" {
 // Unlike upstream OpenSSL, it and the other functions in this file hard-code
 // |AES_KEY|. It is undefined in C to call a function pointer with anything
 // other than the original type. Thus we either must match |block128_f| to the
-// type signature of |AES_encrypt| and friends or pass in |void*| wrapper
+// type signature of |BCM_aes_encrypt| and friends or pass in |void*| wrapper
 // functions.
 //
 // These functions are called exclusively with AES, so we use the former.
