@@ -94,7 +94,7 @@ type ShimConfiguration struct {
 	// string for the shim in question. For example, it might map
 	// “:NO_SHARED_CIPHER:” (a BoringSSL error string) to something
 	// like “SSL_ERROR_NO_CYPHER_OVERLAP”.
-	ErrorMap map[string]string
+	ErrorMap map[string][]string
 
 	// HalfRTTTickets is the number of half-RTT tickets the client should
 	// expect before half-RTT data when testing 0-RTT.
@@ -1450,16 +1450,42 @@ func doExchanges(test *testCase, shim *shimProcess, resumeCount int, transcripts
 	return nil
 }
 
-func translateExpectedError(errorStr string) string {
-	if translated, ok := shimConfig.ErrorMap[errorStr]; ok {
+// translateExpectedError uses a canonical BoringSSL error to produce
+// a slice of expected canonical errors in bogo_shim_config.json.
+func translateExpectedError(canonical string) []string {
+	if translated, found := shimConfig.ErrorMap[canonical]; found {
 		return translated
 	}
 
-	if *looseErrors {
-		return ""
-	}
+	// not specifying a canonical error will have the same effect as -loose-errors being true
+	// since the emptry string with match all error substrings.
+	return []string{canonical}
+}
 
-	return errorStr
+// formatErrors takes the semantic mapping from translateExpectedError
+// and outputs human-readable digest of BoGo error state.
+func formatErrors(expectedErrors []string, stderr, local, child, stdout, expectedLocal, expectedCanonical string) (string, string) {
+	got := fmt.Sprintf("\tstderr:\n\t\t%s\n\tlocal: %q\n\tchild: %q\n\tstdout: %s", stderr, local, child, stdout)
+	want := fmt.Sprintf("\tlocal: %q\n\tremote: %q", expectedLocal, expectedCanonical)
+	if slices.Equal(expectedErrors, []string{expectedCanonical}) {
+		return got, want
+	}
+	if len(expectedErrors) == 0 || expectedErrors == nil {
+		return got, want + " (no specified mapping)"
+	}
+	return got, want + " mapped to one of:\n\t\t" + strings.Join(expectedErrors, "\n\t\t")
+}
+
+// matchError plucks the relevant canonical error from the provided
+// slice if found; if the slice is empty/nil, strict error checking
+// is presumed to be disabled.
+func matchError(expectedErrors []string, stderr string) bool {
+	for _, expectedError := range expectedErrors {
+		if strings.Contains(stderr, expectedError) {
+			return true
+		}
+	}
+	return false
 }
 
 // shimInitialWrite is the data we expect from the shim when the
@@ -1808,8 +1834,8 @@ func runTest(dispatcher *shimDispatcher, statusChan chan statusMsg, test *testCa
 	}
 
 	failed := localErr != nil || childErr != nil
-	expectedError := translateExpectedError(test.expectedError)
-	correctFailure := len(expectedError) == 0 || strings.Contains(stderr, expectedError)
+	expectedErrors := translateExpectedError(test.expectedError)
+	correctFailure := *looseErrors || matchError(expectedErrors, stderr)
 
 	localErrString := "none"
 	if localErr != nil {
@@ -1825,21 +1851,25 @@ func runTest(dispatcher *shimDispatcher, statusChan chan statusMsg, test *testCa
 			childErrString = childErr.Error()
 		}
 
+		got, want := formatErrors(expectedErrors,
+			stderr, localErrString, childErrString, stdout,
+			test.expectedLocalError, test.expectedError)
+
 		var msg string
 		switch {
 		case failed && !test.shouldFail:
 			msg = "unexpected failure"
 		case !failed && test.shouldFail:
-			msg = fmt.Sprintf("unexpected success (wanted failure with %q / %q)", expectedError, test.expectedLocalError)
+			msg = fmt.Sprintf("unexpected success\nwant:\n%s\n", want)
 		case failed && !correctFailure:
-			msg = fmt.Sprintf("bad error (wanted %q / %q)", expectedError, test.expectedLocalError)
+			msg = fmt.Sprintf("unexpected error\ngot:\n%s\n\nwant:\n%s\n", got, want)
 		case mustFail:
 			msg = "test failure"
 		default:
 			panic("internal error")
 		}
 
-		return fmt.Errorf("%s: local error %q, child error %q, stdout:\n%s\nstderr:\n%s\n%s", msg, localErrString, childErrString, stdout, stderr, extraStderr)
+		return fmt.Errorf("%s\nextra stderr:\n%s", msg, extraStderr)
 	}
 
 	if len(extraStderr) > 0 || (!failed && len(stderr) > 0) {
