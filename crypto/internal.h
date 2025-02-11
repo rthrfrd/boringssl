@@ -1118,14 +1118,6 @@ OPENSSL_ATTR_CONST uint32_t OPENSSL_get_ia32cap(int idx);
 
 // See Intel manual, volume 2A, table 3-11.
 
-inline int CRYPTO_is_FXSR_capable(void) {
-#if defined(__FXSR__)
-  return 1;
-#else
-  return (OPENSSL_get_ia32cap(0) & (1u << 24)) != 0;
-#endif
-}
-
 inline int CRYPTO_is_intel_cpu(void) {
   // The reserved bit 30 is used to indicate an Intel CPU.
   return (OPENSSL_get_ia32cap(0) & (1u << 30)) != 0;

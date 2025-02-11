@@ -37,7 +37,7 @@ void CRYPTO_hchacha20(uint8_t out[32], const uint8_t key[32],
 inline int ChaCha20_ctr32_ssse3_capable(size_t len) {
   // Unlike the x86_64 version, the x86 SSSE3 routine runs for all non-zero
   // lengths.
-  return len > 0 && CRYPTO_is_SSSE3_capable() && CRYPTO_is_FXSR_capable();
+  return len > 0 && CRYPTO_is_SSSE3_capable();
 }
 void ChaCha20_ctr32_ssse3(uint8_t *out, const uint8_t *in, size_t in_len,
                           const uint32_t key[8], const uint32_t counter[4]);
