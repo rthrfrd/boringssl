@@ -424,6 +424,31 @@ TEST(PKCS12Test, RoundTrip) {
                 {kTestCert2}, NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
                 NID_pbe_WithSHA1And3_Key_TripleDES_CBC, 100, 100);
 
+  // PBES2 ciphers.
+  TestRoundTrip(kPassword, nullptr /* no name */, kTestKey, kTestCert,
+                {kTestCert2}, NID_rc2_cbc, NID_rc2_cbc, 100, 100);
+  TestRoundTrip(kPassword, nullptr /* no name */, kTestKey, kTestCert,
+                {kTestCert2}, NID_des_ede3_cbc, NID_des_ede3_cbc, 100, 100);
+  TestRoundTrip(kPassword, nullptr /* no name */, kTestKey, kTestCert,
+                {kTestCert2}, NID_aes_128_cbc, NID_aes_128_cbc, 100, 100);
+  TestRoundTrip(kPassword, nullptr /* no name */, kTestKey, kTestCert,
+                {kTestCert2}, NID_aes_192_cbc, NID_aes_192_cbc, 100, 100);
+  TestRoundTrip(kPassword, nullptr /* no name */, kTestKey, kTestCert,
+                {kTestCert2}, NID_aes_256_cbc, NID_aes_256_cbc, 100, 100);
+
+  // Mix and match.
+  TestRoundTrip(kPassword, nullptr /* no name */, kTestKey, kTestCert,
+                {kTestCert2}, NID_pbe_WithSHA1And40BitRC2_CBC,
+                NID_pbe_WithSHA1And3_Key_TripleDES_CBC, 100, 100);
+  TestRoundTrip(kPassword, nullptr /* no name */, kTestKey, kTestCert,
+                {kTestCert2}, NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
+                NID_aes_256_cbc, 100, 100);
+  TestRoundTrip(kPassword, nullptr /* no name */, kTestKey, kTestCert,
+                {kTestCert2}, NID_aes_256_cbc,
+                NID_pbe_WithSHA1And3_Key_TripleDES_CBC, 100, 100);
+  TestRoundTrip(kPassword, nullptr /* no name */, kTestKey, kTestCert,
+                {kTestCert2}, NID_aes_128_cbc, NID_aes_256_cbc, 100, 100);
+
   // Test unencrypted and partially unencrypted PKCS#12 files.
   TestRoundTrip(kPassword, /*name=*/nullptr, kTestKey, kTestCert, {kTestCert2},
                 /*key_nid=*/-1,
