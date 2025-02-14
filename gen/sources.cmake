@@ -84,6 +84,7 @@ set(
   crypto/fipsmodule/hmac/hmac.cc.inc
   crypto/fipsmodule/keccak/keccak.cc.inc
   crypto/fipsmodule/mldsa/mldsa.cc.inc
+  crypto/fipsmodule/mlkem/fips_known_values.inc
   crypto/fipsmodule/mlkem/mlkem.cc.inc
   crypto/fipsmodule/rand/ctrdrbg.cc.inc
   crypto/fipsmodule/rand/rand.cc.inc

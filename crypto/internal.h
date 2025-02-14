@@ -1048,6 +1048,12 @@ inline void boringssl_ensure_ffdh_self_test(void) {}
 
 #endif  // FIPS
 
+// BORINGSSL_check_test memcmp's two values of equal length. It returns 1 on
+// success and, on failure, it prints an error message that includes the
+// hexdumps the two values and returns 0.
+int BORINGSSL_check_test(const void *expected, const void *actual,
+                         size_t expected_len, const char *name);
+
 // boringssl_self_test_sha256 performs a SHA-256 KAT.
 int boringssl_self_test_sha256(void);
 
@@ -1056,6 +1062,9 @@ int boringssl_self_test_sha512(void);
 
 // boringssl_self_test_hmac_sha256 performs an HMAC-SHA-256 KAT.
 int boringssl_self_test_hmac_sha256(void);
+
+// boringssl_self_test_mlkem performs the ML-KEM KATs.
+OPENSSL_EXPORT int boringssl_self_test_mlkem(void);
 
 #if defined(BORINGSSL_FIPS_COUNTERS)
 void boringssl_fips_inc_counter(enum fips_counter_t counter);
