@@ -37,10 +37,18 @@
 #include <openssl/ssl.h>
 
 #include "../../crypto/internal.h"
-#include "../internal.h"
 #include "handshake_util.h"
 #include "mock_quic_transport.h"
 #include "test_state.h"
+
+#if defined(OPENSSL_WINDOWS)
+// Windows defines struct timeval in winsock2.h.
+OPENSSL_MSVC_PRAGMA(warning(push, 3))
+#include <winsock2.h>
+OPENSSL_MSVC_PRAGMA(warning(pop))
+#else
+#include <sys/time.h>
+#endif
 
 namespace {
 
@@ -780,7 +788,9 @@ static void MessageCallback(int is_write, int version, int content_type,
 
   if (content_type == SSL3_RT_HEADER) {
     if (config->is_dtls) {
-      if (len > DTLS1_RT_MAX_HEADER_LENGTH) {
+      // Starting DTLS 1.3, record headers are variable-length, but they will
+      // not be longer than DTLS 1.2's 13-byte header.
+      if (len > 13) {
         fprintf(stderr, "DTLS record header is too long: %zu.\n", len);
       }
       return;
