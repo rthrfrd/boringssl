@@ -2580,10 +2580,6 @@ OPENSSL_EXPORT int SSL_get_negotiated_group(const SSL *ssl);
 // with |SSL_VERIFY_PEER|, otherwise it won't work.
 #define SSL_VERIFY_FAIL_IF_NO_PEER_CERT 0x02
 
-// SSL_VERIFY_PEER_IF_NO_OBC configures a server to request a client certificate
-// if and only if Channel ID is not negotiated.
-#define SSL_VERIFY_PEER_IF_NO_OBC 0x04
-
 // SSL_CTX_set_verify configures certificate verification behavior. |mode| is
 // one of the |SSL_VERIFY_*| values defined above. |callback| should be NULL.
 //

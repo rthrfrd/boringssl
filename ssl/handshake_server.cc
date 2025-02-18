@@ -833,18 +833,10 @@ static enum ssl_hs_wait_t do_select_parameters(SSL_HANDSHAKE *hs) {
       hs->new_session->group_id = group_id;
     }
 
-    // Determine whether to request a client certificate.
-    hs->cert_request = !!(hs->config->verify_mode & SSL_VERIFY_PEER);
-    // Only request a certificate if Channel ID isn't negotiated.
-    if ((hs->config->verify_mode & SSL_VERIFY_PEER_IF_NO_OBC) &&
-        hs->channel_id_negotiated) {
-      hs->cert_request = false;
-    }
-    // CertificateRequest may only be sent in certificate-based ciphers.
-    if (!ssl_cipher_uses_certificate_auth(hs->new_cipher)) {
-      hs->cert_request = false;
-    }
-
+    // Determine whether to request a client certificate. CertificateRequest may
+    // only be sent in certificate-based ciphers.
+    hs->cert_request = (hs->config->verify_mode & SSL_VERIFY_PEER) &&
+                       ssl_cipher_uses_certificate_auth(hs->new_cipher);
     if (!hs->cert_request) {
       // OpenSSL returns X509_V_OK when no certificates are requested. This is
       // classed by them as a bug, but it's assumed by at least NGINX.

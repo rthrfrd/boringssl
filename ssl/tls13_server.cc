@@ -977,11 +977,6 @@ static enum ssl_hs_wait_t do_send_server_hello(SSL_HANDSHAKE *hs) {
   if (!ssl->s3->session_reused && !hs->pake_verifier) {
     // Determine whether to request a client certificate.
     hs->cert_request = !!(hs->config->verify_mode & SSL_VERIFY_PEER);
-    // Only request a certificate if Channel ID isn't negotiated.
-    if ((hs->config->verify_mode & SSL_VERIFY_PEER_IF_NO_OBC) &&
-        hs->channel_id_negotiated) {
-      hs->cert_request = false;
-    }
   }
 
   // Send a CertificateRequest, if necessary.

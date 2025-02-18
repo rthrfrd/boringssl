@@ -409,7 +409,6 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         BoolFlag("-shim-shuts-down", &TestConfig::shim_shuts_down),
         BoolFlag("-verify-fail", &TestConfig::verify_fail),
         BoolFlag("-verify-peer", &TestConfig::verify_peer),
-        BoolFlag("-verify-peer-if-no-obc", &TestConfig::verify_peer_if_no_obc),
         BoolFlag("-expect-verify-result", &TestConfig::expect_verify_result),
         IntFlag("-expect-total-renegotiations",
                 &TestConfig::expect_total_renegotiations),
@@ -2201,12 +2200,6 @@ bssl::UniquePtr<SSL> TestConfig::NewSSL(
   }
   if (verify_peer) {
     mode = SSL_VERIFY_PEER;
-  }
-  if (verify_peer_if_no_obc) {
-    // Set SSL_VERIFY_FAIL_IF_NO_PEER_CERT so testing whether client
-    // certificates were requested is easy.
-    mode = SSL_VERIFY_PEER | SSL_VERIFY_PEER_IF_NO_OBC |
-           SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
   }
   if (use_custom_verify_callback) {
     SSL_set_custom_verify(ssl.get(), mode, CustomVerifyCallback);
