@@ -411,18 +411,13 @@ func (d *delocation) loadAarch64Address(statement *node32, targetReg string, sym
 		panic("non-zero offset for helper-based reference")
 	}
 
-	var helperFunc string
-	if symbol == "OPENSSL_armcap_P" {
-		helperFunc = ".LOPENSSL_armcap_P_addr"
-	} else {
-		// GOT helpers also dereference the GOT entry, thus the subsequent ldr
-		// instruction, which would normally do the dereferencing, needs to be
-		// dropped. GOT helpers have to include the dereference because the
-		// assembler doesn't support ":got_lo12:foo" offsets except in an ldr
-		// instruction.
-		d.gotExternalsNeeded[symbol] = struct{}{}
-		helperFunc = gotHelperName(symbol)
-	}
+	// GOT helpers also dereference the GOT entry, thus the subsequent ldr
+	// instruction, which would normally do the dereferencing, needs to be
+	// dropped. GOT helpers have to include the dereference because the
+	// assembler doesn't support ":got_lo12:foo" offsets except in an ldr
+	// instruction.
+	d.gotExternalsNeeded[symbol] = struct{}{}
+	helperFunc := gotHelperName(symbol)
 
 	// Clear the red-zone. I can't find a definitive answer about whether Linux
 	// Aarch64 includes a red-zone, but Microsoft has a 16-byte one and Apple a
@@ -969,37 +964,6 @@ Args:
 			symbol, offset, section, didChange, symbolIsLocal, memRef := d.parseMemRef(arg.up)
 			changed = didChange
 
-			if symbol == "OPENSSL_ia32cap_P" && section == "" {
-				if instructionName != "leaq" {
-					return nil, fmt.Errorf("non-leaq instruction %q referenced OPENSSL_ia32cap_P directly", instructionName)
-				}
-
-				if i != 0 || len(argNodes) != 2 || !d.isRIPRelative(memRef) || len(offset) > 0 {
-					return nil, fmt.Errorf("invalid OPENSSL_ia32cap_P reference in instruction %q", instructionName)
-				}
-
-				target := argNodes[1]
-				assertNodeType(target, ruleRegisterOrConstant)
-				reg := d.contents(target)
-
-				if !strings.HasPrefix(reg, "%r") {
-					return nil, fmt.Errorf("tried to load OPENSSL_ia32cap_P into %q, which is not a standard register.", reg)
-				}
-
-				changed = true
-
-				// Flag-altering instructions (i.e. addq) are going to be used so the
-				// flags need to be preserved.
-				wrappers = append(wrappers, saveFlags(d.output, false /* Red Zone not yet cleared */))
-
-				wrappers = append(wrappers, func(k func()) {
-					d.output.WriteString("\tleaq\tOPENSSL_ia32cap_addr_delta(%rip), " + reg + "\n")
-					d.output.WriteString("\taddq\t(" + reg + "), " + reg + "\n")
-				})
-
-				break Args
-			}
-
 			switch section {
 			case "":
 				if _, knownSymbol := d.symbols[symbol]; knownSymbol {
@@ -1142,15 +1106,7 @@ Args:
 					redzoneCleared = true
 				}
 
-				if symbol == "OPENSSL_ia32cap_P" {
-					// Flag-altering instructions (i.e. addq) are going to be used so the
-					// flags need to be preserved.
-					wrappers = append(wrappers, saveFlags(d.output, redzoneCleared))
-					wrappers = append(wrappers, func(k func()) {
-						d.output.WriteString("\tleaq\tOPENSSL_ia32cap_addr_delta(%rip), " + targetReg + "\n")
-						d.output.WriteString("\taddq\t(" + targetReg + "), " + targetReg + "\n")
-					})
-				} else if useGOT {
+				if useGOT {
 					wrappers = append(wrappers, d.loadFromGOT(d.output, targetReg, symbol, section, redzoneCleared))
 				} else {
 					wrappers = append(wrappers, func(k func()) {
@@ -1355,9 +1311,6 @@ func transform(w stringWriter, inputs []inputFile) error {
 	// to match that behaviour otherwise warnings result.
 	fileDirectivesContainMD5 := false
 
-	// OPENSSL_ia32cap_get will be synthesized by this script.
-	symbols["OPENSSL_ia32cap_get"] = struct{}{}
-
 	for _, input := range inputs {
 		forEachPath(input.ast.up, func(node *node32) {
 			symbol := input.contents[node.begin:node.end]
@@ -1503,12 +1456,6 @@ func transform(w stringWriter, inputs []inputFile) error {
 			})
 		}
 
-		writeAarch64Function(w, ".LOPENSSL_armcap_P_addr", func(w stringWriter) {
-			w.WriteString("\tadrp x0, OPENSSL_armcap_P\n")
-			w.WriteString("\tadd x0, x0, :lo12:OPENSSL_armcap_P\n")
-			w.WriteString("\tret\n")
-		})
-
 	case x86_64:
 		externalNames := sortedSet(d.gotExternalsNeeded)
 		for _, name := range externalNames {
@@ -1524,19 +1471,6 @@ func transform(w stringWriter, inputs []inputFile) error {
 			w.WriteString("\t.long " + symbol + "@" + section + "\n")
 			w.WriteString("\t.long 0\n")
 		}
-
-		w.WriteString(".type OPENSSL_ia32cap_get, @function\n")
-		w.WriteString(".globl OPENSSL_ia32cap_get\n")
-		w.WriteString(localTargetName("OPENSSL_ia32cap_get") + ":\n")
-		w.WriteString("OPENSSL_ia32cap_get:\n")
-		w.WriteString("\tleaq OPENSSL_ia32cap_P(%rip), %rax\n")
-		w.WriteString("\tret\n")
-
-		w.WriteString(".extern OPENSSL_ia32cap_P\n")
-		w.WriteString(".type OPENSSL_ia32cap_addr_delta, @object\n")
-		w.WriteString(".size OPENSSL_ia32cap_addr_delta, 8\n")
-		w.WriteString("OPENSSL_ia32cap_addr_delta:\n")
-		w.WriteString(".quad OPENSSL_ia32cap_P-OPENSSL_ia32cap_addr_delta\n")
 
 		if d.gotDeltaNeeded {
 			w.WriteString(".Lboringssl_got_delta:\n")
@@ -1805,7 +1739,6 @@ func localTargetName(name string) string {
 
 func isSynthesized(symbol string) bool {
 	return strings.HasSuffix(symbol, "_bss_get") ||
-		symbol == "OPENSSL_ia32cap_get" ||
 		strings.HasPrefix(symbol, "BORINGSSL_bcm_text_")
 }
 
