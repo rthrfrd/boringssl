@@ -1940,6 +1940,11 @@ func (m *helloRetryRequestMsg) marshal() []byte {
 }
 
 func (m *helloRetryRequestMsg) unmarshal(data []byte) bool {
+	expectedLegacyVers := uint16(VersionTLS12)
+	if m.isDTLS {
+		expectedLegacyVers = VersionDTLS12
+	}
+
 	m.raw = data
 	reader := cryptobyte.String(data[4:])
 	var legacyVers uint16
@@ -1947,7 +1952,7 @@ func (m *helloRetryRequestMsg) unmarshal(data []byte) bool {
 	var compressionMethod byte
 	var extensions cryptobyte.String
 	if !reader.ReadUint16(&legacyVers) ||
-		legacyVers != VersionTLS12 ||
+		legacyVers != expectedLegacyVers ||
 		!reader.ReadBytes(&random, 32) ||
 		!readUint8LengthPrefixedBytes(&reader, &m.sessionID) ||
 		!reader.ReadUint16(&m.cipherSuite) ||

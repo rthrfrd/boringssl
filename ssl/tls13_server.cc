@@ -711,7 +711,8 @@ static enum ssl_hs_wait_t do_send_hello_retry_request(SSL_HANDSHAKE *hs) {
   ScopedCBB cbb;
   CBB body, session_id, extensions;
   if (!ssl->method->init_message(ssl, cbb.get(), &body, SSL3_MT_SERVER_HELLO) ||
-      !CBB_add_u16(&body, TLS1_2_VERSION) ||
+      !CBB_add_u16(&body,
+                   SSL_is_dtls(ssl) ? DTLS1_2_VERSION : TLS1_2_VERSION) ||
       !CBB_add_bytes(&body, kHelloRetryRequest, SSL3_RANDOM_SIZE) ||
       !CBB_add_u8_length_prefixed(&body, &session_id) ||
       !CBB_add_bytes(&session_id, hs->session_id.data(),
@@ -907,15 +908,12 @@ static enum ssl_hs_wait_t do_send_server_hello(SSL_HANDSHAKE *hs) {
     }
   }
 
-  uint16_t server_hello_version = TLS1_2_VERSION;
-  if (SSL_is_dtls(ssl)) {
-    server_hello_version = DTLS1_2_VERSION;
-  }
   Array<uint8_t> server_hello;
   ScopedCBB cbb;
   CBB body, extensions, session_id;
   if (!ssl->method->init_message(ssl, cbb.get(), &body, SSL3_MT_SERVER_HELLO) ||
-      !CBB_add_u16(&body, server_hello_version) ||
+      !CBB_add_u16(&body,
+                   SSL_is_dtls(ssl) ? DTLS1_2_VERSION : TLS1_2_VERSION) ||
       !CBB_add_bytes(&body, ssl->s3->server_random,
                      sizeof(ssl->s3->server_random)) ||
       !CBB_add_u8_length_prefixed(&body, &session_id) ||

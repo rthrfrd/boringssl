@@ -1518,8 +1518,8 @@ func (c *Conn) readHandshake() (any, error) {
 
 	if data[0] == typeServerHello && len(data) >= 38 {
 		vers := uint16(data[4])<<8 | uint16(data[5])
-		if vers == VersionTLS12 && bytes.Equal(data[6:38], tls13HelloRetryRequest) {
-			m = new(helloRetryRequestMsg)
+		if (vers == VersionDTLS12 || vers == VersionTLS12) && bytes.Equal(data[6:38], tls13HelloRetryRequest) {
+			m = &helloRetryRequestMsg{isDTLS: c.isDTLS}
 		}
 	}
 
