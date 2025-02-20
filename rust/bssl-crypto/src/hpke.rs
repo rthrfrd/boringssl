@@ -95,7 +95,6 @@ impl Kem {
         }
     }
 
-
     fn from_rfc_id(n: u16) -> Option<Kem> {
         match n {
             n if n == Kem::P256HkdfSha256 as u16 => Some(Self::P256HkdfSha256),
