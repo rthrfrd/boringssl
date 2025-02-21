@@ -39,6 +39,7 @@ struct CredentialConfig {
   std::vector<uint8_t> delegated_credential;
   std::vector<uint8_t> ocsp_response;
   std::vector<uint8_t> signed_cert_timestamps;
+  bool must_match_issuer = false;
   std::vector<uint8_t> pake_context;
   std::vector<uint8_t> pake_client_id;
   std::vector<uint8_t> pake_server_id;

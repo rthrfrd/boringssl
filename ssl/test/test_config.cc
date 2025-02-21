@@ -534,6 +534,8 @@ const Flag<TestConfig> *FindFlag(const char *name) {
                        &TestConfig::signed_cert_timestamps),
             Base64Flag("-signed-cert-timestamps",
                        &CredentialConfig::signed_cert_timestamps)),
+        CredentialFlag(BoolFlag("-must-match-issuer",
+                                &CredentialConfig::must_match_issuer)),
         CredentialFlag(
             Base64Flag("-pake-context", &CredentialConfig::pake_context)),
         CredentialFlag(
@@ -1478,6 +1480,10 @@ static bssl::UniquePtr<SSL_CREDENTIAL> CredentialFromConfig(
                               cred.get(), buf.get())) {
       return nullptr;
     }
+  }
+
+  if (cred_config.must_match_issuer) {
+    SSL_CREDENTIAL_set_must_match_issuer(cred.get(), 1);
   }
 
   if (!SetCredentialInfo(cred.get(), std::move(info))) {

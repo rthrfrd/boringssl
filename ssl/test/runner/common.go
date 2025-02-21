@@ -509,6 +509,10 @@ type Config struct {
 	// If RootCAs is nil, TLS uses the host's root CA set.
 	RootCAs *x509.CertPool
 
+	// SendRootCAs, if true, causes the client to send the list of
+	// supported root CAs in the certificate_authorities extension.
+	SendRootCAs bool
+
 	// NextProtos is a list of supported, application level protocols.
 	NextProtos []string
 
@@ -2282,7 +2286,9 @@ type Credential struct {
 	Type CredentialType
 	// Certificate is a chain of one or more certificates, leaf first.
 	Certificate [][]byte
-	PrivateKey  crypto.PrivateKey // supported types: *rsa.PrivateKey, *ecdsa.PrivateKey
+	// RootCertificate is the certificate that issued this chain.
+	RootCertificate []byte
+	PrivateKey      crypto.PrivateKey // supported types: *rsa.PrivateKey, *ecdsa.PrivateKey
 	// OCSPStaple contains an optional OCSP response which will be served
 	// to clients that request it.
 	OCSPStaple []byte
@@ -2313,6 +2319,9 @@ type Credential struct {
 	// SignSignatureAlgorithms, if not nil, overrides the default set of
 	// supported signature algorithms to sign with.
 	SignSignatureAlgorithms []signatureAlgorithm
+	// MustMatchIssuer, if set, causes the shim to only consider this
+	// credential when the issuer matches a peer-requested CA.
+	MustMatchIssuer bool
 	// The following fields are used for PAKE credentials. For simplicity,
 	// we specify the password directly and expect the shim and runner to
 	// compute the client- and server-specific halves as needed.
@@ -2343,6 +2352,12 @@ func (c *Credential) WithOCSP(ocsp []byte) *Credential {
 func (c *Credential) WithSCTList(sctList []byte) *Credential {
 	ret := *c
 	ret.SignedCertificateTimestampList = sctList
+	return &ret
+}
+
+func (c *Credential) WithMustMatchIssuer(mustMatch bool) *Credential {
+	ret := *c
+	ret.MustMatchIssuer = mustMatch
 	return &ret
 }
 
@@ -2568,12 +2583,13 @@ func generateSingleCertChain(template *x509.Certificate, key crypto.Signer) Cred
 	cert := generateTestCert(template, nil, key)
 	tmpCertPath, tmpKeyPath := writeTempCertFile([]*x509.Certificate{cert}), writeTempKeyFile(key)
 	return Credential{
-		Certificate: [][]byte{cert.Raw},
-		PrivateKey:  key,
-		Leaf:        cert,
-		ChainPath:   tmpCertPath,
-		KeyPath:     tmpKeyPath,
-		RootPath:    tmpCertPath,
+		Certificate:     [][]byte{cert.Raw},
+		RootCertificate: cert.Raw,
+		PrivateKey:      key,
+		Leaf:            cert,
+		ChainPath:       tmpCertPath,
+		KeyPath:         tmpKeyPath,
+		RootPath:        tmpCertPath,
 	}
 }
 

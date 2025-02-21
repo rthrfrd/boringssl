@@ -231,18 +231,21 @@ var (
 
 func initCertificates() {
 	for _, def := range []struct {
-		key crypto.Signer
-		out *Credential
+		name string
+		key  crypto.Signer
+		out  *Credential
 	}{
-		{&rsa1024Key, &rsa1024Certificate},
-		{&rsa2048Key, &rsaCertificate},
-		{&ecdsaP224Key, &ecdsaP224Certificate},
-		{&ecdsaP256Key, &ecdsaP256Certificate},
-		{&ecdsaP384Key, &ecdsaP384Certificate},
-		{&ecdsaP521Key, &ecdsaP521Certificate},
-		{ed25519Key, &ed25519Certificate},
+		{"Test RSA-1024 Cert", &rsa1024Key, &rsa1024Certificate},
+		{"Test RSA-2048 Cert", &rsa2048Key, &rsaCertificate},
+		{"Test ECDSA P-224 Cert", &ecdsaP224Key, &ecdsaP224Certificate},
+		{"Test ECDSA P-256 Cert", &ecdsaP256Key, &ecdsaP256Certificate},
+		{"Test ECDSA P-384 Cert", &ecdsaP384Key, &ecdsaP384Certificate},
+		{"Test ECDSA P-521 Cert", &ecdsaP521Key, &ecdsaP521Certificate},
+		{"Test Ed25519 Cert", ed25519Key, &ed25519Certificate},
 	} {
-		*def.out = generateSingleCertChain(nil, def.key)
+		template := *baseCertTemplate
+		template.Subject.CommonName = def.name
+		*def.out = generateSingleCertChain(&template, def.key)
 	}
 
 	channelIDBytes = make([]byte, 64)
@@ -267,12 +270,13 @@ func initCertificates() {
 	rootCertPath, chainPath := writeTempCertFile([]*x509.Certificate{rootCert}), writeTempCertFile([]*x509.Certificate{leafCert, intermediateCert})
 
 	rsaChainCertificate = Credential{
-		Certificate: [][]byte{leafCert.Raw, intermediateCert.Raw},
-		PrivateKey:  &rsa2048Key,
-		Leaf:        leafCert,
-		ChainPath:   chainPath,
-		KeyPath:     keyPath,
-		RootPath:    rootCertPath,
+		Certificate:     [][]byte{leafCert.Raw, intermediateCert.Raw},
+		RootCertificate: rootCert.Raw,
+		PrivateKey:      &rsa2048Key,
+		Leaf:            leafCert,
+		ChainPath:       chainPath,
+		KeyPath:         keyPath,
+		RootPath:        rootCertPath,
 	}
 }
 
@@ -1496,6 +1500,9 @@ func appendCredentialFlags(flags []string, cred *Credential, prefix string, newC
 		flags = append(flags, prefix+"-signing-prefs", strconv.Itoa(int(sigAlg)))
 	}
 	handleBase64Field("delegated-credential", cred.DelegatedCredential)
+	if cred.MustMatchIssuer {
+		flags = append(flags, prefix+"-must-match-issuer")
+	}
 	handleBase64Field("pake-context", cred.PAKEContext)
 	handleBase64Field("pake-client-id", cred.PAKEClientID)
 	handleBase64Field("pake-server-id", cred.PAKEServerID)
@@ -4632,16 +4639,21 @@ func addCBCSplittingTests() {
 	}
 }
 
-func addClientAuthTests() {
-	// Add a dummy cert pool to stress certificate authority parsing.
+func makeCertPoolFromRoots(creds ...*Credential) *x509.CertPool {
 	certPool := x509.NewCertPool()
-	for _, cert := range []Credential{rsaCertificate, rsa1024Certificate} {
-		cert, err := x509.ParseCertificate(cert.Certificate[0])
+	for _, cred := range creds {
+		cert, err := x509.ParseCertificate(cred.RootCertificate)
 		if err != nil {
 			panic(err)
 		}
 		certPool.AddCert(cert)
 	}
+	return certPool
+}
+
+func addClientAuthTests() {
+	// Add a dummy cert pool to stress certificate authority parsing.
+	certPool := makeCertPoolFromRoots(&rsaCertificate, &rsa1024Certificate)
 	caNames := certPool.Subjects()
 
 	for _, ver := range tlsVersions {
@@ -18394,6 +18406,10 @@ func addDelegatedCredentialTests() {
 		dcAlgo: signatureECDSAWithP256AndSHA256,
 		algo:   signatureRSAPSSWithSHA256,
 	})
+	p256DCFromECDSA := createDelegatedCredential(&ecdsaP256Certificate, delegatedCredentialConfig{
+		dcAlgo: signatureECDSAWithP256AndSHA256,
+		algo:   signatureECDSAWithP256AndSHA256,
+	})
 
 	testCases = append(testCases, testCase{
 		testType: serverTest,
@@ -18547,6 +18563,25 @@ func addDelegatedCredentialTests() {
 			peerCertificate: p384DC,
 		},
 	})
+
+	// Delegated credentials participate in issuer-based certificate selection.
+	testCases = append(testCases, testCase{
+		testType: serverTest,
+		name:     "DelegatedCredentials-MatchIssuer",
+		config: Config{
+			DelegatedCredentialAlgorithms: []signatureAlgorithm{signatureECDSAWithP256AndSHA256},
+			// The client requested p256DCFromECDSA's issuer.
+			RootCAs:     makeCertPoolFromRoots(p256DCFromECDSA),
+			SendRootCAs: true,
+		},
+		shimCredentials: []*Credential{
+			p256DC.WithMustMatchIssuer(true), p256DCFromECDSA.WithMustMatchIssuer(true)},
+		flags: []string{"-expect-selected-credential", "1"},
+		expectations: connectionExpectations{
+			peerCertificate: p256DCFromECDSA,
+		},
+	})
+
 }
 
 type echCipher struct {
@@ -21708,6 +21743,11 @@ func addCompliancePolicyTests() {
 	}
 }
 
+func canBeShimCertificate(c *Credential) bool {
+	// Some options can only be set with the credentials API.
+	return c.Type == CredentialTypeX509 && !c.MustMatchIssuer
+}
+
 func addCertificateSelectionTests() {
 	// Combinatorially test each selection criteria at different versions,
 	// protocols, and with the matching certificate before and after the
@@ -22106,6 +22146,52 @@ func addCertificateSelectionTests() {
 			mismatch:      rsaCertificate.WithSignatureAlgorithms(signatureRSAPSSWithSHA384),
 			expectedError: ":NO_COMMON_SIGNATURE_ALGORITHMS:",
 		},
+
+		// By default, certificate selection does not take issuers
+		// into account.
+		{
+			name:     "Client-DontCheckIssuer",
+			testType: clientTest,
+			config: Config{
+				ClientAuth: RequestClientCert,
+				ClientCAs:  makeCertPoolFromRoots(&rsaChainCertificate, &ecdsaP384Certificate),
+			},
+			match: &ecdsaP256Certificate,
+		},
+		{
+			name:     "Server-DontCheckIssuer",
+			testType: serverTest,
+			config: Config{
+				RootCAs:     makeCertPoolFromRoots(&rsaChainCertificate, &ecdsaP384Certificate),
+				SendRootCAs: true,
+			},
+			match: &ecdsaP256Certificate,
+		},
+
+		// If requested, certificate selection will match against the
+		// requested issuers.
+		{
+			name:     "Client-CheckIssuer",
+			testType: clientTest,
+			config: Config{
+				ClientAuth: RequestClientCert,
+				ClientCAs:  makeCertPoolFromRoots(&rsaChainCertificate, &ecdsaP384Certificate),
+			},
+			match:         rsaChainCertificate.WithMustMatchIssuer(true),
+			mismatch:      ecdsaP256Certificate.WithMustMatchIssuer(true),
+			expectedError: ":NO_MATCHING_ISSUER:",
+		},
+		{
+			name:     "Server-CheckIssuer",
+			testType: serverTest,
+			config: Config{
+				RootCAs:     makeCertPoolFromRoots(&rsaChainCertificate, &ecdsaP384Certificate),
+				SendRootCAs: true,
+			},
+			match:         rsaChainCertificate.WithMustMatchIssuer(true),
+			mismatch:      ecdsaP256Certificate.WithMustMatchIssuer(true),
+			expectedError: ":NO_MATCHING_ISSUER:",
+		},
 	}
 
 	for _, protocol := range []protocol{tls, dtls} {
@@ -22247,16 +22333,18 @@ func addCertificateSelectionTests() {
 					flags:           append([]string{"-expect-selected-credential", "1"}, test.flags...),
 					expectations:    connectionExpectations{peerCertificate: test.match},
 				})
-				testCases = append(testCases, testCase{
-					name:            fmt.Sprintf("CertificateSelection-%s-MatchDefault-%s", test.name, suffix),
-					protocol:        protocol,
-					testType:        test.testType,
-					config:          config,
-					shimCredentials: []*Credential{test.mismatch},
-					shimCertificate: test.match,
-					flags:           append([]string{"-expect-selected-credential", "-1"}, test.flags...),
-					expectations:    connectionExpectations{peerCertificate: test.match},
-				})
+				if canBeShimCertificate(test.match) {
+					testCases = append(testCases, testCase{
+						name:            fmt.Sprintf("CertificateSelection-%s-MatchDefault-%s", test.name, suffix),
+						protocol:        protocol,
+						testType:        test.testType,
+						config:          config,
+						shimCredentials: []*Credential{test.mismatch},
+						shimCertificate: test.match,
+						flags:           append([]string{"-expect-selected-credential", "-1"}, test.flags...),
+						expectations:    connectionExpectations{peerCertificate: test.match},
+					})
+				}
 				testCases = append(testCases, testCase{
 					name:               fmt.Sprintf("CertificateSelection-%s-MatchNone-%s", test.name, suffix),
 					protocol:           protocol,

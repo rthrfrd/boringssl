@@ -632,6 +632,10 @@ func (hs *clientHandshakeState) createClientHello(innerHello *clientHelloMsg, ec
 		}
 	}
 
+	if c.config.SendRootCAs && c.config.RootCAs != nil {
+		hello.certificateAuthorities = c.config.RootCAs.Subjects()
+	}
+
 	if maxVersion >= VersionTLS13 {
 		// Use the same key shares between ClientHelloInner and ClientHelloOuter.
 		if innerHello != nil {

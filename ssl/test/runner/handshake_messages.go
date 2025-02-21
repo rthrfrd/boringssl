@@ -205,6 +205,7 @@ type clientHelloMsg struct {
 	pakeClientID                             []byte
 	pakeServerID                             []byte
 	pakeShares                               []pakeShare
+	certificateAuthorities                   [][]byte
 	outerExtensions                          []uint16
 	reorderOuterExtensionsWithoutCompressing bool
 	prefixExtensions                         []uint16
@@ -557,6 +558,18 @@ func (m *clientHelloMsg) marshalBody(hello *cryptobyte.Builder, typ clientHelloT
 		})
 		extensions = append(extensions, extension{
 			id:   extensionPAKE,
+			body: body.BytesOrPanic(),
+		})
+	}
+	if len(m.certificateAuthorities) > 0 {
+		body := cryptobyte.NewBuilder(nil)
+		body.AddUint16LengthPrefixed(func(certificateAuthorities *cryptobyte.Builder) {
+			for _, ca := range m.certificateAuthorities {
+				addUint16LengthPrefixedBytes(certificateAuthorities, ca)
+			}
+		})
+		extensions = append(extensions, extension{
+			id:   extensionCertificateAuthorities,
 			body: body.BytesOrPanic(),
 		})
 	}
@@ -1100,6 +1113,12 @@ func (m *clientHelloMsg) unmarshal(data []byte) bool {
 				m.pakeClientID = []byte(clientId)
 				m.pakeServerID = []byte(serverId)
 				m.pakeShares = append(m.pakeShares, pakeShare{id: id, msg: msg})
+			}
+		case extensionCertificateAuthorities:
+			if !parseCAs(&body, &m.certificateAuthorities) || len(body) != 0 ||
+				// If present, the CA extension may not be empty.
+				len(m.certificateAuthorities) == 0 {
+				return false
 			}
 		}
 

@@ -774,8 +774,6 @@ OPENSSL_EXPORT void SSL_CTX_set0_buffer_pool(SSL_CTX *ctx,
 // - Whether the peer supports the signature algorithms in the certificate chain
 // - Whether the a server certificate is compatible with the server_name
 //   extension (SNI)
-// - Whether the peer supports the certificate authority that issued the
-//   certificate
 //
 // Credentials may be configured before the handshake or dynamically in the
 // early callback (see |SSL_CTX_set_select_certificate_cb|) and certificate
@@ -838,6 +836,25 @@ OPENSSL_EXPORT int SSL_CREDENTIAL_set1_ocsp_response(SSL_CREDENTIAL *cred,
 // on success and zero on error.
 OPENSSL_EXPORT int SSL_CREDENTIAL_set1_signed_cert_timestamp_list(
     SSL_CREDENTIAL *cred, CRYPTO_BUFFER *sct_list);
+
+// SSL_CREDENTIAL_set_must_match_issuer configures whether |cred| should check
+// if the peer supports the certificate chain's issuer.
+//
+// If |match| is non-zero, |cred| will only be applicable when the certificate
+// chain is issued by some CA requested by the peer, e.g. in the
+// certificate_authorities extension. This can be used for certificate chains
+// that may not be usable by all peers, e.g. chains with fewer cross-signs or
+// issued from a newer CA.
+//
+// If |match| is zero (default), |cred| will not be conditioned on the peer's
+// requested CAs. This can be used for certificate chains that are assumed to be
+// usable by most peers.
+//
+// The credential list is tried in order, so more specific credentials that
+// enable issuer matching should generally be ordered before less specific
+// credentials that do not.
+OPENSSL_EXPORT void SSL_CREDENTIAL_set_must_match_issuer(SSL_CREDENTIAL *cred,
+                                                         int match);
 
 // SSL_CTX_add1_credential appends |cred| to |ctx|'s credential list. It returns
 // one on success and zero on error. The credential list is maintained in order
@@ -1399,24 +1416,6 @@ OPENSSL_EXPORT void SSL_CTX_set_private_key_method(
 // credential-specific state, such as a handle to the private key.
 OPENSSL_EXPORT int SSL_CREDENTIAL_set_private_key_method(
     SSL_CREDENTIAL *cred, const SSL_PRIVATE_KEY_METHOD *key_method);
-
-// SSL_CREDENTIAL_set_must_match_issuer sets the flag that this credential
-// should be considered only when it matches a peer request for a particular
-// issuer via a negotiation mechanism (such as the certificate_authorities
-// extension).
-OPENSSL_EXPORT void SSL_CREDENTIAL_set_must_match_issuer(SSL_CREDENTIAL *cred);
-
-// SSL_CREDENTIAL_clear_must_match_issuer clears the flag requiring issuer
-// matching, indicating this credential should be considered regardless of peer
-// issuer matching requests. (This is the default).
-OPENSSL_EXPORT void SSL_CREDENTIAL_clear_must_match_issuer(
-    SSL_CREDENTIAL *cred);
-
-// SSL_CREDENTIAL_must_match_issuer returns the value of the flag indicating
-// that this credential should be considered only when it matches a peer request
-// for a particular issuer via a negotiation mechanism (such as the
-// certificate_authorities extension).
-OPENSSL_EXPORT int SSL_CREDENTIAL_must_match_issuer(const SSL_CREDENTIAL *cred);
 
 // SSL_can_release_private_key returns one if |ssl| will no longer call into the
 // private key and zero otherwise. If the function returns one, the caller can

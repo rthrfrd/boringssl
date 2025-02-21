@@ -4876,8 +4876,8 @@ TEST(SSLTest, CredentialChains) {
 
   ASSERT_TRUE(SSL_CREDENTIAL_set1_private_key(cred.get(), key.get()));
   ASSERT_TRUE(SSL_CREDENTIAL_set1_private_key(cred2.get(), testkey.get()));
-  SSL_CREDENTIAL_set_must_match_issuer(cred.get());
-  SSL_CREDENTIAL_set_must_match_issuer(cred2.get());
+  SSL_CREDENTIAL_set_must_match_issuer(cred.get(), 1);
+  SSL_CREDENTIAL_set_must_match_issuer(cred2.get(), 1);
   ASSERT_TRUE(SSL_CTX_add1_credential(ctx.get(), cred.get()));
   ASSERT_TRUE(SSL_CTX_add1_credential(ctx.get(), cred2.get()));
 
