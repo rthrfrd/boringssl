@@ -2391,7 +2391,6 @@ type certificateRequestMsg struct {
 	signatureAlgorithms     []signatureAlgorithm
 	signatureAlgorithmsCert []signatureAlgorithm
 	certificateAuthorities  [][]byte
-	hasCAExtension          bool
 	customExtension         uint16
 }
 
@@ -2473,7 +2472,7 @@ func parseCAs(reader *cryptobyte.String, out *[][]byte) bool {
 	}
 	for len(cas) > 0 {
 		var ca []byte
-		if !readUint16LengthPrefixedBytes(&cas, &ca) {
+		if !readUint16LengthPrefixedBytes(&cas, &ca) || len(ca) == 0 {
 			return false
 		}
 		*out = append(*out, ca)
@@ -2510,10 +2509,11 @@ func (m *certificateRequestMsg) unmarshal(data []byte) bool {
 					return false
 				}
 			case extensionCertificateAuthorities:
-				if !parseCAs(&body, &m.certificateAuthorities) || len(body) != 0 {
+				if !parseCAs(&body, &m.certificateAuthorities) || len(body) != 0 ||
+					// If present, the CA extension may not be empty.
+					len(m.certificateAuthorities) == 0 {
 					return false
 				}
-				m.hasCAExtension = true
 			}
 		}
 	} else {

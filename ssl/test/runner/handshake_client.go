@@ -1257,10 +1257,6 @@ func (hs *clientHandshakeState) doTLS13Handshake(msg any) error {
 				return errors.New("tls: non-empty certificate request context sent in handshake")
 			}
 
-			if c.config.Bugs.ExpectNoCertificateAuthoritiesExtension && certReq.hasCAExtension {
-				return errors.New("tls: expected no certificate_authorities extension")
-			}
-
 			hs.writeServerHash(certReq.marshal())
 
 			credential = c.config.Credential

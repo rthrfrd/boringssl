@@ -1941,10 +1941,6 @@ type ProtocolBugs struct {
 	// renegotiation handshakes.
 	RenegotiationCertificate *Credential
 
-	// ExpectNoCertificateAuthoritiesExtension, if true, causes the client to
-	// reject CertificateRequest with the CertificateAuthorities extension.
-	ExpectNoCertificateAuthoritiesExtension bool
-
 	// SigningAlgorithmForLegacyVersions, if non-zero, is the signature algorithm
 	// to use when signing in TLS 1.1 and earlier where algorithms are not
 	// negotiated.

@@ -4852,15 +4852,14 @@ func addClientAuthTests() {
 	})
 
 	// Test that an empty client CA list doesn't send a CA extension.
+	// (This is implicitly tested by the parser. An empty CA extension is
+	// a syntax error.)
 	testCases = append(testCases, testCase{
 		testType: serverTest,
 		name:     "TLS13-Empty-Client-CA-List",
 		config: Config{
 			MaxVersion: VersionTLS13,
 			Credential: &rsaCertificate,
-			Bugs: ProtocolBugs{
-				ExpectNoCertificateAuthoritiesExtension: true,
-			},
 		},
 		flags: []string{
 			"-require-any-client-certificate",
