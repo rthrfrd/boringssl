@@ -2882,11 +2882,16 @@ OPENSSL_EXPORT int SSL_set_verify_algorithm_prefs(SSL *ssl,
                                                   size_t num_prefs);
 
 
-// Client certificate CA list.
+// Certificate authorities.
 //
-// When requesting a client certificate, a server may advertise a list of
-// certificate authorities which are accepted. These functions may be used to
-// configure this list.
+// TLS implementations can send a list of supported certificate authorities to
+// guide the peer in selecting a certificate. This was originally defined for
+// servers requesting client certificates, but TLS 1.3 generalized it to server
+// certificates with the certificate_authorities extension.
+//
+// The following functions can be used to configure and query this list. They do
+// not directly impact certificate verification, only the list of certificate
+// authorities sent to the peer.
 
 // SSL_set_client_CA_list sets |ssl|'s client certificate CA list to
 // |name_list|. It takes ownership of |name_list|.
