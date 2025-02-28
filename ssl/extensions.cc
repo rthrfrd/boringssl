@@ -2510,12 +2510,14 @@ static bool ext_supported_groups_parse_clienthello(SSL_HANDSHAKE *hs,
 static bool ext_certificate_authorities_add_clienthello(
     const SSL_HANDSHAKE *hs, CBB *out, CBB *out_compressible,
     ssl_client_hello_type_t type) {
+  // TODO(crbug.com/399937371) Decide what to do with this for ECH.
   if (ssl_has_CA_names(hs->config)) {
     CBB ca_contents;
-    if (!CBB_add_u16(out, TLSEXT_TYPE_certificate_authorities) ||  //
-        !CBB_add_u16_length_prefixed(out, &ca_contents) ||         //
-        !ssl_add_CA_names(hs, &ca_contents) ||                     //
-        !CBB_flush(out)) {
+    if (!CBB_add_u16(out_compressible,
+                     TLSEXT_TYPE_certificate_authorities) ||  //
+        !CBB_add_u16_length_prefixed(out_compressible, &ca_contents) ||    //
+        !ssl_add_CA_names(hs, &ca_contents) ||                //
+        !CBB_flush(out_compressible)) {
       return false;
     }
   }
