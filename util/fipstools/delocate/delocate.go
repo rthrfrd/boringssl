@@ -21,6 +21,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -48,6 +49,7 @@ type inputFile struct {
 }
 
 type stringWriter interface {
+	io.Writer
 	WriteString(string) (int, error)
 }
 
@@ -145,6 +147,8 @@ func (d *delocation) processInput(input inputFile) (err error) {
 			statement, err = d.processDirective(statement, node.up)
 		case ruleLabelContainingDirective:
 			statement, err = d.processLabelContainingDirective(statement, node.up)
+		case ruleSymbolDefiningDirective:
+			statement, err = d.processSymbolDefiningDirective(statement, node.up)
 		case ruleLabel:
 			statement, err = d.processLabel(statement, node.up)
 		case ruleInstruction:
@@ -338,6 +342,45 @@ func (d *delocation) processLabelContainingDirective(statement, directive *node3
 	} else {
 		d.writeCommentedNode(statement)
 		d.output.WriteString("\t" + name + "\t" + strings.Join(args, ", ") + "\n")
+	}
+
+	return statement, nil
+}
+
+func (d *delocation) processSymbolDefiningDirective(statement, directive *node32) (*node32, error) {
+	changed := false
+	assertNodeType(directive, ruleSymbolDefiningDirectiveName)
+	name := d.contents(directive)
+
+	node := directive.next
+	assertNodeType(node, ruleWS)
+
+	node = node.next
+	symbol := d.contents(node)
+	isLocal := node.pegRule == ruleLocalSymbol
+	if isLocal {
+		symbol = d.mapLocalSymbol(symbol)
+		changed = true
+	} else {
+		assertNodeType(node, ruleSymbolName)
+	}
+
+	node = skipWS(node.next)
+	assertNodeType(node, ruleSymbolArg)
+	assertNodeType(node.up, ruleSymbolExpr)
+	var b strings.Builder
+	changed = d.processSymbolExpr(node.up, &b) || changed
+	arg := b.String()
+
+	if !changed {
+		d.writeNode(statement)
+	} else {
+		d.writeCommentedNode(statement)
+		fmt.Fprintf(d.output, "\t%s\t%s, %s\n", name, symbol, arg)
+	}
+
+	if !isLocal {
+		fmt.Fprintf(d.output, "\t%s\t%s, %s\n", name, localTargetName(symbol), arg)
 	}
 
 	return statement, nil
@@ -1273,6 +1316,13 @@ func (d *delocation) handleBSS(statement *node32) (*node32, error) {
 				return nil, err
 			}
 
+		case ruleSymbolDefiningDirective:
+			var err error
+			statement, err = d.processSymbolDefiningDirective(statement, node.up)
+			if err != nil {
+				return nil, err
+			}
+
 		default:
 			return nil, fmt.Errorf("unknown BSS statement type %q in %q", rul3s[node.pegRule], d.contents(statement))
 		}
@@ -1323,6 +1373,18 @@ func transform(w stringWriter, inputs []inputFile) error {
 			}
 			symbols[symbol] = struct{}{}
 		}, ruleStatement, ruleLabel, ruleSymbolName)
+
+		// Some directives also define symbols.
+		forEachPath(input.ast.up, func(node *node32) {
+			node = skipWS(node.next)
+			if node.pegRule == ruleLocalSymbol {
+				return
+			}
+			assertNodeType(node, ruleSymbolName)
+			symbol := input.contents[node.begin:node.end]
+			// Allow duplicates. A symbol may be set multiple times with .set.
+			symbols[symbol] = struct{}{}
+		}, ruleStatement, ruleSymbolDefiningDirective, ruleSymbolDefiningDirectiveName)
 
 		forEachPath(input.ast.up, func(node *node32) {
 			assertNodeType(node, ruleLocationDirective)

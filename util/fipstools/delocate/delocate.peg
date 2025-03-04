@@ -30,6 +30,7 @@ type Asm Peg {}
 AsmFile <- Statement* !.
 Statement <- WS? (Label / ((GlobalDirective /
                             LocationDirective /
+                            SymbolDefiningDirective /
                             LabelContainingDirective /
                             Instruction /
                             Directive /
@@ -44,8 +45,10 @@ Args <- Arg ((WS? ',' WS?) Arg)*
 Arg <- QuotedArg / [[0-9a-z%+\-*_@.$]]*
 QuotedArg <- '"' QuotedText '"'
 QuotedText <- (EscapedChar / [^"])*
+SymbolDefiningDirective <- SymbolDefiningDirectiveName WS (LocalSymbol / SymbolName) WS? ',' WS? SymbolArg
+SymbolDefiningDirectiveName <- ".equiv" / ".equ" / ".set"
 LabelContainingDirective <- LabelContainingDirectiveName WS SymbolArgs
-LabelContainingDirectiveName <- ".xword" / ".word" / ".hword" / ".long" / ".set" / ".byte" / ".8byte" / ".4byte" / ".quad" / ".tc" / ".localentry" / ".size" / ".type" / ".uleb128" / ".sleb128"
+LabelContainingDirectiveName <- ".xword" / ".word" / ".hword" / ".long" / ".byte" / ".8byte" / ".4byte" / ".quad" / ".tc" / ".localentry" / ".size" / ".type" / ".uleb128" / ".sleb128"
 SymbolArgs <- SymbolArg ((WS? ',' WS?) SymbolArg)*
 
 SymbolArg <- SymbolExpr
