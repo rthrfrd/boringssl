@@ -67,7 +67,7 @@ static int run_test() {
   const uint32_t module_version = FIPS_version();
   if (module_version == 0) {
     printf("No module version set\n");
-    // return 0;
+    return 0;
   }
   printf("Module: '%s', version: %" PRIu32 " hash:\n", FIPS_module_name(),
          module_version);
