@@ -1615,22 +1615,6 @@ func (c *Conn) Write(b []byte) (int, error) {
 }
 
 func (c *Conn) processTLS13NewSessionTicket(newSessionTicket *newSessionTicketMsg, cipherSuite *cipherSuite) error {
-	if c.config.Bugs.ExpectGREASE && !newSessionTicket.hasGREASEExtension {
-		return errors.New("tls: no GREASE ticket extension found")
-	}
-
-	if c.config.Bugs.ExpectTicketEarlyData && newSessionTicket.maxEarlyDataSize == 0 {
-		return errors.New("tls: no early_data ticket extension found")
-	}
-
-	if c.config.Bugs.ExpectNoNewSessionTicket || c.config.Bugs.ExpectNoNonEmptyNewSessionTicket {
-		return errors.New("tls: received unexpected NewSessionTicket")
-	}
-
-	if c.config.ClientSessionCache == nil || newSessionTicket.ticketLifetime == 0 {
-		return nil
-	}
-
 	session := &ClientSessionState{
 		sessionTicket:               newSessionTicket.ticket,
 		vers:                        c.vers,
@@ -1651,6 +1635,27 @@ func (c *Conn) processTLS13NewSessionTicket(newSessionTicket *newSessionTicketMs
 		hasApplicationSettingsOld:   c.hasApplicationSettingsOld,
 		localApplicationSettingsOld: c.localApplicationSettingsOld,
 		peerApplicationSettingsOld:  c.peerApplicationSettingsOld,
+		resumptionAcrossNames:       newSessionTicket.flags.hasFlag(flagResumptionAcrossNames),
+	}
+
+	if c.config.Bugs.ExpectGREASE && !newSessionTicket.hasGREASEExtension {
+		return errors.New("tls: no GREASE ticket extension found")
+	}
+
+	if c.config.Bugs.ExpectTicketEarlyData && newSessionTicket.maxEarlyDataSize == 0 {
+		return errors.New("tls: no early_data ticket extension found")
+	}
+
+	if c.config.Bugs.ExpectNoNewSessionTicket || c.config.Bugs.ExpectNoNonEmptyNewSessionTicket {
+		return errors.New("tls: received unexpected NewSessionTicket")
+	}
+
+	if expect := c.config.Bugs.ExpectResumptionAcrossNames; expect != nil && session.resumptionAcrossNames != *expect {
+		return errors.New("tls: resumption_across_names status of ticket did not match expectation")
+	}
+
+	if c.config.ClientSessionCache == nil || newSessionTicket.ticketLifetime == 0 {
+		return nil
 	}
 
 	cacheKey := clientSessionCacheKey(c.conn.RemoteAddr(), c.config)
@@ -2030,6 +2035,10 @@ func (c *Conn) SendNewSessionTicket(nonce []byte) error {
 		ticketAgeAdd:                ticketAgeAdd,
 		ticketNonce:                 nonce,
 		maxEarlyDataSize:            c.config.MaxEarlyDataSize,
+		flags: flagSet{
+			mustInclude: c.config.Bugs.AlwaysSendTicketFlags,
+			padding:     c.config.Bugs.TicketFlagPadding,
+		},
 	}
 	if c.config.Bugs.MockQUICTransport != nil && m.maxEarlyDataSize > 0 {
 		m.maxEarlyDataSize = 0xffffffff
@@ -2037,6 +2046,12 @@ func (c *Conn) SendNewSessionTicket(nonce []byte) error {
 
 	if c.config.Bugs.SendTicketLifetime != 0 {
 		m.ticketLifetime = uint32(c.config.Bugs.SendTicketLifetime / time.Second)
+	}
+	if c.config.ResumptionAcrossNames {
+		m.flags.setFlag(flagResumptionAcrossNames)
+	}
+	for _, flag := range c.config.Bugs.SendTicketFlags {
+		m.flags.setFlag(flag)
 	}
 
 	state := sessionState{

@@ -361,6 +361,96 @@ bool tls12_check_peer_sigalg(const SSL_HANDSHAKE *hs, uint8_t *out_alert,
   return true;
 }
 
+// Flags.
+//
+// https://www.ietf.org/archive/id/draft-ietf-tls-tlsflags-14.html
+
+bool ssl_add_flags_extension(CBB *cbb, SSLFlags flags) {
+  if (flags == 0) {
+    return true;
+  }
+
+  CBB body, child;
+  if (!CBB_add_u16(cbb, TLSEXT_TYPE_tls_flags) ||
+      !CBB_add_u16_length_prefixed(cbb, &body) ||
+      !CBB_add_u8_length_prefixed(&body, &child)) {
+    return false;
+  }
+
+  while (flags != 0) {
+    if (!CBB_add_u8(&child, static_cast<uint8_t>(flags))) {
+      return false;
+    }
+    flags >>= 8;
+  }
+
+  return CBB_flush(cbb);
+}
+
+static bool ssl_parse_flags_extension(const CBS *cbs, SSLFlags *out,
+                                      uint8_t *out_alert, bool allow_unknown) {
+  CBS copy = *cbs, flags;
+  if (!CBS_get_u8_length_prefixed(&copy, &flags) ||  //
+      CBS_len(&copy) != 0 ||                         //
+      CBS_len(&flags) == 0) {
+    OPENSSL_PUT_ERROR(SSL, SSL_R_DECODE_ERROR);
+    *out_alert = SSL_AD_DECODE_ERROR;
+    return false;
+  }
+
+  // There may not be any trailing zeros.
+  if (CBS_data(&flags)[CBS_len(&flags) - 1] == 0) {
+    OPENSSL_PUT_ERROR(SSL, SSL_R_DECODE_ERROR);
+    *out_alert = SSL_AD_ILLEGAL_PARAMETER;
+    return false;
+  }
+
+  // We can only represent flags that fit in SSLFlags, so any bits beyond that
+  // are necessarily unsolicited. Unsolicited flags are allowed in CH, CR, and
+  // NST, but forbidden in SH, EE, CT, and HRR. See Section 3 of
+  // draft-ietf-tls-tlsflags-14.
+  if (!allow_unknown && CBS_len(&flags) > sizeof(SSLFlags)) {
+    OPENSSL_PUT_ERROR(SSL, SSL_R_UNEXPECTED_EXTENSION);
+    *out_alert = SSL_AD_ILLEGAL_PARAMETER;
+    return false;
+  }
+
+  // We currently use the same in-memory and wire representation for flags.
+  uint8_t padded[sizeof(SSLFlags)] = {0};
+  OPENSSL_memcpy(padded, CBS_data(&flags),
+                 std::min(CBS_len(&flags), size_t{4}));
+  static_assert(sizeof(SSLFlags) == sizeof(uint32_t),
+                "We currently assume SSLFlags is 32-bit");
+  *out = CRYPTO_load_u32_le(padded);
+  return true;
+}
+
+bool ssl_parse_flags_extension_request(const CBS *cbs, SSLFlags *out,
+                                       uint8_t *out_alert) {
+  // In a request message, unsolicited flags are allowed and ignored.
+  return ssl_parse_flags_extension(cbs, out, out_alert,
+                                   /*allow_unknown=*/true);
+}
+
+bool ssl_parse_flags_extension_response(const CBS *cbs, SSLFlags *out,
+                                        uint8_t *out_alert,
+                                        SSLFlags allowed_flags) {
+  // In a response message, unsolicited flags are not allowed.
+  if (!ssl_parse_flags_extension(cbs, out, out_alert,
+                                 /*allow_unknown=*/false)) {
+    return false;
+  }
+
+  // Check for unsolicited flags that fit in |SSLFlags|.
+  if ((*out & allowed_flags) != *out) {
+    OPENSSL_PUT_ERROR(SSL, SSL_R_UNEXPECTED_EXTENSION);
+    *out_alert = SSL_AD_ILLEGAL_PARAMETER;
+    return false;
+  }
+
+  return true;
+}
+
 // tls_extension represents a TLS extension that is handled internally.
 //
 // The parse callbacks receive a |CBS| that contains the contents of the

@@ -2055,6 +2055,12 @@ OPENSSL_EXPORT void SSL_SESSION_get0_peer_sha256(const SSL_SESSION *session,
                                                  const uint8_t **out_ptr,
                                                  size_t *out_len);
 
+// SSL_SESSION_is_resumable_across_names returns one if |session| may be resumed
+// with any identity in the server certificate and zero otherwise. See
+// draft-ietf-tls-cross-sni-resumption.
+OPENSSL_EXPORT int SSL_SESSION_is_resumable_across_names(
+    const SSL_SESSION *session);
+
 
 // Session caching.
 //
@@ -2303,6 +2309,32 @@ OPENSSL_EXPORT SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(
 // return |SSL_ERROR_PENDING_SESSION| and the handshake can be retried later
 // when the lookup has completed.
 OPENSSL_EXPORT SSL_SESSION *SSL_magic_pending_session_ptr(void);
+
+// SSL_CTX_set_resumption_across_names_enabled configures whether |ctx|, as a
+// TLS 1.3 server, signals its sessions are compatible with any identity in the
+// server certificate, e.g. all DNS names in the subjectAlternateNames list.
+// This does not change BoringSSL's resumption behavior, only whether it signals
+// this to the client. See draft-ietf-tls-cross-sni-resumption.
+//
+// When this is enabled, all identities in the server certificate should by
+// hosted by servers that accept TLS 1.3 tickets issued by |ctx|. The connection
+// will otherwise function, but performance may suffer from clients wasting
+// single-use tickets.
+OPENSSL_EXPORT void SSL_CTX_set_resumption_across_names_enabled(SSL_CTX *ctx,
+                                                                int enabled);
+
+// SSL_set_resumption_across_names_enabled configures whether |ssl|, as a
+// TLS 1.3 server, signals its sessions are compatible with any identity in the
+// server certificate, e.g. all DNS names in the subjectAlternateNames list.
+// This does not change BoringSSL's resumption behavior, only whether it signals
+// this to the client. See draft-ietf-tls-cross-sni-resumption.
+//
+// When this is enabled, all identities in the server certificate should by
+// hosted by servers that accept TLS 1.3 tickets issued by |ssl|. The connection
+// will otherwise function, but performance may suffer from clients wasting
+// single-use tickets.
+OPENSSL_EXPORT void SSL_set_resumption_across_names_enabled(SSL *ssl,
+                                                            int enabled);
 
 
 // Session tickets.

@@ -137,6 +137,9 @@ extern "C" {
 // standardization completes.
 #define TLSEXT_TYPE_trust_anchors 0xca34
 
+// ExtensionType value from draft-ietf-tls-tlsflags.
+#define TLSEXT_TYPE_tls_flags 62
+
 // status request value from RFC 3546
 #define TLSEXT_STATUSTYPE_nothing (-1)
 #define TLSEXT_STATUSTYPE_ocsp 1

@@ -150,6 +150,53 @@ type pakeShare struct {
 	msg []byte
 }
 
+type flagSet struct {
+	bytes       []byte
+	mustInclude bool
+	padding     int
+}
+
+func (f *flagSet) hasFlag(bit uint) bool {
+	idx := bit / 8
+	mask := byte(1 << (bit % 8))
+	return idx < uint(len(f.bytes)) && f.bytes[idx]&mask != 0
+}
+
+func (f *flagSet) setFlag(bit uint) {
+	idx := bit / 8
+	mask := byte(1 << (bit % 8))
+	for uint(len(f.bytes)) <= idx {
+		f.bytes = append(f.bytes, 0)
+	}
+	f.bytes[idx] |= mask
+}
+
+func (f *flagSet) unmarshalExtensionValue(s cryptobyte.String) bool {
+	if !readUint8LengthPrefixedBytes(&s, &f.bytes) || !s.Empty() || len(f.bytes) == 0 {
+		return false
+	}
+	// Flags must be minimally-encoded.
+	if f.bytes[len(f.bytes)-1] == 0 {
+		return false
+	}
+	return true
+}
+
+func (f *flagSet) marshalExtension(b *cryptobyte.Builder) {
+	if len(f.bytes) == 0 && !f.mustInclude {
+		return
+	}
+	b.AddUint16(extensionTLSFlags)
+	b.AddUint16LengthPrefixed(func(value *cryptobyte.Builder) {
+		value.AddUint8LengthPrefixed(func(flags *cryptobyte.Builder) {
+			flags.AddBytes(f.bytes)
+			for range f.padding {
+				flags.AddUint8(0)
+			}
+		})
+	})
+}
+
 type clientHelloMsg struct {
 	raw                                      []byte
 	isDTLS                                   bool
@@ -2680,6 +2727,7 @@ type newSessionTicketMsg struct {
 	customExtension             string
 	duplicateEarlyDataExtension bool
 	hasGREASEExtension          bool
+	flags                       flagSet
 }
 
 func (m *newSessionTicketMsg) marshal() []byte {
@@ -2722,6 +2770,7 @@ func (m *newSessionTicketMsg) marshal() []byte {
 					extensions.AddUint16(extensionCustom)
 					addUint16LengthPrefixedBytes(extensions, []byte(m.customExtension))
 				}
+				m.flags.marshalExtension(extensions)
 			})
 		}
 	})
@@ -2772,6 +2821,10 @@ func (m *newSessionTicketMsg) unmarshal(data []byte) bool {
 			switch extension {
 			case extensionEarlyData:
 				if !body.ReadUint32(&m.maxEarlyDataSize) || !body.Empty() {
+					return false
+				}
+			case extensionTLSFlags:
+				if !m.flags.unmarshalExtensionValue(body) {
 					return false
 				}
 			default:

@@ -590,6 +590,12 @@ const Flag<TestConfig> *FindFlag(const char *name) {
         CredentialFlag(
             Base64Flag("-trust-anchor-id", &CredentialConfig::trust_anchor_id)),
         IntFlag("-private-key-delay-ms", &TestConfig::private_key_delay_ms),
+        BoolFlag("-resumption-across-names-enabled",
+                 &TestConfig::resumption_across_names_enabled),
+        OptionalBoolTrueFlag("-expect-resumable-across-names",
+                             &TestConfig::expect_resumable_across_names),
+        OptionalBoolFalseFlag("-expect-not-resumable-across-names",
+                              &TestConfig::expect_resumable_across_names),
     };
     std::sort(ret.begin(), ret.end(), FlagNameComparator{});
     return ret;
@@ -2058,6 +2064,10 @@ bssl::UniquePtr<SSL_CTX> TestConfig::SetupCtx(SSL_CTX *old_ctx) const {
 
   if (use_ocsp_callback) {
     SSL_CTX_set_tlsext_status_cb(ssl_ctx.get(), LegacyOCSPCallback);
+  }
+
+  if (resumption_across_names_enabled) {
+    SSL_CTX_set_resumption_across_names_enabled(ssl_ctx.get(), 1);
   }
 
   if (old_ctx) {

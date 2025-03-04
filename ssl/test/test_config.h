@@ -235,6 +235,8 @@ struct TestConfig {
   std::optional<int> expect_selected_credential;
   std::vector<CredentialConfig> credentials;
   int private_key_delay_ms = 0;
+  bool resumption_across_names_enabled = false;
+  std::optional<bool> expect_resumable_across_names;
 
   std::vector<const char *> handshaker_args;
 

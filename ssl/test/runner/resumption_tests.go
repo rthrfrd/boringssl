@@ -14,7 +14,10 @@
 
 package runner
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 func addResumptionVersionTests() {
 	for _, sessionVers := range tlsVersions {
@@ -970,6 +973,109 @@ func addSessionTicketTests() {
 				shouldFail:         true,
 				expectedError:      ":SERVER_ECHOED_INVALID_SESSION_ID:",
 				expectedLocalError: "remote error: illegal parameter",
+			})
+		}
+
+		// Test ticket flags.
+		if ver.version >= VersionTLS13 {
+			// The client should parse and ignore unknown ticket flags. 2039
+			// is the highest possible flag number (8*255 flags total).
+			for i, flags := range [][]uint{{1}, {31}, {100}, {2039}, {1, 31, 100, 2039}} {
+				testCases = append(testCases, testCase{
+					name: fmt.Sprintf("%s-Client-UnknownTicketFlags-%d", ver.name, i),
+					config: Config{
+						MinVersion: ver.version,
+						MaxVersion: ver.version,
+						Bugs: ProtocolBugs{
+							SendTicketFlags: flags,
+						},
+					},
+				})
+				testCases = append(testCases, testCase{
+					name: fmt.Sprintf("%s-Client-KnownAndUnknownTicketFlags-%d", ver.name, i),
+					config: Config{
+						MinVersion:            ver.version,
+						MaxVersion:            ver.version,
+						ResumptionAcrossNames: true,
+						Bugs: ProtocolBugs{
+							SendTicketFlags: flags,
+						},
+					},
+					flags: []string{"-expect-resumable-across-names"},
+				})
+			}
+
+			// The client should reject invalid ticket flag extensions.
+			testCases = append(testCases, testCase{
+				name: ver.name + "-Client-NonminimalTicketFlags",
+				config: Config{
+					MinVersion: ver.version,
+					MaxVersion: ver.version,
+					Bugs: ProtocolBugs{
+						SendTicketFlags:   []uint{1},
+						TicketFlagPadding: 1,
+					},
+				},
+				shouldFail:         true,
+				expectedError:      ":DECODE_ERROR:",
+				expectedLocalError: "remote error: illegal parameter",
+			})
+			testCases = append(testCases, testCase{
+				name: ver.name + "-Client-EmptyTicketFlags",
+				config: Config{
+					MinVersion: ver.version,
+					MaxVersion: ver.version,
+					Bugs: ProtocolBugs{
+						AlwaysSendTicketFlags: true,
+					},
+				},
+				shouldFail:         true,
+				expectedError:      ":DECODE_ERROR:",
+				expectedLocalError: "remote error: error decoding message",
+			})
+
+			// The client should parse the resumption_across_names flag.
+			testCases = append(testCases, testCase{
+				name: ver.name + "-Client-NoResumptionAcrossNames",
+				config: Config{
+					MinVersion: ver.version,
+					MaxVersion: ver.version,
+				},
+				flags: []string{"-expect-not-resumable-across-names"},
+			})
+			testCases = append(testCases, testCase{
+				name: ver.name + "-Client-ResumptionAcrossNames",
+				config: Config{
+					MinVersion:            ver.version,
+					MaxVersion:            ver.version,
+					ResumptionAcrossNames: true,
+				},
+				flags: []string{"-expect-resumable-across-names"},
+			})
+
+			// The server should offer resumption_across_names as configured.
+			testCases = append(testCases, testCase{
+				testType: serverTest,
+				name:     ver.name + "-Server-NoResumptionAcrossNames",
+				config: Config{
+					MinVersion: ver.version,
+					MaxVersion: ver.version,
+					Bugs: ProtocolBugs{
+						ExpectResumptionAcrossNames: ptrTo(false),
+					},
+				},
+			})
+			testCases = append(testCases, testCase{
+				testType: serverTest,
+				name:     ver.name + "-Server-ResumptionAcrossNames",
+				config: Config{
+					MinVersion: ver.version,
+					MaxVersion: ver.version,
+					Bugs: ProtocolBugs{
+						ExpectResumptionAcrossNames: ptrTo(true),
+					},
+				},
+				flags: []string{"-resumption-across-names-enabled"},
 			})
 		}
 	}

@@ -172,6 +172,7 @@ const (
 	extensionSignatureAlgorithmsCert    uint16 = 50
 	extensionKeyShare                   uint16 = 51
 	extensionQUICTransportParams        uint16 = 57
+	extensionTLSFlags                   uint16 = 62
 	extensionCustom                     uint16 = 1234  // not IANA assigned
 	extensionNextProtoNeg               uint16 = 13172 // not IANA assigned
 	extensionApplicationSettingsOld     uint16 = 17513 // not IANA assigned
@@ -184,6 +185,10 @@ const (
 	extensionDuplicate                  uint16 = 0xffff // not IANA assigned
 	extensionEncryptedClientHello       uint16 = 0xfe0d // not IANA assigned
 	extensionECHOuterExtensions         uint16 = 0xfd00 // not IANA assigned
+)
+
+const (
+	flagResumptionAcrossNames = 8
 )
 
 // TLS signaling cipher suite values
@@ -382,6 +387,7 @@ type ClientSessionState struct {
 	hasApplicationSettingsOld   bool
 	localApplicationSettingsOld []byte
 	peerApplicationSettingsOld  []byte
+	resumptionAcrossNames       bool
 }
 
 // ClientSessionCache is a cache of ClientSessionState objects that can be used
@@ -691,6 +697,10 @@ type Config struct {
 	// AvailableTrustAnchors, if not empty, is the list of trust anchor IDs
 	// to report as available in EncryptedExtensions.
 	AvailableTrustAnchors [][]byte
+
+	// ResumptionAcrossNames specifies whether session tickets issued by the TLS
+	// server should be marked as compatable with cross-name resumption.
+	ResumptionAcrossNames bool
 
 	// Bugs specifies optional misbehaviour to be used for testing other
 	// implementations.
@@ -2146,6 +2156,24 @@ type ProtocolBugs struct {
 	// CheckClientHello is called on the initial ClientHello received from the
 	// peer, to implement extra checks.
 	CheckClientHello func(*clientHelloMsg) error
+
+	// SendTicketFlags contains a list of flags, represented by bit index, that
+	// the server will send in TLS 1.3 NewSessionTicket.
+	SendTicketFlags []uint
+
+	// AlwaysSendTicketFlags causes the server to send the flags extension in
+	// TLS 1.3 NewSessionTicket even if empty.
+	AlwaysSendTicketFlags bool
+
+	// TicketFlagPadding is the number of extra bytes of padding (giving a
+	// non-minimal encoding) to include in the flags extension in TLS 1.3
+	// NewSessionTicket.
+	TicketFlagPadding int
+
+	// ExpectResumptionAcrossNames, if not nil, causes the client to require all
+	// NewSessionTicket messages to have or not have the resumption_across_names
+	// flag set.
+	ExpectResumptionAcrossNames *bool
 }
 
 func (c *Config) serverInit() {

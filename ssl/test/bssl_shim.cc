@@ -1285,6 +1285,18 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
                 got_early_data ? "" : " not");
         return false;
       }
+
+      if (config->expect_resumable_across_names.has_value()) {
+        bool actual = !!SSL_SESSION_is_resumable_across_names(
+            test_state->new_session.get());
+        if (config->expect_resumable_across_names.value() != actual) {
+          fprintf(stderr,
+                  "new session did%s support cross-name resumption, but we "
+                  "expected the opposite\n",
+                  actual ? "" : " not");
+          return false;
+        }
+      }
     }
   }
 

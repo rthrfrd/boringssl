@@ -2702,6 +2702,43 @@ const SSL_SESSION *ssl_handshake_session(const SSL_HANDSHAKE *hs);
 void ssl_done_writing_client_hello(SSL_HANDSHAKE *hs);
 
 
+// Flags.
+
+// SSLFlags is a bitmask of flags that can be encoded with the TLS flags
+// extension, draft-ietf-tls-tlsflags-14. For now, our in-memory representation
+// matches the wire representation, and we only support flags up to 32. If
+// higher values are needed, we can increase the size of the bitmask, or only
+// store the flags we implement in the bitmask.
+using SSLFlags = uint32_t;
+inline constexpr SSLFlags kSSLFlagResumptionAcrossNames = 1 << 8;
+
+// ssl_add_flags_extension encodes a tls_flags extension (including the header)
+// containing the flags in |flags|. It returns true on success and false on
+// error. If |flags| is zero (no flags set), it returns true without adding
+// anything to |cbb|.
+bool ssl_add_flags_extension(CBB *cbb, SSLFlags flags);
+
+// ssl_parse_flags_extension_request parses tls_flags extension value (excluding
+// the header) from |cbs|, for a request message (ClientHello,
+// CertificateRequest, or NewSessionTicket). Unrecognized flags will be ignored.
+//
+// On success, it sets |*out| to the parsed flags and returns true. On error, it
+// sets |*out_alert| to a TLS alert and returns false.
+bool ssl_parse_flags_extension_request(const CBS *cbs, SSLFlags *out,
+                                       uint8_t *out_alert);
+
+// ssl_parse_flags_extension_response parses tls_flags extension value
+// (excluding the header) from |cbs|, for a response message (HelloRetryRequest,
+// ServerHello, EncryptedExtensions, or Certificate). Only the flags in
+// |allowed_flags| may be present.
+//
+// On success, it sets |*out| to the parsed flags and returns true. On error, it
+// sets |*out_alert| to a TLS alert and returns false.
+bool ssl_parse_flags_extension_response(const CBS *cbs, SSLFlags *out,
+                                        uint8_t *out_alert,
+                                        SSLFlags allowed_flags);
+
+
 // SSLKEYLOGFILE functions.
 
 // ssl_log_secret logs |secret| with label |label|, if logging is enabled for
@@ -4387,6 +4424,10 @@ struct ssl_ctx_st : public bssl::RefCounted<ssl_ctx_st> {
   // |aes_hw_override| is true.
   bool aes_hw_override_value : 1;
 
+  // resumption_across_names_enabled indicates whether a TLS 1.3 server should
+  // signal its sessions may be resumed across names in the server certificate.
+  bool resumption_across_names_enabled : 1;
+
  private:
   friend RefCounted;
   ~ssl_ctx_st();
@@ -4474,6 +4515,10 @@ struct ssl_st {
 
   // If enable_early_data is true, early data can be sent and accepted.
   bool enable_early_data : 1;
+
+  // resumption_across_names_enabled indicates whether a TLS 1.3 server should
+  // signal its sessions may be resumed across names in the server certificate.
+  bool resumption_across_names_enabled : 1;
 };
 
 struct ssl_session_st : public bssl::RefCounted<ssl_session_st> {
@@ -4613,6 +4658,10 @@ struct ssl_session_st : public bssl::RefCounted<ssl_session_st> {
   // has_application_settings indicates whether ALPS was negotiated in this
   // session.
   bool has_application_settings : 1;
+
+  // is_resumable_across_names indicates whether the session may be resumed for
+  // any of the identities presented in the certificate.
+  bool is_resumable_across_names : 1;
 
   // quic_early_data_context is used to determine whether early data must be
   // rejected when performing a QUIC handshake.

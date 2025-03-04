@@ -815,7 +815,8 @@ ssl_session_st::ssl_session_st(const SSL_X509_METHOD *method)
       ticket_age_add_valid(false),
       is_server(false),
       is_quic(false),
-      has_application_settings(false) {
+      has_application_settings(false),
+      is_resumable_across_names(false) {
   CRYPTO_new_ex_data(&ex_data);
   time = ::time(nullptr);
 }
@@ -998,6 +999,10 @@ void SSL_SESSION_get0_peer_sha256(const SSL_SESSION *session,
     *out_ptr = nullptr;
     *out_len = 0;
   }
+}
+
+int SSL_SESSION_is_resumable_across_names(const SSL_SESSION *session) {
+  return session->is_resumable_across_names;
 }
 
 int SSL_SESSION_early_data_capable(const SSL_SESSION *session) {
@@ -1195,6 +1200,14 @@ SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(SSL *ssl,
                                                       int id_len,
                                                       int *out_copy) {
   return ctx->get_session_cb;
+}
+
+void SSL_CTX_set_resumption_across_names_enabled(SSL_CTX *ctx, int enabled) {
+  ctx->resumption_across_names_enabled = !!enabled;
+}
+
+void SSL_set_resumption_across_names_enabled(SSL *ssl, int enabled) {
+  ssl->resumption_across_names_enabled = !!enabled;
 }
 
 void SSL_CTX_set_info_callback(SSL_CTX *ctx, void (*cb)(const SSL *ssl,

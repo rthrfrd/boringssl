@@ -401,7 +401,8 @@ ssl_ctx_st::ssl_ctx_st(const SSL_METHOD *ssl_method)
       handoff(false),
       enable_early_data(false),
       aes_hw_override(false),
-      aes_hw_override_value(false) {
+      aes_hw_override_value(false),
+      resumption_across_names_enabled(false) {
   CRYPTO_MUTEX_init(&lock);
   CRYPTO_new_ex_data(&ex_data);
 }
@@ -478,7 +479,8 @@ ssl_st::ssl_st(SSL_CTX *ctx_arg)
       max_cert_list(ctx->max_cert_list),
       server(false),
       quiet_shutdown(ctx->quiet_shutdown),
-      enable_early_data(ctx->enable_early_data) {
+      enable_early_data(ctx->enable_early_data),
+      resumption_across_names_enabled(ctx->resumption_across_names_enabled) {
   CRYPTO_new_ex_data(&ex_data);
 }
 
