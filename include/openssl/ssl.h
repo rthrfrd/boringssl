@@ -3722,7 +3722,7 @@ OPENSSL_EXPORT SSL_CREDENTIAL *SSL_CREDENTIAL_new_spake2plusv1_client(
 // WARNING: |rate_limit| differs from the client's |error_limit| parameter.
 // Server PAKE credentials must temporarily deduct incomplete handshakes from
 // the limit, until the peer completes the handshake correctly. Thus
-// applications use that multiple connections in parallel may need a higher
+// applications that use multiple connections in parallel may need a higher
 // limit, and thus higher attacker exposure, to avoid failures. Such
 // applications should instead use one PAKE-based connection to established a
 // high-entropy secret (e.g. with |SSL_export_keying_material|) instead of
