@@ -596,7 +596,7 @@ void CRYPTO_gcm128_tag(const GCM128_KEY *key, GCM128_CONTEXT *ctx, uint8_t *tag,
 #if defined(OPENSSL_X86) || defined(OPENSSL_X86_64)
 int crypto_gcm_clmul_enabled(void) {
 #if defined(GHASH_ASM_X86) || defined(GHASH_ASM_X86_64)
-  return CRYPTO_is_PCLMUL_capable();
+  return CRYPTO_is_PCLMUL_capable() && CRYPTO_is_SSSE3_capable();
 #else
   return 0;
 #endif
