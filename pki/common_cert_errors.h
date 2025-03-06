@@ -139,6 +139,9 @@ OPENSSL_EXPORT extern const CertErrorId kEkuHasProhibitedTimeStamping;
 // The certificate's EKU has Code Signing when it should not.
 OPENSSL_EXPORT extern const CertErrorId kEkuHasProhibitedCodeSigning;
 
+// The certificate's EKU is incorrect for an RcsMlsClient.
+OPENSSL_EXPORT extern const CertErrorId kEkuIncorrectForRcsMlsClient;
+
 // The certificate does not have EKU.
 OPENSSL_EXPORT extern const CertErrorId kEkuNotPresent;
 

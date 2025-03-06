@@ -70,6 +70,9 @@ DEFINE_CERT_ERROR_ID(kEkuHasProhibitedTimeStamping,
 DEFINE_CERT_ERROR_ID(kEkuHasProhibitedCodeSigning,
                      "The extended key usage includes code signing which "
                      "is not permitted for this use");
+DEFINE_CERT_ERROR_ID(kEkuIncorrectForRcsMlsClient,
+                     "The extended key usage does not contain only the "
+                     "rcsMlsClient key purpose.");
 DEFINE_CERT_ERROR_ID(kEkuNotPresent,
                      "Certificate does not have extended key usage");
 DEFINE_CERT_ERROR_ID(kCertIsNotTrustAnchor,

@@ -2256,6 +2256,14 @@ set(
   pki/testdata/verify_certificate_chain_unittest/intermediate-eku-clientauth/serverauth-strict-leaf.test
   pki/testdata/verify_certificate_chain_unittest/intermediate-eku-clientauth/serverauth-strict.test
   pki/testdata/verify_certificate_chain_unittest/intermediate-eku-clientauth/serverauth.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-mlsclientauth-extra/any.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-mlsclientauth-extra/chain.pem
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-mlsclientauth-extra/mlsclientauth.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-mlsclientauth/any.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-mlsclientauth/chain.pem
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-mlsclientauth/clientauth.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-mlsclientauth/mlsclientauth.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-mlsclientauth/serverauth.test
   pki/testdata/verify_certificate_chain_unittest/intermediate-eku-server-gated-crypto/sha1-chain.pem
   pki/testdata/verify_certificate_chain_unittest/intermediate-eku-server-gated-crypto/sha1-eku-any.test
   pki/testdata/verify_certificate_chain_unittest/intermediate-eku-server-gated-crypto/sha1-eku-clientAuth-strict.test
@@ -2472,6 +2480,7 @@ set(
   pki/testdata/verify_certificate_chain_unittest/target-eku-any/clientauth-strict-leaf.test
   pki/testdata/verify_certificate_chain_unittest/target-eku-any/clientauth-strict.test
   pki/testdata/verify_certificate_chain_unittest/target-eku-any/clientauth.test
+  pki/testdata/verify_certificate_chain_unittest/target-eku-any/mlsclientauth.test
   pki/testdata/verify_certificate_chain_unittest/target-eku-any/serverauth-strict-leaf.test
   pki/testdata/verify_certificate_chain_unittest/target-eku-any/serverauth-strict.test
   pki/testdata/verify_certificate_chain_unittest/target-eku-any/serverauth.test
@@ -2486,6 +2495,7 @@ set(
   pki/testdata/verify_certificate_chain_unittest/target-eku-many/clientauth-strict-leaf.test
   pki/testdata/verify_certificate_chain_unittest/target-eku-many/clientauth-strict.test
   pki/testdata/verify_certificate_chain_unittest/target-eku-many/clientauth.test
+  pki/testdata/verify_certificate_chain_unittest/target-eku-many/mlsclientauth.test
   pki/testdata/verify_certificate_chain_unittest/target-eku-many/serverauth-strict-leaf.test
   pki/testdata/verify_certificate_chain_unittest/target-eku-many/serverauth-strict.test
   pki/testdata/verify_certificate_chain_unittest/target-eku-many/serverauth.test
@@ -2494,6 +2504,7 @@ set(
   pki/testdata/verify_certificate_chain_unittest/target-eku-none/clientauth-strict-leaf.test
   pki/testdata/verify_certificate_chain_unittest/target-eku-none/clientauth-strict.test
   pki/testdata/verify_certificate_chain_unittest/target-eku-none/clientauth.test
+  pki/testdata/verify_certificate_chain_unittest/target-eku-none/mlsclientauth.test
   pki/testdata/verify_certificate_chain_unittest/target-eku-none/serverauth-strict.test
   pki/testdata/verify_certificate_chain_unittest/target-eku-none/serverauth.test
   pki/testdata/verify_certificate_chain_unittest/target-has-512bit-rsa-key/chain.pem

@@ -216,8 +216,11 @@ void VerifyExtendedKeyUsage(const ParsedCertificate &cert,
   bool has_code_signing_eku = false;
   bool has_time_stamping_eku = false;
   bool has_ocsp_signing_eku = false;
+  bool has_rcs_mls_client_eku = false;
+  size_t eku_oid_count = 0;
   if (cert.has_extended_key_usage()) {
     for (const auto &key_purpose_oid : cert.extended_key_usage()) {
+      eku_oid_count++;
       if (key_purpose_oid == der::Input(kAnyEKU)) {
         has_any_eku = true;
       }
@@ -236,8 +239,24 @@ void VerifyExtendedKeyUsage(const ParsedCertificate &cert,
       if (key_purpose_oid == der::Input(kOCSPSigning)) {
         has_ocsp_signing_eku = true;
       }
+      if (key_purpose_oid == der::Input(kRcsMlsClient)) {
+        has_rcs_mls_client_eku = true;
+      }
     }
   }
+
+  if (required_key_purpose == KeyPurpose::RCS_MLS_CLIENT_AUTH) {
+    // Rules for MLS client auth. For the leaf and all intermediates, EKU must
+    // be present and have exactly one EKU which is rcsMlsClient.
+    if (!cert.has_extended_key_usage()) {
+      errors->AddError(cert_errors::kEkuNotPresent);
+    } else if (eku_oid_count != 1 || !has_rcs_mls_client_eku) {
+      errors->AddError(cert_errors::kEkuIncorrectForRcsMlsClient);
+    }
+    return;
+  }
+
+  // Rules TLS client and server authentication variants.
 
   // Apply strict only to leaf certificates in these cases.
   if (required_key_purpose == KeyPurpose::CLIENT_AUTH_STRICT_LEAF) {
@@ -329,6 +348,7 @@ void VerifyExtendedKeyUsage(const ParsedCertificate &cert,
     case KeyPurpose::ANY_EKU:
     case KeyPurpose::CLIENT_AUTH_STRICT_LEAF:
     case KeyPurpose::SERVER_AUTH_STRICT_LEAF:
+    case KeyPurpose::RCS_MLS_CLIENT_AUTH:
       assert(0);  // NOTREACHED
       return;
     case KeyPurpose::SERVER_AUTH:
@@ -1232,6 +1252,7 @@ void VerifyTargetCertIsNotCA(const ParsedCertificate &cert,
       case KeyPurpose::CLIENT_AUTH_STRICT:
       case KeyPurpose::CLIENT_AUTH_STRICT_LEAF:
       case KeyPurpose::SERVER_AUTH_STRICT_LEAF:
+      case KeyPurpose::RCS_MLS_CLIENT_AUTH:
         errors->AddError(cert_errors::kTargetCertShouldNotBeCa);
         break;
     }
