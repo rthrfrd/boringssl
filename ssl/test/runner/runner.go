@@ -1763,7 +1763,7 @@ func runTest(dispatcher *shimDispatcher, statusChan chan statusMsg, test *testCa
 		var msg string
 		switch {
 		case failed && !test.shouldFail:
-			msg = "unexpected failure"
+			msg = fmt.Sprintf("unexpected failure\ngot:\n%s\n", got)
 		case !failed && test.shouldFail:
 			msg = fmt.Sprintf("unexpected success\nwant:\n%s\n", want)
 		case failed && !correctFailure:
