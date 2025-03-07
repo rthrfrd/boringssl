@@ -430,22 +430,14 @@ _CET_ENDBR
 	addq	$16,%rax
 	cmpq	%rax,%r11
 	jne	.Lvaesenc_loop_first_4_vecs__func1
-
-
-
 	vpxord	0(%rdi),%zmm14,%zmm4
 	vpxord	64(%rdi),%zmm14,%zmm5
 	vpxord	128(%rdi),%zmm14,%zmm6
 	vpxord	192(%rdi),%zmm14,%zmm7
-
-
-
 	vaesenclast	%zmm4,%zmm0,%zmm4
 	vaesenclast	%zmm5,%zmm1,%zmm5
 	vaesenclast	%zmm6,%zmm2,%zmm6
 	vaesenclast	%zmm7,%zmm3,%zmm7
-
-
 	vmovdqu8	%zmm4,0(%rsi)
 	vmovdqu8	%zmm5,64(%rsi)
 	vmovdqu8	%zmm6,128(%rsi)
@@ -456,6 +448,7 @@ _CET_ENDBR
 	addq	$-256,%rdx
 	cmpq	$256-1,%rdx
 	jbe	.Lghash_last_ciphertext_4x__func1
+
 	vbroadcasti32x4	-144(%r11),%zmm15
 	vbroadcasti32x4	-128(%r11),%zmm16
 	vbroadcasti32x4	-112(%r11),%zmm17
@@ -465,6 +458,7 @@ _CET_ENDBR
 	vbroadcasti32x4	-48(%r11),%zmm21
 	vbroadcasti32x4	-32(%r11),%zmm22
 	vbroadcasti32x4	-16(%r11),%zmm23
+
 .Lcrypt_loop_4x__func1:
 
 
@@ -518,6 +512,9 @@ _CET_ENDBR
 	prefetcht0	512+64(%rdi)
 	prefetcht0	512+128(%rdi)
 	prefetcht0	512+192(%rdi)
+
+
+
 	vpshufb	%zmm8,%zmm4,%zmm4
 	vpxord	%zmm10,%zmm4,%zmm4
 	vpshufb	%zmm8,%zmm5,%zmm5
@@ -607,28 +604,21 @@ _CET_ENDBR
 	vaesenc	%zmm23,%zmm2,%zmm2
 	vaesenc	%zmm23,%zmm3,%zmm3
 
+
 	vextracti32x4	$1,%zmm10,%xmm4
 	vextracti32x4	$2,%zmm10,%xmm5
 	vextracti32x4	$3,%zmm10,%xmm6
 	vpxord	%xmm4,%xmm10,%xmm10
 	vpternlogd	$0x96,%xmm5,%xmm6,%xmm10
 
-
-
-
 	vpxord	0(%rdi),%zmm14,%zmm4
 	vpxord	64(%rdi),%zmm14,%zmm5
 	vpxord	128(%rdi),%zmm14,%zmm6
 	vpxord	192(%rdi),%zmm14,%zmm7
-
-
-
 	vaesenclast	%zmm4,%zmm0,%zmm4
 	vaesenclast	%zmm5,%zmm1,%zmm5
 	vaesenclast	%zmm6,%zmm2,%zmm6
 	vaesenclast	%zmm7,%zmm3,%zmm7
-
-
 	vmovdqu8	%zmm4,0(%rsi)
 	vmovdqu8	%zmm5,64(%rsi)
 	vmovdqu8	%zmm6,128(%rsi)
@@ -899,6 +889,7 @@ _CET_ENDBR
 	vmovdqu8	256-192(%r9),%zmm28
 	vmovdqu8	256-128(%r9),%zmm29
 	vmovdqu8	256-64(%r9),%zmm30
+
 	vbroadcasti32x4	-144(%r11),%zmm15
 	vbroadcasti32x4	-128(%r11),%zmm16
 	vbroadcasti32x4	-112(%r11),%zmm17
@@ -908,6 +899,7 @@ _CET_ENDBR
 	vbroadcasti32x4	-48(%r11),%zmm21
 	vbroadcasti32x4	-32(%r11),%zmm22
 	vbroadcasti32x4	-16(%r11),%zmm23
+
 .Lcrypt_loop_4x__func2:
 	vmovdqu8	0(%rdi),%zmm4
 	vmovdqu8	64(%rdi),%zmm5
@@ -965,6 +957,9 @@ _CET_ENDBR
 	prefetcht0	512+64(%rdi)
 	prefetcht0	512+128(%rdi)
 	prefetcht0	512+192(%rdi)
+
+
+
 	vpshufb	%zmm8,%zmm4,%zmm4
 	vpxord	%zmm10,%zmm4,%zmm4
 	vpshufb	%zmm8,%zmm5,%zmm5
@@ -1054,28 +1049,21 @@ _CET_ENDBR
 	vaesenc	%zmm23,%zmm2,%zmm2
 	vaesenc	%zmm23,%zmm3,%zmm3
 
+
 	vextracti32x4	$1,%zmm10,%xmm4
 	vextracti32x4	$2,%zmm10,%xmm5
 	vextracti32x4	$3,%zmm10,%xmm6
 	vpxord	%xmm4,%xmm10,%xmm10
 	vpternlogd	$0x96,%xmm5,%xmm6,%xmm10
 
-
-
-
 	vpxord	0(%rdi),%zmm14,%zmm4
 	vpxord	64(%rdi),%zmm14,%zmm5
 	vpxord	128(%rdi),%zmm14,%zmm6
 	vpxord	192(%rdi),%zmm14,%zmm7
-
-
-
 	vaesenclast	%zmm4,%zmm0,%zmm4
 	vaesenclast	%zmm5,%zmm1,%zmm5
 	vaesenclast	%zmm6,%zmm2,%zmm6
 	vaesenclast	%zmm7,%zmm3,%zmm7
-
-
 	vmovdqu8	%zmm4,0(%rsi)
 	vmovdqu8	%zmm5,64(%rsi)
 	vmovdqu8	%zmm6,128(%rsi)

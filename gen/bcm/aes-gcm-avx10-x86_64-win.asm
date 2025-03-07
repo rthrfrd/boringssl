@@ -495,22 +495,14 @@ $L$vaesenc_loop_first_4_vecs__func1:
 	add	rax,16
 	cmp	r11,rax
 	jne	NEAR $L$vaesenc_loop_first_4_vecs__func1
-
-
-
 	vpxord	zmm4,zmm14,ZMMWORD[rcx]
 	vpxord	zmm5,zmm14,ZMMWORD[64+rcx]
 	vpxord	zmm6,zmm14,ZMMWORD[128+rcx]
 	vpxord	zmm7,zmm14,ZMMWORD[192+rcx]
-
-
-
 	vaesenclast	zmm4,zmm0,zmm4
 	vaesenclast	zmm5,zmm1,zmm5
 	vaesenclast	zmm6,zmm2,zmm6
 	vaesenclast	zmm7,zmm3,zmm7
-
-
 	vmovdqu8	ZMMWORD[rdx],zmm4
 	vmovdqu8	ZMMWORD[64+rdx],zmm5
 	vmovdqu8	ZMMWORD[128+rdx],zmm6
@@ -521,6 +513,7 @@ $L$vaesenc_loop_first_4_vecs__func1:
 	add	r8,-4*64
 	cmp	r8,4*64-1
 	jbe	NEAR $L$ghash_last_ciphertext_4x__func1
+
 	vbroadcasti32x4	zmm15,ZMMWORD[((-144))+r11]
 	vbroadcasti32x4	zmm16,ZMMWORD[((-128))+r11]
 	vbroadcasti32x4	zmm17,ZMMWORD[((-112))+r11]
@@ -530,6 +523,7 @@ $L$vaesenc_loop_first_4_vecs__func1:
 	vbroadcasti32x4	zmm21,ZMMWORD[((-48))+r11]
 	vbroadcasti32x4	zmm22,ZMMWORD[((-32))+r11]
 	vbroadcasti32x4	zmm23,ZMMWORD[((-16))+r11]
+
 $L$crypt_loop_4x__func1:
 
 
@@ -583,6 +577,9 @@ $L$aes128__func1:
 	prefetcht0	[((512+64))+rcx]
 	prefetcht0	[((512+128))+rcx]
 	prefetcht0	[((512+192))+rcx]
+
+
+
 	vpshufb	zmm4,zmm4,zmm8
 	vpxord	zmm4,zmm4,zmm10
 	vpshufb	zmm5,zmm5,zmm8
@@ -672,28 +669,21 @@ $L$aes128__func1:
 	vaesenc	zmm2,zmm2,zmm23
 	vaesenc	zmm3,zmm3,zmm23
 
+
 	vextracti32x4	xmm4,zmm10,1
 	vextracti32x4	xmm5,zmm10,2
 	vextracti32x4	xmm6,zmm10,3
 	vpxord	xmm10,xmm10,xmm4
 	vpternlogd	xmm10,xmm6,xmm5,0x96
 
-
-
-
 	vpxord	zmm4,zmm14,ZMMWORD[rcx]
 	vpxord	zmm5,zmm14,ZMMWORD[64+rcx]
 	vpxord	zmm6,zmm14,ZMMWORD[128+rcx]
 	vpxord	zmm7,zmm14,ZMMWORD[192+rcx]
-
-
-
 	vaesenclast	zmm4,zmm0,zmm4
 	vaesenclast	zmm5,zmm1,zmm5
 	vaesenclast	zmm6,zmm2,zmm6
 	vaesenclast	zmm7,zmm3,zmm7
-
-
 	vmovdqu8	ZMMWORD[rdx],zmm4
 	vmovdqu8	ZMMWORD[64+rdx],zmm5
 	vmovdqu8	ZMMWORD[128+rdx],zmm6
@@ -1003,6 +993,7 @@ $L$SEH_endprologue_aes_gcm_dec_update_vaes_avx10_512_16:
 	vmovdqu8	zmm28,ZMMWORD[((256-192))+rdi]
 	vmovdqu8	zmm29,ZMMWORD[((256-128))+rdi]
 	vmovdqu8	zmm30,ZMMWORD[((256-64))+rdi]
+
 	vbroadcasti32x4	zmm15,ZMMWORD[((-144))+r11]
 	vbroadcasti32x4	zmm16,ZMMWORD[((-128))+r11]
 	vbroadcasti32x4	zmm17,ZMMWORD[((-112))+r11]
@@ -1012,6 +1003,7 @@ $L$SEH_endprologue_aes_gcm_dec_update_vaes_avx10_512_16:
 	vbroadcasti32x4	zmm21,ZMMWORD[((-48))+r11]
 	vbroadcasti32x4	zmm22,ZMMWORD[((-32))+r11]
 	vbroadcasti32x4	zmm23,ZMMWORD[((-16))+r11]
+
 $L$crypt_loop_4x__func2:
 	vmovdqu8	zmm4,ZMMWORD[rcx]
 	vmovdqu8	zmm5,ZMMWORD[64+rcx]
@@ -1069,6 +1061,9 @@ $L$aes128__func2:
 	prefetcht0	[((512+64))+rcx]
 	prefetcht0	[((512+128))+rcx]
 	prefetcht0	[((512+192))+rcx]
+
+
+
 	vpshufb	zmm4,zmm4,zmm8
 	vpxord	zmm4,zmm4,zmm10
 	vpshufb	zmm5,zmm5,zmm8
@@ -1158,28 +1153,21 @@ $L$aes128__func2:
 	vaesenc	zmm2,zmm2,zmm23
 	vaesenc	zmm3,zmm3,zmm23
 
+
 	vextracti32x4	xmm4,zmm10,1
 	vextracti32x4	xmm5,zmm10,2
 	vextracti32x4	xmm6,zmm10,3
 	vpxord	xmm10,xmm10,xmm4
 	vpternlogd	xmm10,xmm6,xmm5,0x96
 
-
-
-
 	vpxord	zmm4,zmm14,ZMMWORD[rcx]
 	vpxord	zmm5,zmm14,ZMMWORD[64+rcx]
 	vpxord	zmm6,zmm14,ZMMWORD[128+rcx]
 	vpxord	zmm7,zmm14,ZMMWORD[192+rcx]
-
-
-
 	vaesenclast	zmm4,zmm0,zmm4
 	vaesenclast	zmm5,zmm1,zmm5
 	vaesenclast	zmm6,zmm2,zmm6
 	vaesenclast	zmm7,zmm3,zmm7
-
-
 	vmovdqu8	ZMMWORD[rdx],zmm4
 	vmovdqu8	ZMMWORD[64+rdx],zmm5
 	vmovdqu8	ZMMWORD[128+rdx],zmm6
