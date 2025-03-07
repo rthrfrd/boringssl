@@ -14,87 +14,99 @@
 
 package runner
 
+import "fmt"
+
 func addExportKeyingMaterialTests() {
-	for _, vers := range tlsVersions {
-		testCases = append(testCases, testCase{
-			name: "ExportKeyingMaterial-" + vers.name,
-			config: Config{
-				MaxVersion: vers.version,
-			},
-			// Test the exporter in both initial and resumption
-			// handshakes.
-			resumeSession:        true,
-			exportKeyingMaterial: 1024,
-			exportLabel:          "label",
-			exportContext:        "context",
-			useExportContext:     true,
-		})
-		testCases = append(testCases, testCase{
-			name: "ExportKeyingMaterial-NoContext-" + vers.name,
-			config: Config{
-				MaxVersion: vers.version,
-			},
-			exportKeyingMaterial: 1024,
-		})
-		testCases = append(testCases, testCase{
-			name: "ExportKeyingMaterial-EmptyContext-" + vers.name,
-			config: Config{
-				MaxVersion: vers.version,
-			},
-			exportKeyingMaterial: 1024,
-			useExportContext:     true,
-		})
-		testCases = append(testCases, testCase{
-			name: "ExportKeyingMaterial-Small-" + vers.name,
-			config: Config{
-				MaxVersion: vers.version,
-			},
-			exportKeyingMaterial: 1,
-			exportLabel:          "label",
-			exportContext:        "context",
-			useExportContext:     true,
-		})
-
-		if vers.version >= VersionTLS13 {
-			// Test the exporters do not work while the client is
-			// sending 0-RTT data.
+	for _, protocol := range []protocol{tls, dtls, quic} {
+		for _, vers := range allVersions(protocol) {
+			suffix := fmt.Sprintf("%s-%s", protocol, vers)
 			testCases = append(testCases, testCase{
-				name: "NoEarlyKeyingMaterial-Client-InEarlyData-" + vers.name,
+				protocol: protocol,
+				name:     "ExportKeyingMaterial-" + suffix,
 				config: Config{
 					MaxVersion: vers.version,
 				},
-				resumeSession: true,
-				earlyData:     true,
-				flags: []string{
-					"-on-resume-export-keying-material", "1024",
-					"-on-resume-export-label", "label",
-					"-on-resume-export-context", "context",
-				},
-				shouldFail:    true,
-				expectedError: ":HANDSHAKE_NOT_COMPLETE:",
-			})
-
-			// Test the normal exporter on the server in half-RTT.
-			testCases = append(testCases, testCase{
-				testType: serverTest,
-				name:     "ExportKeyingMaterial-Server-HalfRTT-" + vers.name,
-				config: Config{
-					MaxVersion: vers.version,
-					Bugs: ProtocolBugs{
-						// The shim writes exported data immediately after
-						// the handshake returns, so disable the built-in
-						// early data test.
-						SendEarlyData:     [][]byte{},
-						ExpectHalfRTTData: [][]byte{},
-					},
-				},
+				// Test the exporter in both initial and resumption
+				// handshakes.
 				resumeSession:        true,
-				earlyData:            true,
 				exportKeyingMaterial: 1024,
 				exportLabel:          "label",
 				exportContext:        "context",
 				useExportContext:     true,
 			})
+			testCases = append(testCases, testCase{
+				protocol: protocol,
+				name:     "ExportKeyingMaterial-NoContext-" + suffix,
+				config: Config{
+					MaxVersion: vers.version,
+				},
+				exportKeyingMaterial: 1024,
+			})
+			testCases = append(testCases, testCase{
+				protocol: protocol,
+				name:     "ExportKeyingMaterial-EmptyContext-" + suffix,
+				config: Config{
+					MaxVersion: vers.version,
+				},
+				exportKeyingMaterial: 1024,
+				useExportContext:     true,
+			})
+			testCases = append(testCases, testCase{
+				protocol: protocol,
+				name:     "ExportKeyingMaterial-Small-" + suffix,
+				config: Config{
+					MaxVersion: vers.version,
+				},
+				exportKeyingMaterial: 1,
+				exportLabel:          "label",
+				exportContext:        "context",
+				useExportContext:     true,
+			})
+
+			// TODO(crbug.com/381113363): Support 0-RTT in DTLS 1.3.
+			if vers.version >= VersionTLS13 && protocol != dtls {
+				// Test the exporters do not work while the client is
+				// sending 0-RTT data.
+				testCases = append(testCases, testCase{
+					protocol: protocol,
+					name:     "NoEarlyKeyingMaterial-Client-InEarlyData-" + suffix,
+					config: Config{
+						MaxVersion: vers.version,
+					},
+					resumeSession: true,
+					earlyData:     true,
+					flags: []string{
+						"-on-resume-export-keying-material", "1024",
+						"-on-resume-export-label", "label",
+						"-on-resume-export-context", "context",
+					},
+					shouldFail:    true,
+					expectedError: ":HANDSHAKE_NOT_COMPLETE:",
+				})
+
+				// Test the normal exporter on the server in half-RTT.
+				testCases = append(testCases, testCase{
+					testType: serverTest,
+					protocol: protocol,
+					name:     "ExportKeyingMaterial-Server-HalfRTT-" + suffix,
+					config: Config{
+						MaxVersion: vers.version,
+						Bugs: ProtocolBugs{
+							// The shim writes exported data immediately after
+							// the handshake returns, so disable the built-in
+							// early data test.
+							SendEarlyData:     [][]byte{},
+							ExpectHalfRTTData: [][]byte{},
+						},
+					},
+					resumeSession:        true,
+					earlyData:            true,
+					exportKeyingMaterial: 1024,
+					exportLabel:          "label",
+					exportContext:        "context",
+					useExportContext:     true,
+				})
+			}
 		}
 	}
 
