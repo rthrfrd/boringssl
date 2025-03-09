@@ -474,7 +474,7 @@ bool tls13_derive_session_psk(SSL_SESSION *session, Span<const uint8_t> nonce,
 
 static const char kTLS13LabelExportKeying[] = "exporter";
 
-bool tls13_export_keying_material(SSL *ssl, Span<uint8_t> out,
+bool tls13_export_keying_material(const SSL *ssl, Span<uint8_t> out,
                                   Span<const uint8_t> secret,
                                   std::string_view label,
                                   Span<const uint8_t> context) {

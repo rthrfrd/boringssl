@@ -1827,9 +1827,12 @@ OPENSSL_EXPORT int SSL_get_secure_renegotiation_support(const SSL *ssl);
 // would give different output.
 //
 // It returns one on success and zero otherwise.
-OPENSSL_EXPORT int SSL_export_keying_material(
-    SSL *ssl, uint8_t *out, size_t out_len, const char *label, size_t label_len,
-    const uint8_t *context, size_t context_len, int use_context);
+OPENSSL_EXPORT int SSL_export_keying_material(const SSL *ssl, uint8_t *out,
+                                              size_t out_len, const char *label,
+                                              size_t label_len,
+                                              const uint8_t *context,
+                                              size_t context_len,
+                                              int use_context);
 
 
 // Sessions.

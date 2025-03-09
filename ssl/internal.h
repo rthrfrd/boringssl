@@ -1660,7 +1660,7 @@ bool tls13_derive_resumption_secret(SSL_HANDSHAKE *hs);
 
 // tls13_export_keying_material provides an exporter interface to use the
 // |exporter_secret|.
-bool tls13_export_keying_material(SSL *ssl, Span<uint8_t> out,
+bool tls13_export_keying_material(const SSL *ssl, Span<uint8_t> out,
                                   Span<const uint8_t> secret,
                                   std::string_view label,
                                   Span<const uint8_t> context);
