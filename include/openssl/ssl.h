@@ -1823,8 +1823,13 @@ OPENSSL_EXPORT int SSL_get_secure_renegotiation_support(const SSL *ssl);
 // SSL_export_keying_material exports a connection-specific secret from |ssl|,
 // as specified in RFC 5705. It writes |out_len| bytes to |out| given a label
 // and optional context. If |use_context| is zero, the |context| parameter is
-// ignored. Prior to TLS 1.3, using a zero-length context and using no context
-// would give different output.
+// ignored.
+//
+// To derive the same value, both sides of a connection must use the same output
+// length, label, and context. In TLS 1.2 and earlier, using a zero-length
+// context and using no context would give different output. In TLS 1.3 and
+// later, the output length impacts the derivation, so a truncated longer export
+// will not match a shorter export.
 //
 // It returns one on success and zero otherwise.
 OPENSSL_EXPORT int SSL_export_keying_material(const SSL *ssl, uint8_t *out,
