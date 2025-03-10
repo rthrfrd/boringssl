@@ -56,7 +56,7 @@ $L$SEH_begin_gcm_gmult_vpclmulqdq_avx10_1:
 _CET_ENDBR
 	sub	rsp,24
 $L$SEH_prologue_gcm_gmult_vpclmulqdq_avx10_2:
-	movdqa	XMMWORD[rsp],xmm6
+	vmovdqa	XMMWORD[rsp],xmm6
 $L$SEH_prologue_gcm_gmult_vpclmulqdq_avx10_3:
 
 $L$SEH_endprologue_gcm_gmult_vpclmulqdq_avx10_4:
@@ -82,7 +82,7 @@ $L$SEH_endprologue_gcm_gmult_vpclmulqdq_avx10_4:
 
 	vpshufb	xmm0,xmm0,xmm1
 	vmovdqu	XMMWORD[rcx],xmm0
-	movdqa	xmm6,XMMWORD[rsp]
+	vmovdqa	xmm6,XMMWORD[rsp]
 	add	rsp,24
 	ret
 $L$SEH_end_gcm_gmult_vpclmulqdq_avx10_5:
@@ -203,21 +203,21 @@ $L$SEH_begin_gcm_ghash_vpclmulqdq_avx10_512_1:
 _CET_ENDBR
 	sub	rsp,136
 $L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_2:
-	movdqa	XMMWORD[rsp],xmm6
+	vmovdqa	XMMWORD[rsp],xmm6
 $L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_3:
-	movdqa	XMMWORD[16+rsp],xmm7
+	vmovdqa	XMMWORD[16+rsp],xmm7
 $L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_4:
-	movdqa	XMMWORD[32+rsp],xmm8
+	vmovdqa	XMMWORD[32+rsp],xmm8
 $L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_5:
-	movdqa	XMMWORD[48+rsp],xmm9
+	vmovdqa	XMMWORD[48+rsp],xmm9
 $L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_6:
-	movdqa	XMMWORD[64+rsp],xmm10
+	vmovdqa	XMMWORD[64+rsp],xmm10
 $L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_7:
-	movdqa	XMMWORD[80+rsp],xmm11
+	vmovdqa	XMMWORD[80+rsp],xmm11
 $L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_8:
-	movdqa	XMMWORD[96+rsp],xmm12
+	vmovdqa	XMMWORD[96+rsp],xmm12
 $L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_9:
-	movdqa	XMMWORD[112+rsp],xmm13
+	vmovdqa	XMMWORD[112+rsp],xmm13
 $L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_10:
 
 $L$SEH_endprologue_gcm_ghash_vpclmulqdq_avx10_512_11:
@@ -367,14 +367,14 @@ $L$aad_done__func1:
 	vmovdqu	XMMWORD[rcx],xmm5
 
 	vzeroupper
-	movdqa	xmm6,XMMWORD[rsp]
-	movdqa	xmm7,XMMWORD[16+rsp]
-	movdqa	xmm8,XMMWORD[32+rsp]
-	movdqa	xmm9,XMMWORD[48+rsp]
-	movdqa	xmm10,XMMWORD[64+rsp]
-	movdqa	xmm11,XMMWORD[80+rsp]
-	movdqa	xmm12,XMMWORD[96+rsp]
-	movdqa	xmm13,XMMWORD[112+rsp]
+	vmovdqa	xmm6,XMMWORD[rsp]
+	vmovdqa	xmm7,XMMWORD[16+rsp]
+	vmovdqa	xmm8,XMMWORD[32+rsp]
+	vmovdqa	xmm9,XMMWORD[48+rsp]
+	vmovdqa	xmm10,XMMWORD[64+rsp]
+	vmovdqa	xmm11,XMMWORD[80+rsp]
+	vmovdqa	xmm12,XMMWORD[96+rsp]
+	vmovdqa	xmm13,XMMWORD[112+rsp]
 	add	rsp,136
 	ret
 $L$SEH_end_gcm_ghash_vpclmulqdq_avx10_512_12:
@@ -399,25 +399,25 @@ $L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_4:
 	mov	r12,QWORD[80+rsp]
 	sub	rsp,160
 $L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_5:
-	movdqa	XMMWORD[rsp],xmm6
+	vmovdqa	XMMWORD[rsp],xmm6
 $L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_6:
-	movdqa	XMMWORD[16+rsp],xmm7
+	vmovdqa	XMMWORD[16+rsp],xmm7
 $L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_7:
-	movdqa	XMMWORD[32+rsp],xmm8
+	vmovdqa	XMMWORD[32+rsp],xmm8
 $L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_8:
-	movdqa	XMMWORD[48+rsp],xmm9
+	vmovdqa	XMMWORD[48+rsp],xmm9
 $L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_9:
-	movdqa	XMMWORD[64+rsp],xmm10
+	vmovdqa	XMMWORD[64+rsp],xmm10
 $L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_10:
-	movdqa	XMMWORD[80+rsp],xmm11
+	vmovdqa	XMMWORD[80+rsp],xmm11
 $L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_11:
-	movdqa	XMMWORD[96+rsp],xmm12
+	vmovdqa	XMMWORD[96+rsp],xmm12
 $L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_12:
-	movdqa	XMMWORD[112+rsp],xmm13
+	vmovdqa	XMMWORD[112+rsp],xmm13
 $L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_13:
-	movdqa	XMMWORD[128+rsp],xmm14
+	vmovdqa	XMMWORD[128+rsp],xmm14
 $L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_14:
-	movdqa	XMMWORD[144+rsp],xmm15
+	vmovdqa	XMMWORD[144+rsp],xmm15
 $L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_15:
 
 $L$SEH_endprologue_aes_gcm_enc_update_vaes_avx10_512_16:
@@ -894,16 +894,16 @@ $L$done__func1:
 	vmovdqu	XMMWORD[r12],xmm10
 
 	vzeroupper
-	movdqa	xmm6,XMMWORD[rsp]
-	movdqa	xmm7,XMMWORD[16+rsp]
-	movdqa	xmm8,XMMWORD[32+rsp]
-	movdqa	xmm9,XMMWORD[48+rsp]
-	movdqa	xmm10,XMMWORD[64+rsp]
-	movdqa	xmm11,XMMWORD[80+rsp]
-	movdqa	xmm12,XMMWORD[96+rsp]
-	movdqa	xmm13,XMMWORD[112+rsp]
-	movdqa	xmm14,XMMWORD[128+rsp]
-	movdqa	xmm15,XMMWORD[144+rsp]
+	vmovdqa	xmm6,XMMWORD[rsp]
+	vmovdqa	xmm7,XMMWORD[16+rsp]
+	vmovdqa	xmm8,XMMWORD[32+rsp]
+	vmovdqa	xmm9,XMMWORD[48+rsp]
+	vmovdqa	xmm10,XMMWORD[64+rsp]
+	vmovdqa	xmm11,XMMWORD[80+rsp]
+	vmovdqa	xmm12,XMMWORD[96+rsp]
+	vmovdqa	xmm13,XMMWORD[112+rsp]
+	vmovdqa	xmm14,XMMWORD[128+rsp]
+	vmovdqa	xmm15,XMMWORD[144+rsp]
 	add	rsp,160
 	pop	r12
 	pop	rdi
@@ -931,25 +931,25 @@ $L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_4:
 	mov	r12,QWORD[80+rsp]
 	sub	rsp,160
 $L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_5:
-	movdqa	XMMWORD[rsp],xmm6
+	vmovdqa	XMMWORD[rsp],xmm6
 $L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_6:
-	movdqa	XMMWORD[16+rsp],xmm7
+	vmovdqa	XMMWORD[16+rsp],xmm7
 $L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_7:
-	movdqa	XMMWORD[32+rsp],xmm8
+	vmovdqa	XMMWORD[32+rsp],xmm8
 $L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_8:
-	movdqa	XMMWORD[48+rsp],xmm9
+	vmovdqa	XMMWORD[48+rsp],xmm9
 $L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_9:
-	movdqa	XMMWORD[64+rsp],xmm10
+	vmovdqa	XMMWORD[64+rsp],xmm10
 $L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_10:
-	movdqa	XMMWORD[80+rsp],xmm11
+	vmovdqa	XMMWORD[80+rsp],xmm11
 $L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_11:
-	movdqa	XMMWORD[96+rsp],xmm12
+	vmovdqa	XMMWORD[96+rsp],xmm12
 $L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_12:
-	movdqa	XMMWORD[112+rsp],xmm13
+	vmovdqa	XMMWORD[112+rsp],xmm13
 $L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_13:
-	movdqa	XMMWORD[128+rsp],xmm14
+	vmovdqa	XMMWORD[128+rsp],xmm14
 $L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_14:
-	movdqa	XMMWORD[144+rsp],xmm15
+	vmovdqa	XMMWORD[144+rsp],xmm15
 $L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_15:
 
 $L$SEH_endprologue_aes_gcm_dec_update_vaes_avx10_512_16:
@@ -1336,16 +1336,16 @@ $L$done__func2:
 	vmovdqu	XMMWORD[r12],xmm10
 
 	vzeroupper
-	movdqa	xmm6,XMMWORD[rsp]
-	movdqa	xmm7,XMMWORD[16+rsp]
-	movdqa	xmm8,XMMWORD[32+rsp]
-	movdqa	xmm9,XMMWORD[48+rsp]
-	movdqa	xmm10,XMMWORD[64+rsp]
-	movdqa	xmm11,XMMWORD[80+rsp]
-	movdqa	xmm12,XMMWORD[96+rsp]
-	movdqa	xmm13,XMMWORD[112+rsp]
-	movdqa	xmm14,XMMWORD[128+rsp]
-	movdqa	xmm15,XMMWORD[144+rsp]
+	vmovdqa	xmm6,XMMWORD[rsp]
+	vmovdqa	xmm7,XMMWORD[16+rsp]
+	vmovdqa	xmm8,XMMWORD[32+rsp]
+	vmovdqa	xmm9,XMMWORD[48+rsp]
+	vmovdqa	xmm10,XMMWORD[64+rsp]
+	vmovdqa	xmm11,XMMWORD[80+rsp]
+	vmovdqa	xmm12,XMMWORD[96+rsp]
+	vmovdqa	xmm13,XMMWORD[112+rsp]
+	vmovdqa	xmm14,XMMWORD[128+rsp]
+	vmovdqa	xmm15,XMMWORD[144+rsp]
 	add	rsp,160
 	pop	r12
 	pop	rdi
