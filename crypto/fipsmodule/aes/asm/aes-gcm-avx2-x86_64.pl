@@ -490,14 +490,24 @@ $code .= _begin_func "gcm_ghash_vpclmulqdq_avx2", 1;
     @{[ _save_xmmregs (6 .. 9) ]}
     .seh_endprologue
 
-    vbroadcasti128  .Lbswap_mask(%rip), $BSWAP_MASK
+    # Load the bswap_mask and gfpoly constants.  Since AADLEN is usually small,
+    # usually only 128-bit vectors will be used.  So as an optimization, don't
+    # broadcast these constants to both 128-bit lanes quite yet.
+    vmovdqu         .Lbswap_mask(%rip), $BSWAP_MASK_XMM
+    vmovdqu         .Lgfpoly(%rip), $GFPOLY_XMM
+
+    # Load the GHASH accumulator.
     vmovdqu         ($GHASH_ACC_PTR), $GHASH_ACC_XMM
     vpshufb         $BSWAP_MASK_XMM, $GHASH_ACC_XMM, $GHASH_ACC_XMM
-    vbroadcasti128  .Lgfpoly(%rip), $GFPOLY
 
     # Optimize for AADLEN < 32 by checking for AADLEN < 32 before AADLEN < 128.
     cmp             \$32, $AADLEN
     jb              .Lghash_lastblock
+
+    # AADLEN >= 32, so we'll operate on full vectors.  Broadcast bswap_mask and
+    # gfpoly to both 128-bit lanes.
+    vinserti128     \$1, $BSWAP_MASK_XMM, $BSWAP_MASK, $BSWAP_MASK
+    vinserti128     \$1, $GFPOLY_XMM, $GFPOLY, $GFPOLY
 
     cmp             \$127, $AADLEN
     jbe             .Lghash_loop_1x
@@ -530,9 +540,6 @@ $code .= _begin_func "gcm_ghash_vpclmulqdq_avx2", 1;
     cmp             \$32, $AADLEN
     jae             .Lghash_loop_1x
 .Lghash_loop_1x_done:
-    # Issue the vzeroupper that is needed after using ymm registers.  Do it here
-    # instead of at the end, to minimize overhead for small AADLEN.
-    vzeroupper
 
     # Update GHASH with the remaining 16-byte block if any.
 .Lghash_lastblock:
@@ -549,6 +556,8 @@ $code .= _begin_func "gcm_ghash_vpclmulqdq_avx2", 1;
     # Store the updated GHASH accumulator back to memory.
     vpshufb         $BSWAP_MASK_XMM, $GHASH_ACC_XMM, $GHASH_ACC_XMM
     vmovdqu         $GHASH_ACC_XMM, ($GHASH_ACC_PTR)
+
+    vzeroupper
 ___
 }
 $code .= _end_func;

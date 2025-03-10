@@ -202,14 +202,24 @@ _CET_ENDBR
 
 
 
-	vbroadcasti128	L$bswap_mask(%rip),%ymm6
+
+
+
+	vmovdqu	L$bswap_mask(%rip),%xmm6
+	vmovdqu	L$gfpoly(%rip),%xmm7
+
+
 	vmovdqu	(%rdi),%xmm5
 	vpshufb	%xmm6,%xmm5,%xmm5
-	vbroadcasti128	L$gfpoly(%rip),%ymm7
 
 
 	cmpq	$32,%rcx
 	jb	L$ghash_lastblock
+
+
+
+	vinserti128	$1,%xmm6,%ymm6,%ymm6
+	vinserti128	$1,%xmm7,%ymm7,%ymm7
 
 	cmpq	$127,%rcx
 	jbe	L$ghash_loop_1x
@@ -319,9 +329,6 @@ L$ghash_loop_1x:
 L$ghash_loop_1x_done:
 
 
-	vzeroupper
-
-
 L$ghash_lastblock:
 	testq	%rcx,%rcx
 	jz	L$ghash_done
@@ -348,6 +355,8 @@ L$ghash_done:
 
 	vpshufb	%xmm6,%xmm5,%xmm5
 	vmovdqu	%xmm5,(%rdi)
+
+	vzeroupper
 	ret
 
 

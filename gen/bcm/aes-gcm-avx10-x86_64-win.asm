@@ -337,9 +337,6 @@ $L$aad_loop_1x__func1:
 $L$aad_large_done__func1:
 
 
-	vzeroupper
-
-
 $L$aad_blockbyblock__func1:
 	test	r9,r9
 	jz	NEAR $L$aad_done__func1
@@ -368,6 +365,8 @@ $L$aad_done__func1:
 
 	vpshufb	xmm5,xmm5,xmm4
 	vmovdqu	XMMWORD[rcx],xmm5
+
+	vzeroupper
 	movdqa	xmm6,XMMWORD[rsp]
 	movdqa	xmm7,XMMWORD[16+rsp]
 	movdqa	xmm8,XMMWORD[32+rsp]

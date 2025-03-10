@@ -308,9 +308,6 @@ _CET_ENDBR
 .Laad_large_done__func1:
 
 
-	vzeroupper
-
-
 .Laad_blockbyblock__func1:
 	testq	%rcx,%rcx
 	jz	.Laad_done__func1
@@ -339,6 +336,8 @@ _CET_ENDBR
 
 	vpshufb	%xmm4,%xmm5,%xmm5
 	vmovdqu	%xmm5,(%rdi)
+
+	vzeroupper
 	ret
 
 .cfi_endproc	

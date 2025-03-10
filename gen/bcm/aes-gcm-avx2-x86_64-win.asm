@@ -229,14 +229,24 @@ $L$SEH_prologue_gcm_ghash_vpclmulqdq_avx2_6:
 
 $L$SEH_endprologue_gcm_ghash_vpclmulqdq_avx2_7:
 
-	vbroadcasti128	ymm6,XMMWORD[$L$bswap_mask]
+
+
+
+	vmovdqu	xmm6,XMMWORD[$L$bswap_mask]
+	vmovdqu	xmm7,XMMWORD[$L$gfpoly]
+
+
 	vmovdqu	xmm5,XMMWORD[rcx]
 	vpshufb	xmm5,xmm5,xmm6
-	vbroadcasti128	ymm7,XMMWORD[$L$gfpoly]
 
 
 	cmp	r9,32
 	jb	NEAR $L$ghash_lastblock
+
+
+
+	vinserti128	ymm6,ymm6,xmm6,1
+	vinserti128	ymm7,ymm7,xmm7,1
 
 	cmp	r9,127
 	jbe	NEAR $L$ghash_loop_1x
@@ -346,9 +356,6 @@ $L$ghash_loop_1x:
 $L$ghash_loop_1x_done:
 
 
-	vzeroupper
-
-
 $L$ghash_lastblock:
 	test	r9,r9
 	jz	NEAR $L$ghash_done
@@ -375,6 +382,8 @@ $L$ghash_done:
 
 	vpshufb	xmm5,xmm5,xmm6
 	vmovdqu	XMMWORD[rcx],xmm5
+
+	vzeroupper
 	movdqa	xmm6,XMMWORD[rsp]
 	movdqa	xmm7,XMMWORD[16+rsp]
 	movdqa	xmm8,XMMWORD[32+rsp]

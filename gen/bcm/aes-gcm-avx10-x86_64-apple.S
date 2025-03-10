@@ -308,9 +308,6 @@ L$aad_loop_1x__func1:
 L$aad_large_done__func1:
 
 
-	vzeroupper
-
-
 L$aad_blockbyblock__func1:
 	testq	%rcx,%rcx
 	jz	L$aad_done__func1
@@ -339,6 +336,8 @@ L$aad_done__func1:
 
 	vpshufb	%xmm4,%xmm5,%xmm5
 	vmovdqu	%xmm5,(%rdi)
+
+	vzeroupper
 	ret
 
 
