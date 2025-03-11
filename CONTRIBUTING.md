@@ -65,6 +65,23 @@ valuable contributions. To avoid being presumptuous, we did not proactively list
 all past contributors. If you previously made a contribution, you are likewise
 welcome to send us a patch to be added, or request that we add you.
 
+After the copyright lines, files should include the license notice described in
+the Apache 2.0 appendix. Thus new files should begin with the following header:
+
+    // Copyright YEAR The BoringSSL Authors
+    //
+    // Licensed under the Apache License, Version 2.0 (the "License");
+    // you may not use this file except in compliance with the License.
+    // You may obtain a copy of the License at
+    //
+    //     https://www.apache.org/licenses/LICENSE-2.0
+    //
+    // Unless required by applicable law or agreed to in writing, software
+    // distributed under the License is distributed on an "AS IS" BASIS,
+    // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    // See the License for the specific language governing permissions and
+    // limitations under the License.
+
 ### The small print
 Contributions made by corporations are covered by a different agreement than
 the one above, the
