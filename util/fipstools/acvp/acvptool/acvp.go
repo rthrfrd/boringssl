@@ -17,7 +17,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"crypto"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -42,21 +41,18 @@ import (
 
 	"boringssl.googlesource.com/boringssl.git/util/fipstools/acvp/acvptool/acvp"
 	"boringssl.googlesource.com/boringssl.git/util/fipstools/acvp/acvptool/subprocess"
-	"cloud.google.com/go/storage"
-	"google.golang.org/api/iterator"
 )
 
 var (
-	dumpRegcap         = flag.Bool("regcap", false, "Print module capabilities JSON to stdout")
-	configFilename     = flag.String("config", "config.json", "Location of the configuration JSON file")
-	jsonInputFile      = flag.String("json", "", "Location of a vector-set input file")
-	uploadInputFile    = flag.String("upload", "", "Location of a JSON results file to upload")
-	uploadDirectory    = flag.String("directory", "", "Path to folder where result files to be uploaded are")
-	uploadGcsDirectory = flag.String("gcs", "", "GCS path to folder where result files to be uploaded are")
-	runFlag            = flag.String("run", "", "Name of primitive to run tests for")
-	fetchFlag          = flag.String("fetch", "", "Name of primitive to fetch vectors for")
-	expectedOutFlag    = flag.String("expected-out", "", "Name of a file to write the expected results to")
-	wrapperPath        = flag.String("wrapper", "../../../../build/util/fipstools/acvp/modulewrapper/modulewrapper", "Path to the wrapper binary")
+	dumpRegcap      = flag.Bool("regcap", false, "Print module capabilities JSON to stdout")
+	configFilename  = flag.String("config", "config.json", "Location of the configuration JSON file")
+	jsonInputFile   = flag.String("json", "", "Location of a vector-set input file")
+	uploadInputFile = flag.String("upload", "", "Location of a JSON results file to upload")
+	uploadDirectory = flag.String("directory", "", "Path to folder where result files to be uploaded are")
+	runFlag         = flag.String("run", "", "Name of primitive to run tests for")
+	fetchFlag       = flag.String("fetch", "", "Name of primitive to fetch vectors for")
+	expectedOutFlag = flag.String("expected-out", "", "Name of a file to write the expected results to")
+	wrapperPath     = flag.String("wrapper", "../../../../build/util/fipstools/acvp/modulewrapper/modulewrapper", "Path to the wrapper binary")
 )
 
 type Config struct {
@@ -610,66 +606,6 @@ func uploadResultsDirectory(directory string, config *Config, sessionTokensCache
 	uploadResults(results, sessionID, config, sessionTokensCacheDir)
 }
 
-// Uploads results directory from GCS.
-// Similar to uploadResultsDirectory().
-func uploadResultsFromGcs(gcsBucket string, config *Config, sessionTokensCacheDir string) {
-	u, err := neturl.Parse(gcsBucket)
-	if err != nil {
-		log.Fatal(err)
-	}
-	bucket := u.Host
-	folder := trimLeadingSlash(addTrailingSlash(u.Path))
-	sessionID, err := getLastDigitDir(folder)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
-	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
-	}
-	defer client.Close()
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
-	defer cancel()
-
-	// Access bucket and identify all objects.
-	// Objects include the folder.
-	it := client.Bucket(bucket).Objects(ctx, &storage.Query{
-		Prefix:    folder,
-		Delimiter: "/",
-	})
-
-	var results []nistUploadResult
-	// Go through each object (noting GCS stores objects, not files)
-	for {
-		attrs, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			log.Fatalf("Unable to read bucket: %s", err)
-		}
-		rc, err := client.Bucket(bucket).Object(attrs.Name).NewReader(ctx)
-		if err != nil {
-			log.Fatalf("unable to open object from bucket %q, object %q: %v", bucket, attrs.Name, err)
-			return
-		}
-		defer rc.Close()
-		content, err := ioutil.ReadAll(rc)
-		if err != nil {
-			log.Fatalf("unable to read contents of object %q: %v", attrs.Name, err)
-		}
-		if len(content) == 0 {
-			log.Printf("object (gs://%s/%s) is a \"folder\" or empty.", bucket, attrs.Name)
-			continue
-		}
-
-		results = processResultContent(results, content, sessionID, attrs.Name)
-	}
-
-	uploadResults(results, sessionID, config, sessionTokensCacheDir)
-}
-
 // vectorSetHeader is the first element in the array of JSON elements that makes
 // up the on-disk format for a vector set.
 type vectorSetHeader struct {
@@ -889,8 +825,7 @@ func main() {
 		uploadResultsDirectory(*uploadDirectory, &config, sessionTokensCacheDir)
 		return
 	}
-	if len(*uploadGcsDirectory) > 0 {
-		uploadResultsFromGcs(*uploadGcsDirectory, &config, sessionTokensCacheDir)
+	if handleGCSFlag(&config, sessionTokensCacheDir) {
 		return
 	}
 

@@ -1,4 +1,4 @@
-// Copyright 2020 The BoringSSL Authors
+// Copyright 2025 The BoringSSL Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build !interactive
+//go:build !gcs
 
 package main
 
-import (
-	"boringssl.googlesource.com/boringssl.git/util/fipstools/acvp/acvptool/acvp"
-)
-
-const interactiveModeSupported = false
-
-func runInteractive(*acvp.Server, Config) {
-	panic("not supported")
-}
+func handleGCSFlag(config *Config, sessionTokensCacheDir string) bool { return false }
