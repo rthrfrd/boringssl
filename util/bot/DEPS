@@ -34,9 +34,9 @@ vars = {
   # Keep this in sync with .bazelversion.
   'bazel_version': 'version:3@7.5.0.chromium.1',
   # infra/3pp/tools/cmake/linux-amd64
-  'cmake_version': 'version:3@3.31.5.chromium.8',
+  'cmake_version': 'version:3@3.31.6.chromium.8',
   # infra/3pp/tools/go/linux-amd64
-  'go_version': 'version:3@1.24.0',
+  'go_version': 'version:3@1.24.1',
   # infra/3pp/tools/perl/windows-amd64
   'perl_version': 'version:2@5.32.1.1',
 
@@ -44,14 +44,14 @@ vars = {
   # https://chromium.googlesource.com/chromium/src/+/main/DEPS
   'android_sdk_platform-tools_version': 'WihaseZR6cojZbkzIqwGhpTp92ztaGfqq8njBU8eTXYC',
   'libfuzzer_revision': 'e31b99917861f891308269c36a32363b120126bb',
-  'libcxx_revision': '61c68567ca977656440757c3effe124057509e8f',
-  'libcxxabi_revision': '634228a732a1d9ae1a6d459556e8fc58707cf961',
-  'llvm_libc_revision': '5333472378a666cca9d0fcf6551b4d768c70a55c',
+  'libcxx_revision': '7c3087b8a7563d8218b27b7183ba41cf52d41508',
+  'libcxxabi_revision': '94c5d7a8edc09f0680aee57548c0b5d400c2840d',
+  'llvm_libc_revision': 'b86167407ee6dbb81421aa5d139f056aef1c86d7',
   'ninja_version': 'version:2@1.12.1.chromium.4',
 
   # Update to the latest revision of
   # https://chromium.googlesource.com/chromium/src/tools/clang
-  'tools_clang_revision': '2ca96532f8f3dfc83e43070fca2549ed6393699d',
+  'tools_clang_revision': '19193de25965c139d78bcc8bb0d0c96ee1c46faf',
 
   # The Android NDK cannot be updated until https://crbug.com/boringssl/454 is fixed.
   # We rely on an older NDK to test building without NEON instructions as the baseline.
