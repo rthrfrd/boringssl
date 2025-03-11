@@ -1102,6 +1102,9 @@ bcm_status BCM_mlkem768_generate_key_fips(
     uint8_t out_encoded_public_key[BCM_MLKEM768_PUBLIC_KEY_BYTES],
     uint8_t optional_out_seed[BCM_MLKEM_SEED_BYTES],
     struct BCM_mlkem768_private_key *out_private_key) {
+  if (out_encoded_public_key == nullptr || out_private_key == nullptr) {
+    return bcm_status::failure;
+  }
   BCM_mlkem768_generate_key(out_encoded_public_key, optional_out_seed,
                             out_private_key);
   return BCM_mlkem768_check_fips(out_private_key);
@@ -1163,6 +1166,9 @@ bcm_status BCM_mlkem1024_generate_key_fips(
     uint8_t out_encoded_public_key[BCM_MLKEM1024_PUBLIC_KEY_BYTES],
     uint8_t optional_out_seed[BCM_MLKEM_SEED_BYTES],
     struct BCM_mlkem1024_private_key *out_private_key) {
+  if (out_encoded_public_key == nullptr || out_private_key == nullptr) {
+    return bcm_status::failure;
+  }
   BCM_mlkem1024_generate_key(out_encoded_public_key, optional_out_seed,
                              out_private_key);
   return BCM_mlkem1024_check_fips(out_private_key);

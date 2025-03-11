@@ -544,4 +544,12 @@ TEST(MLKEMTest, PWCT) {
       bcm_status::approved);
 }
 
+TEST(MLKEMTest, NullptrArgumentsToCreate) {
+  // For FIPS reasons, this should fail rather than crash.
+  ASSERT_EQ(BCM_mlkem768_generate_key_fips(nullptr, nullptr, nullptr),
+            bcm_status::failure);
+  ASSERT_EQ(BCM_mlkem1024_generate_key_fips(nullptr, nullptr, nullptr),
+            bcm_status::failure);
+}
+
 }  // namespace

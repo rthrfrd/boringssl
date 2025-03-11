@@ -86,7 +86,7 @@ bcm_infallible generate_key_from_seed_no_self_test(
     abort();
   }
 
-  return bcm_infallible::approved;
+  return bcm_infallible::not_approved;
 }
 
 // Note that this overreads by a byte. This is fine in the context that it's
@@ -294,6 +294,18 @@ bcm_infallible BCM_slhdsa_sha2_128s_generate_key_from_seed(
                                              seed);
 }
 
+bcm_status BCM_slhdsa_sha2_128s_generate_key_from_seed_fips(
+    uint8_t out_public_key[BCM_SLHDSA_SHA2_128S_PUBLIC_KEY_BYTES],
+    uint8_t out_secret_key[BCM_SLHDSA_SHA2_128S_PRIVATE_KEY_BYTES],
+    const uint8_t seed[3 * BCM_SLHDSA_SHA2_128S_N]) {
+  if (out_public_key == nullptr || out_secret_key == nullptr) {
+    return bcm_status::failure;
+  }
+  BCM_slhdsa_sha2_128s_generate_key_from_seed(out_public_key, out_secret_key,
+                                              seed);
+  return bcm_status::approved;
+}
+
 bcm_infallible BCM_slhdsa_sha2_128s_generate_key(
     uint8_t out_public_key[BCM_SLHDSA_SHA2_128S_PUBLIC_KEY_BYTES],
     uint8_t out_private_key[BCM_SLHDSA_SHA2_128S_PRIVATE_KEY_BYTES]) {
@@ -301,6 +313,16 @@ bcm_infallible BCM_slhdsa_sha2_128s_generate_key(
   RAND_bytes(seed, 3 * BCM_SLHDSA_SHA2_128S_N);
   return BCM_slhdsa_sha2_128s_generate_key_from_seed(out_public_key,
                                                      out_private_key, seed);
+}
+
+bcm_status BCM_slhdsa_sha2_128s_generate_key_fips(
+    uint8_t out_public_key[BCM_SLHDSA_SHA2_128S_PUBLIC_KEY_BYTES],
+    uint8_t out_private_key[BCM_SLHDSA_SHA2_128S_PRIVATE_KEY_BYTES]) {
+  if (out_public_key == nullptr || out_private_key == nullptr) {
+    return bcm_status::failure;
+  }
+  BCM_slhdsa_sha2_128s_generate_key(out_public_key, out_private_key);
+  return bcm_status::approved;
 }
 
 bcm_infallible BCM_slhdsa_sha2_128s_public_from_private(

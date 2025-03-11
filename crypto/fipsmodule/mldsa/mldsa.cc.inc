@@ -2032,6 +2032,9 @@ bcm_status BCM_mldsa65_generate_key_fips(
     uint8_t out_encoded_public_key[BCM_MLDSA65_PUBLIC_KEY_BYTES],
     uint8_t out_seed[BCM_MLDSA_SEED_BYTES],
     struct BCM_mldsa65_private_key *out_private_key) {
+  if (out_encoded_public_key == nullptr || out_private_key == nullptr) {
+    return bcm_status::failure;
+  }
   if (BCM_mldsa65_generate_key(out_encoded_public_key, out_seed,
                                out_private_key) == bcm_status::failure) {
     return bcm_status::failure;
@@ -2043,6 +2046,9 @@ bcm_status BCM_mldsa65_generate_key_external_entropy_fips(
     uint8_t out_encoded_public_key[BCM_MLDSA65_PUBLIC_KEY_BYTES],
     struct BCM_mldsa65_private_key *out_private_key,
     const uint8_t entropy[BCM_MLDSA_SEED_BYTES]) {
+  if (out_encoded_public_key == nullptr || out_private_key == nullptr) {
+    return bcm_status::failure;
+  }
   if (BCM_mldsa65_generate_key_external_entropy(out_encoded_public_key,
                                                 out_private_key, entropy) ==
       bcm_status::failure) {
@@ -2188,6 +2194,9 @@ bcm_status BCM_mldsa87_generate_key_fips(
     uint8_t out_encoded_public_key[BCM_MLDSA87_PUBLIC_KEY_BYTES],
     uint8_t out_seed[BCM_MLDSA_SEED_BYTES],
     struct BCM_mldsa87_private_key *out_private_key) {
+  if (out_encoded_public_key == nullptr || out_private_key == nullptr) {
+    return bcm_status::failure;
+  }
   if (BCM_mldsa87_generate_key(out_encoded_public_key, out_seed,
                                out_private_key) == bcm_status::failure) {
     return bcm_status::failure;
@@ -2199,6 +2208,9 @@ bcm_status BCM_mldsa87_generate_key_external_entropy_fips(
     uint8_t out_encoded_public_key[BCM_MLDSA87_PUBLIC_KEY_BYTES],
     struct BCM_mldsa87_private_key *out_private_key,
     const uint8_t entropy[BCM_MLDSA_SEED_BYTES]) {
+  if (out_encoded_public_key == nullptr || out_private_key == nullptr) {
+    return bcm_status::failure;
+  }
   if (BCM_mldsa87_generate_key_external_entropy(out_encoded_public_key,
                                                 out_private_key, entropy) ==
       bcm_status::failure) {

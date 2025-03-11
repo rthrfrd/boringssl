@@ -713,10 +713,18 @@ OPENSSL_EXPORT bcm_status BCM_mlkem1024_marshal_private_key(
 // SLH-DSA-SHA2-128s signature.
 #define BCM_SLHDSA_SHA2_128S_SIGNATURE_BYTES 7856
 
-// SLHDSA_SHA2_128S_generate_key_from_seed generates an SLH-DSA-SHA2-128s key
-// pair from a 48-byte seed and writes the result to |out_public_key| and
+// BCM_slhdsa_sha2_128s_generate_key_from_seed generates an SLH-DSA-SHA2-128s
+// key pair from a 48-byte seed and writes the result to |out_public_key| and
 // |out_secret_key|.
 OPENSSL_EXPORT bcm_infallible BCM_slhdsa_sha2_128s_generate_key_from_seed(
+    uint8_t out_public_key[BCM_SLHDSA_SHA2_128S_PUBLIC_KEY_BYTES],
+    uint8_t out_secret_key[BCM_SLHDSA_SHA2_128S_PRIVATE_KEY_BYTES],
+    const uint8_t seed[3 * BCM_SLHDSA_SHA2_128S_N]);
+
+// BCM_slhdsa_sha2_128s_generate_key_from_seed_fips does the same thing as
+// `BCM_slhdsa_sha2_128s_generate_key_from_seed` but implements the required
+// second check before generating a key by testing for nullptr arguments.
+OPENSSL_EXPORT bcm_status BCM_slhdsa_sha2_128s_generate_key_from_seed_fips(
     uint8_t out_public_key[BCM_SLHDSA_SHA2_128S_PUBLIC_KEY_BYTES],
     uint8_t out_secret_key[BCM_SLHDSA_SHA2_128S_PRIVATE_KEY_BYTES],
     const uint8_t seed[3 * BCM_SLHDSA_SHA2_128S_N]);
@@ -745,6 +753,10 @@ OPENSSL_EXPORT bcm_status BCM_slhdsa_sha2_128s_verify_internal(
     size_t context_len, const uint8_t *msg, size_t msg_len);
 
 OPENSSL_EXPORT bcm_infallible BCM_slhdsa_sha2_128s_generate_key(
+    uint8_t out_public_key[BCM_SLHDSA_SHA2_128S_PUBLIC_KEY_BYTES],
+    uint8_t out_private_key[BCM_SLHDSA_SHA2_128S_PRIVATE_KEY_BYTES]);
+
+OPENSSL_EXPORT bcm_status BCM_slhdsa_sha2_128s_generate_key_fips(
     uint8_t out_public_key[BCM_SLHDSA_SHA2_128S_PUBLIC_KEY_BYTES],
     uint8_t out_private_key[BCM_SLHDSA_SHA2_128S_PRIVATE_KEY_BYTES]);
 

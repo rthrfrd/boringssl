@@ -547,4 +547,18 @@ TEST(MLDSATest, PWCT) {
             bcm_status::approved);
 }
 
+TEST(MLDSATest, NullptrArgumentsToCreate) {
+  // For FIPS reasons, this should fail rather than crash.
+  ASSERT_EQ(BCM_mldsa65_generate_key_fips(nullptr, nullptr, nullptr),
+            bcm_status::failure);
+  ASSERT_EQ(BCM_mldsa87_generate_key_fips(nullptr, nullptr, nullptr),
+            bcm_status::failure);
+  ASSERT_EQ(
+      BCM_mldsa65_generate_key_external_entropy_fips(nullptr, nullptr, nullptr),
+      bcm_status::failure);
+  ASSERT_EQ(
+      BCM_mldsa87_generate_key_external_entropy_fips(nullptr, nullptr, nullptr),
+      bcm_status::failure);
+}
+
 }  // namespace
