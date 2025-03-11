@@ -29,7 +29,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	neturl "net/url"
@@ -587,7 +586,7 @@ func uploadResultsDirectory(directory string, config *Config, sessionTokensCache
 
 	var results []nistUploadResult
 	// Read directory, identify, and process all files.
-	files, err := ioutil.ReadDir(directory)
+	files, err := os.ReadDir(directory)
 	if err != nil {
 		log.Fatalf("Unable to read directory: %s", err)
 	}
@@ -595,7 +594,7 @@ func uploadResultsDirectory(directory string, config *Config, sessionTokensCache
 	for _, file := range files {
 		// Add contents of the result file to results.
 		filePath := filepath.Join(directory, file.Name())
-		content, err := ioutil.ReadFile(filePath)
+		content, err := os.ReadFile(filePath)
 		if err != nil {
 			log.Fatalf("Cannot open input: %s", err)
 		}
