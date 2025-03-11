@@ -246,6 +246,17 @@ void VerifyExtendedKeyUsage(const ParsedCertificate &cert,
   }
 
   if (required_key_purpose == KeyPurpose::RCS_MLS_CLIENT_AUTH) {
+    // Enforce the key usage restriction for a leaf from section A.3.8.3 here
+    // as well.
+    if (is_target_cert &&
+        (!cert.has_key_usage() ||
+         // This works to enforce that digital signature is the only bit because
+         // digital signature is bit 0.
+         !cert.key_usage().AssertsBit(KEY_USAGE_BIT_DIGITAL_SIGNATURE) ||
+         cert.key_usage().bytes().size() != 1 ||
+         cert.key_usage().unused_bits() != 7)) {
+      errors->AddError(cert_errors::kKeyUsageIncorrectForRcsMlsClient);
+    }
     // Rules for MLS client auth. For the leaf and all intermediates, EKU must
     // be present and have exactly one EKU which is rcsMlsClient.
     if (!cert.has_extended_key_usage()) {

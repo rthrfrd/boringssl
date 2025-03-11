@@ -125,6 +125,7 @@ func main() {
 	leafInvalid := leaf
 	leafInvalid.template.UnknownExtKeyUsage = []asn1.ObjectIdentifier{[]int{2, 23, 146, 2, 1, 3},
 		[]int{2, 23, 133, 8, 1}}
+	leafInvalid.template.KeyUsage |= x509.KeyUsageKeyEncipherment
 	mustGenerateCertificate("mls_client_leaf_extra_eku.pem", &leafInvalid, &intermediateInvalid)
 }
 

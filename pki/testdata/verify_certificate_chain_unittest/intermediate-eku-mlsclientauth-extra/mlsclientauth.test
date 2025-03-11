@@ -4,6 +4,7 @@ utc_time: DEFAULT
 key_purpose: MLS_CLIENT_AUTH
 expected_errors:
 ----- Certificate i=0 (CN=MLS Cert Leaf) -----
+ERROR: KeyUsage must have only the digitalSignature bit set for rcsMlsClient auth
 ERROR: The extended key usage does not contain only the rcsMlsClient key purpose.
 
 ----- Certificate i=1 (CN=MLS Cert Intermediate) -----
