@@ -33,8 +33,7 @@ BSSL_NAMESPACE_BEGIN
 
 namespace {
 
-bool IsHandledCriticalExtension(const ParsedExtension &extension,
-                                const ParsedCertificate &cert) {
+bool IsHandledCriticalExtension(const ParsedExtension &extension) {
   if (extension.oid == der::Input(kBasicConstraintsOid)) {
     return true;
   }
@@ -80,13 +79,6 @@ bool IsHandledCriticalExtension(const ParsedExtension &extension,
   if (extension.oid == der::Input(kInhibitAnyPolicyOid)) {
     return true;
   }
-  if (extension.oid == der::Input(kMSApplicationPoliciesOid)) {
-    // Per https://crbug.com/1439638 and
-    // https://learn.microsoft.com/en-us/windows/win32/seccertenroll/supported-extensions#msapplicationpolicies
-    // The MSApplicationPolicies extension may be ignored if the
-    // extendedKeyUsage extension is also present.
-    return cert.has_extended_key_usage();
-  }
 
   return false;
 }
@@ -95,16 +87,33 @@ bool IsHandledCriticalExtension(const ParsedExtension &extension,
 // extensions.
 void VerifyNoUnconsumedCriticalExtensions(const ParsedCertificate &cert,
                                           CertErrors *errors,
-                                          bool allow_precertificate) {
+                                          bool allow_precertificate,
+                                          KeyPurpose key_purpose) {
   for (const auto &it : cert.extensions()) {
     const ParsedExtension &extension = it.second;
-    if (allow_precertificate && extension.oid == der::Input(kCtPoisonOid)) {
-      continue;
-    }
-    if (extension.critical && !IsHandledCriticalExtension(extension, cert)) {
-      errors->AddError(cert_errors::kUnconsumedCriticalExtension,
-                       CreateCertErrorParams2Der("oid", extension.oid, "value",
-                                                 extension.value));
+    if (extension.critical) {
+      if (key_purpose == KeyPurpose::RCS_MLS_CLIENT_AUTH) {
+        if (extension.oid == der::Input(kRcsMlsParticipantInformation) ||
+            extension.oid == der::Input(kRcsMlsAcsParticipantInformation)) {
+          continue;
+        }
+      }
+      if (allow_precertificate && extension.oid == der::Input(kCtPoisonOid)) {
+        continue;
+      }
+      if (extension.oid == der::Input(kMSApplicationPoliciesOid) &&
+          cert.has_extended_key_usage()) {
+        // Per https://crbug.com/1439638 and
+        // https://learn.microsoft.com/en-us/windows/win32/seccertenroll/supported-extensions#msapplicationpolicies
+        // The MSApplicationPolicies extension may be ignored if the
+        // extendedKeyUsage extension is also present.
+        continue;
+      }
+      if (!IsHandledCriticalExtension(extension)) {
+        errors->AddError(cert_errors::kUnconsumedCriticalExtension,
+                         CreateCertErrorParams2Der("oid", extension.oid,
+                                                   "value", extension.value));
+      }
     }
   }
 }
@@ -717,7 +726,7 @@ class PathVerifier {
   // This function corresponds to RFC 5280 section 6.1.4's "Preparation for
   // Certificate i+1" procedure. |cert| is expected to be an intermediate.
   void PrepareForNextCertificate(const ParsedCertificate &cert,
-                                 CertErrors *errors);
+                                 KeyPurpose key_purpose, CertErrors *errors);
 
   // This function corresponds with RFC 5280 section 6.1.5's "Wrap-Up
   // Procedure". It does processing for the final certificate (the target cert).
@@ -1135,6 +1144,7 @@ void PathVerifier::BasicCertificateProcessing(
 }
 
 void PathVerifier::PrepareForNextCertificate(const ParsedCertificate &cert,
+                                             KeyPurpose key_purpose,
                                              CertErrors *errors) {
   // RFC 5280 section 6.1.4 step a-b
   VerifyPolicyMappings(cert, errors);
@@ -1238,8 +1248,8 @@ void PathVerifier::PrepareForNextCertificate(const ParsedCertificate &cert,
   //    the certificate.  Process any other recognized non-critical
   //    extension present in the certificate that is relevant to path
   //    processing.
-  VerifyNoUnconsumedCriticalExtensions(cert, errors,
-                                       delegate_->AcceptPreCertificates());
+  VerifyNoUnconsumedCriticalExtensions(
+      cert, errors, delegate_->AcceptPreCertificates(), key_purpose);
 }
 
 // Checks if the target certificate has the CA bit set. If it does, add
@@ -1302,7 +1312,8 @@ void PathVerifier::WrapUp(const ParsedCertificate &cert,
   //
   // Note that this is duplicated by PrepareForNextCertificate() so as to
   // directly match the procedures in RFC 5280's section 6.1.
-  VerifyNoUnconsumedCriticalExtensions(cert, errors, allow_precertificate);
+  VerifyNoUnconsumedCriticalExtensions(cert, errors, allow_precertificate,
+                                       required_key_purpose);
 
   // This calculates the intersection from RFC 5280 section 6.1.5 step g, as
   // well as applying the deferred recursive node that were skipped earlier in
@@ -1404,7 +1415,8 @@ void PathVerifier::ApplyTrustAnchorConstraints(const ParsedCertificate &cert,
   //    constraints are enforced, clients MUST reject certification paths
   //    containing a trust anchor with unrecognized critical extensions.
   VerifyNoUnconsumedCriticalExtensions(cert, errors,
-                                       /*allow_precertificate=*/false);
+                                       /*allow_precertificate=*/false,
+                                       required_key_purpose);
 }
 
 void PathVerifier::ProcessRootCertificate(const ParsedCertificate &cert,
@@ -1507,7 +1519,8 @@ void PathVerifier::ProcessSingleCertChain(const ParsedCertificate &cert,
   // Checking for unknown critical extensions matches Windows, but is stricter
   // than the Mac verifier.
   VerifyNoUnconsumedCriticalExtensions(cert, errors,
-                                       /*allow_precertificate=*/false);
+                                       /*allow_precertificate=*/false,
+                                       required_key_purpose);
 }
 
 bssl::UniquePtr<EVP_PKEY> PathVerifier::ParseAndCheckPublicKey(
@@ -1650,7 +1663,7 @@ void PathVerifier::Run(
       return;
     }
     if (!is_target_cert) {
-      PrepareForNextCertificate(cert, cert_errors);
+      PrepareForNextCertificate(cert, required_key_purpose, cert_errors);
     } else {
       WrapUp(cert, required_key_purpose, user_initial_policy_set,
              delegate->AcceptPreCertificates(), cert_errors);

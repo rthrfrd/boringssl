@@ -42,6 +42,26 @@ type templateAndKey struct {
 	key      *ecdsa.PrivateKey
 }
 
+func rcsMlsParticipantExtension() (ext pkix.Extension, err error) {
+	var oidParticipantInfo = asn1.ObjectIdentifier{2, 23, 146, 2, 1, 4}
+	ext = pkix.Extension{}
+	ext.Id = oidParticipantInfo
+	ext.Critical = true
+	// Not really a valid value, but doesn't matter to us.
+	ext.Value, err = asn1.Marshal([]asn1.ObjectIdentifier{oidParticipantInfo})
+	return ext, err
+}
+
+func rcsAcsMlsParticipantExtension() (ext pkix.Extension, err error) {
+	var oidParticipantInfo = asn1.ObjectIdentifier{2, 23, 146, 2, 1, 5}
+	ext = pkix.Extension{}
+	ext.Id = oidParticipantInfo
+	ext.Critical = true
+	// Not really a valid value, but doesn't matter to us.
+	ext.Value, err = asn1.Marshal([]asn1.ObjectIdentifier{oidParticipantInfo})
+	return ext, err
+}
+
 func mustGenerateCertificate(path string, subject, issuer *templateAndKey) []byte {
 	cert, err := x509.CreateCertificate(rand.Reader, &subject.template, &issuer.template, &subject.key.PublicKey, issuer.key)
 	if err != nil {
@@ -98,6 +118,17 @@ func main() {
 		},
 		key: intermediateKey,
 	}
+
+	ParticipantExt, err := rcsMlsParticipantExtension()
+	if err != nil {
+		panic(err)
+	}
+
+	AcsParticipantExt, err := rcsAcsMlsParticipantExtension()
+	if err != nil {
+		panic(err)
+	}
+
 	leaf := templateAndKey{
 		template: x509.Certificate{
 			SerialNumber:          new(big.Int).SetInt64(3),
@@ -110,6 +141,7 @@ func main() {
 			SignatureAlgorithm:    x509.ECDSAWithSHA256,
 			SubjectKeyId:          []byte("leaf"),
 			UnknownExtKeyUsage:    []asn1.ObjectIdentifier{[]int{2, 23, 146, 2, 1, 3}},
+			ExtraExtensions:       append([]pkix.Extension{}, ParticipantExt, AcsParticipantExt),
 		},
 		key: leafKey,
 	}
