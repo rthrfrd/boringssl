@@ -70,58 +70,6 @@ static void bn_power5(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *table,
 
 #endif  // defined(OPENSSL_BN_ASM_MONT5)
 
-int BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx) {
-  int i, bits, ret = 0;
-  BIGNUM *v, *rr;
-
-  BN_CTX_start(ctx);
-  if (r == a || r == p) {
-    rr = BN_CTX_get(ctx);
-  } else {
-    rr = r;
-  }
-
-  v = BN_CTX_get(ctx);
-  if (rr == NULL || v == NULL) {
-    goto err;
-  }
-
-  if (BN_copy(v, a) == NULL) {
-    goto err;
-  }
-  bits = BN_num_bits(p);
-
-  if (BN_is_odd(p)) {
-    if (BN_copy(rr, a) == NULL) {
-      goto err;
-    }
-  } else {
-    if (!BN_one(rr)) {
-      goto err;
-    }
-  }
-
-  for (i = 1; i < bits; i++) {
-    if (!BN_sqr(v, v, ctx)) {
-      goto err;
-    }
-    if (BN_is_bit_set(p, i)) {
-      if (!BN_mul(rr, rr, v, ctx)) {
-        goto err;
-      }
-    }
-  }
-
-  if (r != rr && !BN_copy(r, rr)) {
-    goto err;
-  }
-  ret = 1;
-
-err:
-  BN_CTX_end(ctx);
-  return ret;
-}
-
 // BN_window_bits_for_exponent_size returns sliding window size for mod_exp with
 // a |b| bit exponent.
 //
@@ -174,59 +122,6 @@ static int BN_window_bits_for_exponent_size(size_t b) {
 // TABLE_SIZE_SMALL is the same as |TABLE_SIZE|, but when |b| is at most
 // |BN_BITS2| * |BN_SMALL_MAX_WORDS|.
 #define TABLE_SIZE_SMALL (1 << (TABLE_BITS_SMALL - 1))
-
-static int mod_exp_even(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-                        const BIGNUM *m, BN_CTX *ctx) {
-  // No cryptographic operations require modular exponentiation with an even
-  // modulus. We support it for backwards compatibility with any applications
-  // that may have relied on the operation, but optimize for simplicity over
-  // performance with straightforward square-and-multiply routine.
-  int bits = BN_num_bits(p);
-  if (bits == 0) {
-    return BN_one(r);
-  }
-
-  // Make a copy of |a|, in case it aliases |r|.
-  bssl::BN_CTXScope scope(ctx);
-  BIGNUM *tmp = BN_CTX_get(ctx);
-  if (tmp == nullptr || !BN_copy(tmp, a)) {
-    return 0;
-  }
-
-  assert(BN_is_bit_set(p, bits - 1));
-  if (!BN_copy(r, tmp)) {
-    return 0;
-  }
-
-  for (int i = bits - 2; i >= 0; i--) {
-    if (!BN_mod_sqr(r, r, m, ctx) ||
-        (BN_is_bit_set(p, i) && !BN_mod_mul(r, r, tmp, m, ctx))) {
-      return 0;
-    }
-  }
-
-  return 1;
-}
-
-int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
-               BN_CTX *ctx) {
-  if (m->neg) {
-    OPENSSL_PUT_ERROR(BN, BN_R_NEGATIVE_NUMBER);
-    return 0;
-  }
-  if (a->neg || BN_ucmp(a, m) >= 0) {
-    if (!BN_nnmod(r, a, m, ctx)) {
-      return 0;
-    }
-    a = r;
-  }
-
-  if (BN_is_odd(m)) {
-    return BN_mod_exp_mont(r, a, p, m, ctx, NULL);
-  }
-
-  return mod_exp_even(r, a, p, m, ctx);
-}
 
 int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
                     const BIGNUM *m, BN_CTX *ctx, const BN_MONT_CTX *mont) {
@@ -851,70 +746,5 @@ err:
     OPENSSL_cleanse(powerbuf, powerbuf_len);
   }
   OPENSSL_free(powerbuf_free);
-  return ret;
-}
-
-int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
-                         const BIGNUM *m, BN_CTX *ctx,
-                         const BN_MONT_CTX *mont) {
-  BIGNUM a_bignum;
-  BN_init(&a_bignum);
-
-  int ret = 0;
-
-  // BN_mod_exp_mont requires reduced inputs.
-  if (bn_minimal_width(m) == 1) {
-    a %= m->d[0];
-  }
-
-  if (!BN_set_word(&a_bignum, a)) {
-    OPENSSL_PUT_ERROR(BN, ERR_R_INTERNAL_ERROR);
-    goto err;
-  }
-
-  ret = BN_mod_exp_mont(rr, &a_bignum, p, m, ctx, mont);
-
-err:
-  BN_free(&a_bignum);
-
-  return ret;
-}
-
-#define TABLE_SIZE 32
-
-int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
-                     const BIGNUM *a2, const BIGNUM *p2, const BIGNUM *m,
-                     BN_CTX *ctx, const BN_MONT_CTX *mont) {
-  BIGNUM tmp;
-  BN_init(&tmp);
-
-  int ret = 0;
-  BN_MONT_CTX *new_mont = NULL;
-
-  // Allocate a montgomery context if it was not supplied by the caller.
-  if (mont == NULL) {
-    new_mont = BN_MONT_CTX_new_for_modulus(m, ctx);
-    if (new_mont == NULL) {
-      goto err;
-    }
-    mont = new_mont;
-  }
-
-  // BN_mod_mul_montgomery removes one Montgomery factor, so passing one
-  // Montgomery-encoded and one non-Montgomery-encoded value gives a
-  // non-Montgomery-encoded result.
-  if (!BN_mod_exp_mont(rr, a1, p1, m, ctx, mont) ||
-      !BN_mod_exp_mont(&tmp, a2, p2, m, ctx, mont) ||
-      !BN_to_montgomery(rr, rr, mont, ctx) ||
-      !BN_mod_mul_montgomery(rr, rr, &tmp, mont, ctx)) {
-    goto err;
-  }
-
-  ret = 1;
-
-err:
-  BN_MONT_CTX_free(new_mont);
-  BN_free(&tmp);
-
   return ret;
 }
