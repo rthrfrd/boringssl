@@ -226,6 +226,8 @@ void VerifyExtendedKeyUsage(const ParsedCertificate &cert,
   bool has_time_stamping_eku = false;
   bool has_ocsp_signing_eku = false;
   bool has_rcs_mls_client_eku = false;
+  bool has_document_signing_eku = false;
+  bool has_email_protection_eku = false;
   size_t eku_oid_count = 0;
   if (cert.has_extended_key_usage()) {
     for (const auto &key_purpose_oid : cert.extended_key_usage()) {
@@ -251,6 +253,12 @@ void VerifyExtendedKeyUsage(const ParsedCertificate &cert,
       if (key_purpose_oid == der::Input(kRcsMlsClient)) {
         has_rcs_mls_client_eku = true;
       }
+      if (key_purpose_oid == der::Input(kEmailProtection)) {
+        has_email_protection_eku = true;
+      }
+      if (key_purpose_oid == der::Input(kDocumentSigning)) {
+        has_document_signing_eku = true;
+      }
     }
   }
 
@@ -272,6 +280,46 @@ void VerifyExtendedKeyUsage(const ParsedCertificate &cert,
       errors->AddError(cert_errors::kEkuNotPresent);
     } else if (eku_oid_count != 1 || !has_rcs_mls_client_eku) {
       errors->AddError(cert_errors::kEkuIncorrectForRcsMlsClient);
+    }
+    return;
+  }
+
+  if (required_key_purpose == KeyPurpose::C2PA_TIMESTAMPING) {
+    // https://c2pa.org/specifications/specifications/2.1/specs/C2PA_Specification.html#_certificate_profiles
+    // For time stamp signing, C2PA requires that the leaf:
+    // 1) must have EKU
+    // 2) must not have EKU ANY, OCSP signing, document signing, or email protection
+    // 3) must have time stamping
+    // 4) should tolerate other EKU's being present.
+    if (is_target_cert) {
+      if (!cert.has_extended_key_usage()) {
+        errors->AddError(cert_errors::kEkuNotPresent);
+      }
+      if (has_any_eku || has_ocsp_signing_eku || has_document_signing_eku ||
+          has_email_protection_eku || !has_time_stamping_eku) {
+        errors->AddError(cert_errors::kEkuIncorrectForC2PATimeStamping);
+      }
+    }
+    return;
+  }
+
+  if (required_key_purpose == KeyPurpose::C2PA_MANIFEST) {
+    // https://c2pa.org/specifications/specifications/2.1/specs/C2PA_Specification.html#_certificate_profiles
+    // For manifest signing, C2PA requires that the leaf:
+    // 1) must have EKU
+    // 2) must not have EKU ANY, time stamping, or OCSP signing
+    // 3) should have document signing and/or email protection
+    // 4) should tolerate other EKU's being present.
+    if (is_target_cert) {
+      if (!cert.has_extended_key_usage()) {
+        errors->AddError(cert_errors::kEkuNotPresent);
+      }
+      if (!cert.has_key_usage() ||
+          !cert.key_usage().AssertsBit(KEY_USAGE_BIT_DIGITAL_SIGNATURE) ||
+          has_any_eku || has_ocsp_signing_eku || has_time_stamping_eku ||
+          (!has_email_protection_eku && !has_document_signing_eku)) {
+        errors->AddError(cert_errors::kEkuIncorrectForC2PAManifest);
+      }
     }
     return;
   }
@@ -369,6 +417,8 @@ void VerifyExtendedKeyUsage(const ParsedCertificate &cert,
     case KeyPurpose::CLIENT_AUTH_STRICT_LEAF:
     case KeyPurpose::SERVER_AUTH_STRICT_LEAF:
     case KeyPurpose::RCS_MLS_CLIENT_AUTH:
+    case KeyPurpose::C2PA_TIMESTAMPING:
+    case KeyPurpose::C2PA_MANIFEST:
       assert(0);  // NOTREACHED
       return;
     case KeyPurpose::SERVER_AUTH:
@@ -1274,6 +1324,8 @@ void VerifyTargetCertIsNotCA(const ParsedCertificate &cert,
       case KeyPurpose::CLIENT_AUTH_STRICT_LEAF:
       case KeyPurpose::SERVER_AUTH_STRICT_LEAF:
       case KeyPurpose::RCS_MLS_CLIENT_AUTH:
+      case KeyPurpose::C2PA_TIMESTAMPING:
+      case KeyPurpose::C2PA_MANIFEST:
         errors->AddError(cert_errors::kTargetCertShouldNotBeCa);
         break;
     }

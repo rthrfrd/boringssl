@@ -45,6 +45,8 @@ enum class KeyPurpose {
                        // certificate.
   CLIENT_AUTH_STRICT_LEAF,  // Same as above, but only for leaf cert.
   RCS_MLS_CLIENT_AUTH,      // Client auth for RCS-MLS.
+  C2PA_TIMESTAMPING,    // Leaf can sign timestamps for C2PA.
+  C2PA_MANIFEST,        // Leaf can sign manifests for C2PA.
 };
 
 enum class InitialExplicitPolicy {

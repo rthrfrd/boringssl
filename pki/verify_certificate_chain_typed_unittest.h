@@ -190,6 +190,18 @@ TYPED_TEST_P(VerifyCertificateChainSingleRootTest, ExtendedKeyUsage) {
   this->RunTest("intermediate-eku-mlsclientauth/mlsclientauth.test");
   this->RunTest("intermediate-eku-mlsclientauth-extra/any.test");
   this->RunTest("intermediate-eku-mlsclientauth-extra/mlsclientauth.test");
+  this->RunTest("intermediate-eku-mlsclientauth-extra/any.test");
+  this->RunTest("intermediate-eku-mlsclientauth-extra/mlsclientauth.test");
+  this->RunTest("intermediate-eku-c2patimestamping/any.test");
+  this->RunTest("intermediate-eku-c2patimestamping/serverauth.test");
+  this->RunTest("intermediate-eku-c2patimestamping/clientauth.test");
+  this->RunTest("intermediate-eku-c2patimestamping/c2patimestamp.test");
+  this->RunTest("intermediate-eku-c2patimestamping/c2pamanifest.test");
+  this->RunTest("intermediate-eku-c2pamanifest/any.test");
+  this->RunTest("intermediate-eku-c2pamanifest/serverauth.test");
+  this->RunTest("intermediate-eku-c2pamanifest/clientauth.test");
+  this->RunTest("intermediate-eku-c2pamanifest/c2patimestamp.test");
+  this->RunTest("intermediate-eku-c2pamanifest/c2pamanifest.test");
   this->RunTest("intermediate-eku-any-and-clientauth/any.test");
   this->RunTest("intermediate-eku-any-and-clientauth/serverauth.test");
   this->RunTest("intermediate-eku-any-and-clientauth/serverauth-strict.test");

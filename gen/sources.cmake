@@ -2252,6 +2252,18 @@ set(
   pki/testdata/verify_certificate_chain_unittest/intermediate-eku-any-and-clientauth/serverauth-strict-leaf.test
   pki/testdata/verify_certificate_chain_unittest/intermediate-eku-any-and-clientauth/serverauth-strict.test
   pki/testdata/verify_certificate_chain_unittest/intermediate-eku-any-and-clientauth/serverauth.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-c2pamanifest/any.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-c2pamanifest/c2pamanifest.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-c2pamanifest/c2patimestamp.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-c2pamanifest/chain.pem
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-c2pamanifest/clientauth.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-c2pamanifest/serverauth.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-c2patimestamping/any.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-c2patimestamping/c2pamanifest.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-c2patimestamping/c2patimestamp.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-c2patimestamping/chain.pem
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-c2patimestamping/clientauth.test
+  pki/testdata/verify_certificate_chain_unittest/intermediate-eku-c2patimestamping/serverauth.test
   pki/testdata/verify_certificate_chain_unittest/intermediate-eku-clientauth/any.test
   pki/testdata/verify_certificate_chain_unittest/intermediate-eku-clientauth/chain.pem
   pki/testdata/verify_certificate_chain_unittest/intermediate-eku-clientauth/clientauth-strict-leaf.test

@@ -78,6 +78,12 @@ inline constexpr uint8_t kTimeStamping[] = {0x2b, 0x06, 0x01, 0x05,
 inline constexpr uint8_t kOCSPSigning[] = {0x2b, 0x06, 0x01, 0x05,
                                            0x05, 0x07, 0x03, 0x09};
 
+// From RFC 9336 section 3.1:
+// id-kp-documentSigning  OBJECT IDENTIFIER  ::=  { id-kp 36 }
+// In dotted notation: 1.3.6.1.5.5.7.3.36
+inline constexpr uint8_t kDocumentSigning[] = {0x2b, 0x06, 0x01, 0x05,
+                                               0x05, 0x07, 0x03, 0x24};
+
 // From GSMA RCC.16 v1.0 End-to-End Encryption Specification.
 // id-gsmaRCSE2EE OBJECT IDENTIFIER ::=  { joint-iso-itu-t(2)
 // international-organizations(23) gsma(146) rcs(2) rcsE2EE (1)}

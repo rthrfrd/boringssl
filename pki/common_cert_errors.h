@@ -146,6 +146,12 @@ OPENSSL_EXPORT extern const CertErrorId kEkuHasProhibitedCodeSigning;
 // The certificate's EKU is incorrect for an RcsMlsClient.
 OPENSSL_EXPORT extern const CertErrorId kEkuIncorrectForRcsMlsClient;
 
+// The certificate's EKU is incorrect for C2PA Time Stamping
+OPENSSL_EXPORT extern const CertErrorId kEkuIncorrectForC2PATimeStamping;
+
+// The certificate's EKU is incorrect for C2PA Manifest Signing
+OPENSSL_EXPORT extern const CertErrorId kEkuIncorrectForC2PAManifest;
+
 // The certificate does not have EKU.
 OPENSSL_EXPORT extern const CertErrorId kEkuNotPresent;
 
