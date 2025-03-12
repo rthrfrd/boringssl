@@ -33,6 +33,10 @@
 #include "internal.h"
 
 
+static_assert(OPENSSL_DSA_MAX_MODULUS_BITS <=
+                  BN_MONTGOMERY_MAX_WORDS * BN_BITS2,
+              "Max DSA size too big for Montgomery arithmetic");
+
 // Primality test according to FIPS PUB 186[-1], Appendix 2.1: 50 rounds of
 // Miller-Rabin.
 #define DSS_prime_checks 50
