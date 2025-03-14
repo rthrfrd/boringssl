@@ -22,55 +22,49 @@
 
 
 int BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx) {
-  int i, bits, ret = 0;
-  BIGNUM *v, *rr;
-
-  BN_CTX_start(ctx);
+  bssl::BN_CTXScope scope(ctx);
+  BIGNUM *rr;
   if (r == a || r == p) {
     rr = BN_CTX_get(ctx);
   } else {
     rr = r;
   }
 
-  v = BN_CTX_get(ctx);
+  BIGNUM *v = BN_CTX_get(ctx);
   if (rr == NULL || v == NULL) {
-    goto err;
+    return 0;
   }
 
   if (BN_copy(v, a) == NULL) {
-    goto err;
+    return 0;
   }
-  bits = BN_num_bits(p);
+  int bits = BN_num_bits(p);
 
   if (BN_is_odd(p)) {
     if (BN_copy(rr, a) == NULL) {
-      goto err;
+      return 0;
     }
   } else {
     if (!BN_one(rr)) {
-      goto err;
+      return 0;
     }
   }
 
-  for (i = 1; i < bits; i++) {
+  for (int i = 1; i < bits; i++) {
     if (!BN_sqr(v, v, ctx)) {
-      goto err;
+      return 0;
     }
     if (BN_is_bit_set(p, i)) {
       if (!BN_mul(rr, rr, v, ctx)) {
-        goto err;
+        return 0;
       }
     }
   }
 
   if (r != rr && !BN_copy(r, rr)) {
-    goto err;
+    return 0;
   }
-  ret = 1;
-
-err:
-  BN_CTX_end(ctx);
-  return ret;
+  return 1;
 }
 
 static int mod_exp_even(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,

@@ -149,57 +149,55 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     return BN_one(rr);
   }
 
-  int ret = 0;
   BIGNUM *val[TABLE_SIZE];
-  BN_MONT_CTX *new_mont = NULL;
 
-  BN_CTX_start(ctx);
+  bssl::BN_CTXScope scope(ctx);
   BIGNUM *r = BN_CTX_get(ctx);
   val[0] = BN_CTX_get(ctx);
-  int window, r_is_one, wstart;
   if (r == NULL || val[0] == NULL) {
-    goto err;
+    return 0;
   }
 
   // Allocate a montgomery context if it was not supplied by the caller.
-  if (mont == NULL) {
-    new_mont = BN_MONT_CTX_new_consttime(m, ctx);
-    if (new_mont == NULL) {
-      goto err;
+  bssl::UniquePtr<BN_MONT_CTX> new_mont;
+  if (mont == nullptr) {
+    new_mont.reset(BN_MONT_CTX_new_consttime(m, ctx));
+    if (new_mont == nullptr) {
+      return 0;
     }
-    mont = new_mont;
+    mont = new_mont.get();
   }
 
   // We exponentiate by looking at sliding windows of the exponent and
   // precomputing powers of |a|. Windows may be shifted so they always end on a
   // set bit, so only precompute odd powers. We compute val[i] = a^(2*i + 1)
   // for i = 0 to 2^(window-1), all in Montgomery form.
-  window = BN_window_bits_for_exponent_size(bits);
+  int window = BN_window_bits_for_exponent_size(bits);
   if (!BN_to_montgomery(val[0], a, mont, ctx)) {
-    goto err;
+    return 0;
   }
   if (window > 1) {
     BIGNUM *d = BN_CTX_get(ctx);
     if (d == NULL || !BN_mod_mul_montgomery(d, val[0], val[0], mont, ctx)) {
-      goto err;
+      return 0;
     }
     for (int i = 1; i < 1 << (window - 1); i++) {
       val[i] = BN_CTX_get(ctx);
       if (val[i] == NULL ||
           !BN_mod_mul_montgomery(val[i], val[i - 1], d, mont, ctx)) {
-        goto err;
+        return 0;
       }
     }
   }
 
   // |p| is non-zero, so at least one window is non-zero. To save some
   // multiplications, defer initializing |r| until then.
-  r_is_one = 1;
-  wstart = bits - 1;  // The top bit of the window.
+  int r_is_one = 1;
+  int wstart = bits - 1;  // The top bit of the window.
   for (;;) {
     if (!BN_is_bit_set(p, wstart)) {
       if (!r_is_one && !BN_mod_mul_montgomery(r, r, r, mont, ctx)) {
-        goto err;
+        return 0;
       }
       if (wstart == 0) {
         break;
@@ -223,7 +221,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     if (!r_is_one) {
       for (int i = 0; i < wsize + 1; i++) {
         if (!BN_mod_mul_montgomery(r, r, r, mont, ctx)) {
-          goto err;
+          return 0;
         }
       }
     }
@@ -232,10 +230,10 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     assert(wvalue < (1 << window));
     if (r_is_one) {
       if (!BN_copy(r, val[wvalue >> 1])) {
-        goto err;
+        return 0;
       }
     } else if (!BN_mod_mul_montgomery(r, r, val[wvalue >> 1], mont, ctx)) {
-      goto err;
+      return 0;
     }
 
     r_is_one = 0;
@@ -248,15 +246,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
   // |p| is non-zero, so |r_is_one| must be cleared at some point.
   assert(!r_is_one);
 
-  if (!BN_from_montgomery(rr, r, mont, ctx)) {
-    goto err;
-  }
-  ret = 1;
-
-err:
-  BN_MONT_CTX_free(new_mont);
-  BN_CTX_end(ctx);
-  return ret;
+  return BN_from_montgomery(rr, r, mont, ctx);
 }
 
 void bn_mod_exp_mont_small(BN_ULONG *r, const BN_ULONG *a, size_t num,
