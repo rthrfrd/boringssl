@@ -102,8 +102,24 @@
     (r) = (carry);                                                         \
     (carry) = high;                                                        \
   } while (0)
-#undef sqr
-#define sqr(r0, r1, a) __asm__("mulq %2" : "=a"(r0), "=d"(r1) : "a"(a) : "cc");
+
+// r0:r1:carry = r0:r1 + a^2 + carry:0
+#define sqr_add(r0, r1, a, carry)                               \
+  do {                                                          \
+    BN_ULONG high, low;                                         \
+    /* lo:hi = a^2 */                                           \
+    __asm__("mulq %2" : "=a"(low), "=d"(high) : "a"(a) : "cc"); \
+    /* carry:hi = lo:hi + carry:0 = a^2 + carry */              \
+    __asm__("addq %2,%0; adcq $0,%1"                            \
+            : "+r"(carry), "+d"(high)                           \
+            : "a"(low)                                          \
+            : "cc");                                            \
+    /* r0:r1:carry = carry:hi + r0:r1 */                        \
+    __asm__("addq %2,%0; adcq %3,%1; movq $0, %2; adcq $0, %2"  \
+            : "+m"(r0), "+m"(r1), "+r"(carry)                   \
+            : "d"(high)                                         \
+            : "cc");                                            \
+  } while (0)
 
 BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, size_t num,
                           BN_ULONG w) {
@@ -169,30 +185,31 @@ BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, size_t num,
   return c1;
 }
 
-void bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, size_t n) {
+void bn_sqr_add_words(BN_ULONG *r, const BN_ULONG *a, size_t n) {
   if (n == 0) {
     return;
   }
 
+  BN_ULONG carry = 0;
   while (n & ~3) {
-    sqr(r[0], r[1], a[0]);
-    sqr(r[2], r[3], a[1]);
-    sqr(r[4], r[5], a[2]);
-    sqr(r[6], r[7], a[3]);
+    sqr_add(r[0], r[1], a[0], carry);
+    sqr_add(r[2], r[3], a[1], carry);
+    sqr_add(r[4], r[5], a[2], carry);
+    sqr_add(r[6], r[7], a[3], carry);
     a += 4;
     r += 8;
     n -= 4;
   }
   if (n) {
-    sqr(r[0], r[1], a[0]);
+    sqr_add(r[0], r[1], a[0], carry);
     if (--n == 0) {
       return;
     }
-    sqr(r[2], r[3], a[1]);
+    sqr_add(r[2], r[3], a[1], carry);
     if (--n == 0) {
       return;
     }
-    sqr(r[4], r[5], a[2]);
+    sqr_add(r[4], r[5], a[2], carry);
   }
 }
 

@@ -25,8 +25,6 @@
 #include "internal.h"
 
 
-#define BN_SQR_STACK_WORDS 16
-
 static void bn_mul_normal(BN_ULONG *r, const BN_ULONG *a, size_t na,
                           const BN_ULONG *b, size_t nb) {
   if (na < nb) {
@@ -228,9 +226,7 @@ void bn_mul_small(BN_ULONG *r, size_t num_r, const BN_ULONG *a, size_t num_a,
   }
 }
 
-// tmp must have 2*n words
-static void bn_sqr_normal(BN_ULONG *r, const BN_ULONG *a, size_t n,
-                          BN_ULONG *tmp) {
+static void bn_sqr_normal(BN_ULONG *r, const BN_ULONG *a, size_t n) {
   if (n == 0) {
     return;
   }
@@ -262,8 +258,7 @@ static void bn_sqr_normal(BN_ULONG *r, const BN_ULONG *a, size_t n,
   bn_add_words(r, r, r, max);
 
   // Add in the contribution of a[i] * a[i] for all i.
-  bn_sqr_words(tmp, a, n);
-  bn_add_words(r, r, tmp, max);
+  bn_sqr_add_words(r, a, n);
 }
 
 int BN_mul_word(BIGNUM *bn, BN_ULONG w) {
@@ -297,8 +292,7 @@ int bn_sqr_consttime(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx) {
 
   bssl::BN_CTXScope scope(ctx);
   BIGNUM *rr = (a != r) ? r : BN_CTX_get(ctx);
-  BIGNUM *tmp = BN_CTX_get(ctx);
-  if (!rr || !tmp) {
+  if (!rr) {
     return 0;
   }
 
@@ -312,15 +306,7 @@ int bn_sqr_consttime(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx) {
   } else if (al == 8) {
     bn_sqr_comba8(rr->d, a->d);
   } else {
-    if (al < BN_SQR_STACK_WORDS) {
-      BN_ULONG t[BN_SQR_STACK_WORDS * 2];
-      bn_sqr_normal(rr->d, a->d, al, t);
-    } else {
-      if (!bn_wexpand(tmp, max)) {
-        return 0;
-      }
-      bn_sqr_normal(rr->d, a->d, al, tmp->d);
-    }
+    bn_sqr_normal(rr->d, a->d, al);
   }
 
   rr->neg = 0;
@@ -342,7 +328,8 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx) {
 }
 
 void bn_sqr_small(BN_ULONG *r, size_t num_r, const BN_ULONG *a, size_t num_a) {
-  if (num_r != 2 * num_a || num_a > BN_SMALL_MAX_WORDS) {
+  assert(r != a);
+  if (num_r != 2 * num_a) {
     abort();
   }
   if (num_a == 4) {
@@ -350,8 +337,6 @@ void bn_sqr_small(BN_ULONG *r, size_t num_r, const BN_ULONG *a, size_t num_a) {
   } else if (num_a == 8) {
     bn_sqr_comba8(r, a);
   } else {
-    BN_ULONG tmp[2 * BN_SMALL_MAX_WORDS];
-    bn_sqr_normal(r, a, num_a, tmp);
-    OPENSSL_cleanse(tmp, 2 * num_a * sizeof(BN_ULONG));
+    bn_sqr_normal(r, a, num_a);
   }
 }
