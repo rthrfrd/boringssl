@@ -16,7 +16,7 @@
 #define OPENSSL_HEADER_CRYPTO_HPKE_INTERNAL_H
 
 #include <openssl/aead.h>
-#include <openssl/base.h>
+#include <openssl/base.h>   // IWYU pragma: export
 #include <openssl/curve25519.h>
 #include <openssl/digest.h>
 
