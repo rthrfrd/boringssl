@@ -16,7 +16,7 @@
 
 #include "../bcm_support.h"
 #include "../internal.h"
-#include "sysrand_internal.h"
+#include "internal.h"
 
 #if defined(OPENSSL_RAND_WINDOWS)
 

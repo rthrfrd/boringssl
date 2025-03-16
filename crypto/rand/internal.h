@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OPENSSL_HEADER_CRYPTO_RAND_SYSRAND_INTERNAL_H
-#define OPENSSL_HEADER_CRYPTO_RAND_SYSRAND_INTERNAL_H
+#ifndef OPENSSL_HEADER_CRYPTO_RAND_INTERNAL_H
+#define OPENSSL_HEADER_CRYPTO_RAND_INTERNAL_H
 
 #include <openssl/base.h>
 
@@ -34,4 +34,22 @@
 #define OPENSSL_RAND_GETENTROPY
 #endif
 
-#endif  // OPENSSL_HEADER_CRYPTO_RAND_SYSRAND_INTERNAL_H
+#if defined(OPENSSL_LINUX)
+// On linux we use MADVISE instead of pthread_atfork(), due
+// to concerns about clone() being used for address space
+// duplication.
+#define OPENSSL_FORK_DETECTION
+#define OPENSSL_FORK_DETECTION_MADVISE
+#elif defined(OPENSSL_MACOS) || defined(OPENSSL_IOS) || \
+    defined(OPENSSL_OPENBSD) || defined(OPENSSL_FREEBSD)
+// These platforms may detect address space duplication with pthread_atfork.
+// iOS doesn't normally allow fork in apps, but it's there.
+#define OPENSSL_FORK_DETECTION
+#define OPENSSL_FORK_DETECTION_PTHREAD_ATFORK
+#elif defined(OPENSSL_WINDOWS) || defined(OPENSSL_TRUSTY) || \
+    defined(__ZEPHYR__) || defined(CROS_EC)
+// These platforms do not fork.
+#define OPENSSL_DOES_NOT_FORK
+#endif
+
+#endif  // OPENSSL_HEADER_CRYPTO_RAND_INTERNAL_H
