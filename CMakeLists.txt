@@ -661,7 +661,7 @@ set_property(TARGET ssl PROPERTY EXPORT_NAME SSL)
 target_link_libraries(ssl crypto)
 
 add_library(decrepit ${DECREPIT_SOURCES})
-target_link_libraries(decrepit crypto ssl)
+target_link_libraries(decrepit ssl crypto)
 
 add_library(test_support_lib STATIC
             ${TEST_SUPPORT_SOURCES} ${TEST_SUPPORT_SOURCES_ASM_USED})
@@ -691,7 +691,7 @@ target_link_libraries(ssl_test test_support_lib boringssl_gtest ssl crypto)
 add_dependencies(all_tests ssl_test)
 add_executable(decrepit_test ${DECREPIT_TEST_SOURCES})
 target_link_libraries(decrepit_test test_support_lib boringssl_gtest
-                      decrepit crypto)
+                      decrepit ssl crypto)
 add_dependencies(all_tests decrepit_test)
 
 if(APPLE)
