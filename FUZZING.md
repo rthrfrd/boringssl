@@ -52,8 +52,6 @@ When `-DFUZZ=1` is passed into CMake, BoringSSL builds with `BORINGSSL_UNSAFE_FU
 
 * Replace `RAND_bytes` with a deterministic PRNG. Call `RAND_reset_for_fuzzing()` at the start of fuzzers which use `RAND_bytes` to reset the PRNG state.
 
-* Use a hard-coded time instead of the actual time.
-
 Additionally, if `BORINGSSL_UNSAFE_FUZZER_MODE` is set, BoringSSL will:
 
 * Modify the TLS stack to perform all signature checks (CertificateVerify and ServerKeyExchange) and the Finished check, but always act as if the check succeeded.

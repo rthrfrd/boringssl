@@ -405,6 +405,12 @@ class TLSFuzzer {
       return false;
     }
 
+    // Use a constant clock.
+    SSL_CTX_set_current_time_cb(ctx_.get(),
+                                [](const SSL *ssl, timeval *out_clock) {
+                                  *out_clock = {1234, 1234};
+                                });
+
     // When accepting peer certificates, allow any certificate.
     SSL_CTX_set_cert_verify_callback(
         ctx_.get(),

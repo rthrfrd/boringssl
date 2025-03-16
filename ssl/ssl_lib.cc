@@ -255,9 +255,7 @@ OPENSSL_timeval ssl_ctx_get_current_time(const SSL_CTX *ctx) {
     }
   }
 
-#if defined(BORINGSSL_UNSAFE_DETERMINISTIC_MODE)
-  return {1234, 1234};
-#elif defined(OPENSSL_WINDOWS)
+#if defined(OPENSSL_WINDOWS)
   struct _timeb time;
   _ftime(&time);
   if (time.time < 0) {

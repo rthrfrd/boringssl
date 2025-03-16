@@ -1133,11 +1133,7 @@ static bssl::UniquePtr<SSL_SESSION> CreateSessionWithTicket(uint16_t version,
     return nullptr;
   }
   // Fix up the timeout.
-#if defined(BORINGSSL_UNSAFE_DETERMINISTIC_MODE)
-  SSL_SESSION_set_time(session.get(), 1234);
-#else
   SSL_SESSION_set_time(session.get(), time(nullptr));
-#endif
   return session;
 }
 
