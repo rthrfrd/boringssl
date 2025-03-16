@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OPENSSL_HEADER_BN_INTERNAL_H
-#define OPENSSL_HEADER_BN_INTERNAL_H
+#ifndef OPENSSL_HEADER_CRYPTO_FIPSMODULE_BN_INTERNAL_H
+#define OPENSSL_HEADER_CRYPTO_FIPSMODULE_BN_INTERNAL_H
 
 #include <openssl/bn.h>
 
@@ -725,4 +725,4 @@ void bn_words_to_big_endian(uint8_t *out, size_t out_len, const BN_ULONG *in,
 }  // extern C
 #endif
 
-#endif  // OPENSSL_HEADER_BN_INTERNAL_H
+#endif  // OPENSSL_HEADER_CRYPTO_FIPSMODULE_BN_INTERNAL_H

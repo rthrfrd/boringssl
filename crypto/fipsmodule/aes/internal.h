@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OPENSSL_HEADER_AES_INTERNAL_H
-#define OPENSSL_HEADER_AES_INTERNAL_H
+#ifndef OPENSSL_HEADER_CRYPTO_FIPSMODULE_AES_INTERNAL_H
+#define OPENSSL_HEADER_CRYPTO_FIPSMODULE_AES_INTERNAL_H
 
 #include <stdlib.h>
 
@@ -571,4 +571,4 @@ size_t CRYPTO_cts128_encrypt_block(const uint8_t *in, uint8_t *out, size_t len,
 
 }  // extern C
 
-#endif  // OPENSSL_HEADER_AES_INTERNAL_H
+#endif  // OPENSSL_HEADER_CRYPTO_FIPSMODULE_AES_INTERNAL_H

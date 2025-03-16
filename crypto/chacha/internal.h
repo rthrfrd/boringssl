@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OPENSSL_HEADER_CHACHA_INTERNAL
-#define OPENSSL_HEADER_CHACHA_INTERNAL
+#ifndef OPENSSL_HEADER_CRYPTO_CHACHA_INTERNAL_H
+#define OPENSSL_HEADER_CRYPTO_CHACHA_INTERNAL_H
 
 #include <openssl/base.h>
 
@@ -99,4 +99,4 @@ void ChaCha20_ctr32_nohw(uint8_t *out, const uint8_t *in, size_t in_len,
 }  // extern C
 #endif
 
-#endif  // OPENSSL_HEADER_CHACHA_INTERNAL
+#endif  // OPENSSL_HEADER_CRYPTO_CHACHA_INTERNAL_H

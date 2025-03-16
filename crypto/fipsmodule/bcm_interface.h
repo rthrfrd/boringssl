@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OPENSSL_HEADER_CRYPTO_BCM_INTERFACE_H
-#define OPENSSL_HEADER_CRYPTO_BCM_INTERFACE_H
+#ifndef OPENSSL_HEADER_CRYPTO_FIPSMODULE_BCM_INTERFACE_H
+#define OPENSSL_HEADER_CRYPTO_FIPSMODULE_BCM_INTERFACE_H
 
 // For the moment, we reach out for AES_KEY.
 #include <openssl/aes.h>
@@ -822,4 +822,4 @@ OPENSSL_EXPORT bcm_status BCM_aes_set_decrypt_key(const uint8_t *key,
 }  // extern C
 #endif
 
-#endif  // OPENSSL_HEADER_CRYPTO_BCM_INTERFACE_H
+#endif  // OPENSSL_HEADER_CRYPTO_FIPSMODULE_BCM_INTERFACE_H

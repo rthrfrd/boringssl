@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OPENSSL_HEADER_CRYPTO_SYSRAND_INTERNAL_H
-#define OPENSSL_HEADER_CRYPTO_SYSRAND_INTERNAL_H
+#ifndef OPENSSL_HEADER_CRYPTO_RAND_SYSRAND_INTERNAL_H
+#define OPENSSL_HEADER_CRYPTO_RAND_SYSRAND_INTERNAL_H
 
 #include <openssl/base.h>
 
@@ -34,4 +34,4 @@
 #define OPENSSL_RAND_GETENTROPY
 #endif
 
-#endif  // OPENSSL_HEADER_CRYPTO__SYSRAND_INTERNAL_H
+#endif  // OPENSSL_HEADER_CRYPTO_RAND_SYSRAND_INTERNAL_H
