@@ -187,6 +187,8 @@ _CET_ENDBR
 
 	vpshufb	%xmm1,%xmm0,%xmm0
 	vmovdqu	%xmm0,(%rdi)
+
+
 	ret
 
 

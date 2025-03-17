@@ -456,6 +456,8 @@ $code .= _begin_func "gcm_gmult_vpclmulqdq_avx2", 1;
 
     vpshufb         $BSWAP_MASK, $GHASH_ACC, $GHASH_ACC
     vmovdqu         $GHASH_ACC, ($GHASH_ACC_PTR)
+
+    # No need for vzeroupper, since only xmm registers were used.
 ___
 }
 $code .= _end_func;

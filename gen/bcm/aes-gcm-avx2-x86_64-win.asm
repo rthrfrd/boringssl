@@ -203,6 +203,8 @@ $L$SEH_endprologue_gcm_gmult_vpclmulqdq_avx2_4:
 
 	vpshufb	xmm0,xmm0,xmm1
 	vmovdqu	XMMWORD[rcx],xmm0
+
+
 	vmovdqa	xmm6,XMMWORD[rsp]
 	add	rsp,24
 	ret
