@@ -1183,6 +1183,10 @@ Args:
 				argStr += d.contents(memRef)
 			}
 
+			for suffix := arg.next; suffix != nil; suffix = suffix.next {
+				argStr += d.contents(suffix)
+			}
+
 			args = append(args, argStr)
 
 		case ruleGOTAddress:
@@ -1191,6 +1195,9 @@ Args:
 			}
 			if i != 0 || len(argNodes) != 2 {
 				return nil, fmt.Errorf("Load of _GLOBAL_OFFSET_TABLE_ address didn't have expected form")
+			}
+			if arg.next != nil {
+				return nil, fmt.Errorf("unexpected argument suffix")
 			}
 			d.gotDeltaNeeded = true
 			changed = true
@@ -1207,6 +1214,9 @@ Args:
 			}
 			if i != 0 || len(argNodes) != 2 {
 				return nil, fmt.Errorf("movabs of _GLOBAL_OFFSET_TABLE_ didn't expected form")
+			}
+			if arg.next != nil {
+				return nil, fmt.Errorf("unexpected argument suffix")
 			}
 
 			d.gotDeltaNeeded = true
@@ -1227,6 +1237,9 @@ Args:
 			}
 			if i != 0 || len(argNodes) != 2 {
 				return nil, fmt.Errorf("movabs of _GLOBAL_OFFSET_TABLE_ offset didn't have expected form")
+			}
+			if arg.next != nil {
+				return nil, fmt.Errorf("unexpected argument suffix")
 			}
 
 			assertNodeType(arg.up, ruleSymbolName)

@@ -147,6 +147,10 @@ bar:
 	.equ	.Llocal_alias_to_local_label_BCM_1, .Llocal_label_BCM_1
 # WAS .equiv .Llocal_alias_to_local_label, .Llocal_label
 	.equiv	.Llocal_alias_to_local_label_BCM_1, .Llocal_label_BCM_1
+
+	# When rewritten, AVX-512 tokens are preserved.
+# WAS vpcmpneqq .Llabel(%rip){1to8}, %zmm1, %k0
+	vpcmpneqq	.Llabel_BCM_1(%rip){1to8}, %zmm1, %k0
 .text
 .loc 1 2 0
 BORINGSSL_bcm_text_end:

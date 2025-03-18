@@ -30,3 +30,6 @@
 .set .Llocal_alias_to_local_label, .Llocal_label
 .equ .Llocal_alias_to_local_label, .Llocal_label
 .equiv .Llocal_alias_to_local_label, .Llocal_label
+
+	# When rewritten, AVX-512 tokens are preserved.
+	vpcmpneqq .Llabel(%rip){1to8}, %zmm1, %k0
