@@ -438,7 +438,7 @@ $L$SEH_prologue_aes_gcm_enc_update_vaes_avx2_15:
 $L$SEH_endprologue_aes_gcm_enc_update_vaes_avx2_16:
 %ifdef BORINGSSL_DISPATCH_TEST
 EXTERN	BORINGSSL_function_hit
-	mov	BYTE[((BORINGSSL_function_hit+8))],1
+	mov	BYTE[((BORINGSSL_function_hit+6))],1
 %endif
 	vbroadcasti128	ymm0,XMMWORD[$L$bswap_mask]
 

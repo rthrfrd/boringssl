@@ -377,7 +377,7 @@ _CET_ENDBR
 	movq	16(%rsp),%r12
 #ifdef BORINGSSL_DISPATCH_TEST
 
-	movb	$1,_BORINGSSL_function_hit+8(%rip)
+	movb	$1,_BORINGSSL_function_hit+6(%rip)
 #endif
 	vbroadcasti128	L$bswap_mask(%rip),%ymm0
 

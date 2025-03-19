@@ -379,7 +379,7 @@ _CET_ENDBR
 #ifdef BORINGSSL_DISPATCH_TEST
 .extern	BORINGSSL_function_hit
 .hidden BORINGSSL_function_hit
-	movb	$1,BORINGSSL_function_hit+8(%rip)
+	movb	$1,BORINGSSL_function_hit+6(%rip)
 #endif
 	vbroadcasti128	.Lbswap_mask(%rip),%ymm0
 
