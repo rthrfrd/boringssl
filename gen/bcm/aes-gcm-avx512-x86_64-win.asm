@@ -47,19 +47,19 @@ $L$inc_4blocks:
 
 section	.text code align=64
 
-global	gcm_gmult_vpclmulqdq_avx10
+global	gcm_gmult_vpclmulqdq_avx512
 
 ALIGN	32
-gcm_gmult_vpclmulqdq_avx10:
+gcm_gmult_vpclmulqdq_avx512:
 
-$L$SEH_begin_gcm_gmult_vpclmulqdq_avx10_1:
+$L$SEH_begin_gcm_gmult_vpclmulqdq_avx512_1:
 _CET_ENDBR
 	sub	rsp,24
-$L$SEH_prologue_gcm_gmult_vpclmulqdq_avx10_2:
+$L$SEH_prologue_gcm_gmult_vpclmulqdq_avx512_2:
 	vmovdqa	XMMWORD[rsp],xmm6
-$L$SEH_prologue_gcm_gmult_vpclmulqdq_avx10_3:
+$L$SEH_prologue_gcm_gmult_vpclmulqdq_avx512_3:
 
-$L$SEH_endprologue_gcm_gmult_vpclmulqdq_avx10_4:
+$L$SEH_endprologue_gcm_gmult_vpclmulqdq_avx512_4:
 
 	vmovdqu	xmm0,XMMWORD[rcx]
 	vmovdqu	xmm1,XMMWORD[$L$bswap_mask]
@@ -87,13 +87,13 @@ $L$SEH_endprologue_gcm_gmult_vpclmulqdq_avx10_4:
 	vmovdqa	xmm6,XMMWORD[rsp]
 	add	rsp,24
 	ret
-$L$SEH_end_gcm_gmult_vpclmulqdq_avx10_5:
+$L$SEH_end_gcm_gmult_vpclmulqdq_avx512_5:
 
 
-global	gcm_init_vpclmulqdq_avx10_512
+global	gcm_init_vpclmulqdq_avx512
 
 ALIGN	32
-gcm_init_vpclmulqdq_avx10_512:
+gcm_init_vpclmulqdq_avx512:
 
 
 _CET_ENDBR
@@ -196,33 +196,33 @@ $L$precompute_next__func1:
 
 
 
-global	gcm_ghash_vpclmulqdq_avx10_512
+global	gcm_ghash_vpclmulqdq_avx512
 
 ALIGN	32
-gcm_ghash_vpclmulqdq_avx10_512:
+gcm_ghash_vpclmulqdq_avx512:
 
-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx10_512_1:
+$L$SEH_begin_gcm_ghash_vpclmulqdq_avx512_1:
 _CET_ENDBR
 	sub	rsp,136
-$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_2:
+$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_2:
 	vmovdqa	XMMWORD[rsp],xmm6
-$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_3:
+$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_3:
 	vmovdqa	XMMWORD[16+rsp],xmm7
-$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_4:
+$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_4:
 	vmovdqa	XMMWORD[32+rsp],xmm8
-$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_5:
+$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_5:
 	vmovdqa	XMMWORD[48+rsp],xmm9
-$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_6:
+$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_6:
 	vmovdqa	XMMWORD[64+rsp],xmm10
-$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_7:
+$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_7:
 	vmovdqa	XMMWORD[80+rsp],xmm11
-$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_8:
+$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_8:
 	vmovdqa	XMMWORD[96+rsp],xmm12
-$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_9:
+$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_9:
 	vmovdqa	XMMWORD[112+rsp],xmm13
-$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_10:
+$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_10:
 
-$L$SEH_endprologue_gcm_ghash_vpclmulqdq_avx10_512_11:
+$L$SEH_endprologue_gcm_ghash_vpclmulqdq_avx512_11:
 
 
 
@@ -379,50 +379,50 @@ $L$aad_done__func1:
 	vmovdqa	xmm13,XMMWORD[112+rsp]
 	add	rsp,136
 	ret
-$L$SEH_end_gcm_ghash_vpclmulqdq_avx10_512_12:
+$L$SEH_end_gcm_ghash_vpclmulqdq_avx512_12:
 
 
-global	aes_gcm_enc_update_vaes_avx10_512
+global	aes_gcm_enc_update_vaes_avx512
 
 ALIGN	32
-aes_gcm_enc_update_vaes_avx10_512:
+aes_gcm_enc_update_vaes_avx512:
 
-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1:
+$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1:
 _CET_ENDBR
 	push	rsi
-$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_2:
+$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_2:
 	push	rdi
-$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_3:
+$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_3:
 	push	r12
-$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_4:
+$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_4:
 
 	mov	rsi,QWORD[64+rsp]
 	mov	rdi,QWORD[72+rsp]
 	mov	r12,QWORD[80+rsp]
 	sub	rsp,160
-$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_5:
+$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_5:
 	vmovdqa	XMMWORD[rsp],xmm6
-$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_6:
+$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_6:
 	vmovdqa	XMMWORD[16+rsp],xmm7
-$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_7:
+$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_7:
 	vmovdqa	XMMWORD[32+rsp],xmm8
-$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_8:
+$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_8:
 	vmovdqa	XMMWORD[48+rsp],xmm9
-$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_9:
+$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_9:
 	vmovdqa	XMMWORD[64+rsp],xmm10
-$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_10:
+$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_10:
 	vmovdqa	XMMWORD[80+rsp],xmm11
-$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_11:
+$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_11:
 	vmovdqa	XMMWORD[96+rsp],xmm12
-$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_12:
+$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_12:
 	vmovdqa	XMMWORD[112+rsp],xmm13
-$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_13:
+$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_13:
 	vmovdqa	XMMWORD[128+rsp],xmm14
-$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_14:
+$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_14:
 	vmovdqa	XMMWORD[144+rsp],xmm15
-$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_15:
+$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_15:
 
-$L$SEH_endprologue_aes_gcm_enc_update_vaes_avx10_512_16:
+$L$SEH_endprologue_aes_gcm_enc_update_vaes_avx512_16:
 %ifdef BORINGSSL_DISPATCH_TEST
 EXTERN	BORINGSSL_function_hit
 	mov	BYTE[((BORINGSSL_function_hit+7))],1
@@ -911,50 +911,50 @@ $L$done__func1:
 	pop	rdi
 	pop	rsi
 	ret
-$L$SEH_end_aes_gcm_enc_update_vaes_avx10_512_17:
+$L$SEH_end_aes_gcm_enc_update_vaes_avx512_17:
 
 
-global	aes_gcm_dec_update_vaes_avx10_512
+global	aes_gcm_dec_update_vaes_avx512
 
 ALIGN	32
-aes_gcm_dec_update_vaes_avx10_512:
+aes_gcm_dec_update_vaes_avx512:
 
-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1:
+$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1:
 _CET_ENDBR
 	push	rsi
-$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_2:
+$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_2:
 	push	rdi
-$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_3:
+$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_3:
 	push	r12
-$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_4:
+$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_4:
 
 	mov	rsi,QWORD[64+rsp]
 	mov	rdi,QWORD[72+rsp]
 	mov	r12,QWORD[80+rsp]
 	sub	rsp,160
-$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_5:
+$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_5:
 	vmovdqa	XMMWORD[rsp],xmm6
-$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_6:
+$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_6:
 	vmovdqa	XMMWORD[16+rsp],xmm7
-$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_7:
+$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_7:
 	vmovdqa	XMMWORD[32+rsp],xmm8
-$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_8:
+$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_8:
 	vmovdqa	XMMWORD[48+rsp],xmm9
-$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_9:
+$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_9:
 	vmovdqa	XMMWORD[64+rsp],xmm10
-$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_10:
+$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_10:
 	vmovdqa	XMMWORD[80+rsp],xmm11
-$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_11:
+$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_11:
 	vmovdqa	XMMWORD[96+rsp],xmm12
-$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_12:
+$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_12:
 	vmovdqa	XMMWORD[112+rsp],xmm13
-$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_13:
+$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_13:
 	vmovdqa	XMMWORD[128+rsp],xmm14
-$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_14:
+$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_14:
 	vmovdqa	XMMWORD[144+rsp],xmm15
-$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_15:
+$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_15:
 
-$L$SEH_endprologue_aes_gcm_dec_update_vaes_avx10_512_16:
+$L$SEH_endprologue_aes_gcm_dec_update_vaes_avx512_16:
 
 	vbroadcasti32x4	zmm8,ZMMWORD[$L$bswap_mask]
 	vbroadcasti32x4	zmm31,ZMMWORD[$L$gfpoly]
@@ -1353,164 +1353,164 @@ $L$done__func2:
 	pop	rdi
 	pop	rsi
 	ret
-$L$SEH_end_aes_gcm_dec_update_vaes_avx10_512_17:
+$L$SEH_end_aes_gcm_dec_update_vaes_avx512_17:
 
 
 section	.pdata rdata align=4
 ALIGN	4
-	DD	$L$SEH_begin_gcm_gmult_vpclmulqdq_avx10_1 wrt ..imagebase
-	DD	$L$SEH_end_gcm_gmult_vpclmulqdq_avx10_5 wrt ..imagebase
-	DD	$L$SEH_info_gcm_gmult_vpclmulqdq_avx10_0 wrt ..imagebase
+	DD	$L$SEH_begin_gcm_gmult_vpclmulqdq_avx512_1 wrt ..imagebase
+	DD	$L$SEH_end_gcm_gmult_vpclmulqdq_avx512_5 wrt ..imagebase
+	DD	$L$SEH_info_gcm_gmult_vpclmulqdq_avx512_0 wrt ..imagebase
 
-	DD	$L$SEH_begin_gcm_ghash_vpclmulqdq_avx10_512_1 wrt ..imagebase
-	DD	$L$SEH_end_gcm_ghash_vpclmulqdq_avx10_512_12 wrt ..imagebase
-	DD	$L$SEH_info_gcm_ghash_vpclmulqdq_avx10_512_0 wrt ..imagebase
+	DD	$L$SEH_begin_gcm_ghash_vpclmulqdq_avx512_1 wrt ..imagebase
+	DD	$L$SEH_end_gcm_ghash_vpclmulqdq_avx512_12 wrt ..imagebase
+	DD	$L$SEH_info_gcm_ghash_vpclmulqdq_avx512_0 wrt ..imagebase
 
-	DD	$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1 wrt ..imagebase
-	DD	$L$SEH_end_aes_gcm_enc_update_vaes_avx10_512_17 wrt ..imagebase
-	DD	$L$SEH_info_aes_gcm_enc_update_vaes_avx10_512_0 wrt ..imagebase
+	DD	$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1 wrt ..imagebase
+	DD	$L$SEH_end_aes_gcm_enc_update_vaes_avx512_17 wrt ..imagebase
+	DD	$L$SEH_info_aes_gcm_enc_update_vaes_avx512_0 wrt ..imagebase
 
-	DD	$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1 wrt ..imagebase
-	DD	$L$SEH_end_aes_gcm_dec_update_vaes_avx10_512_17 wrt ..imagebase
-	DD	$L$SEH_info_aes_gcm_dec_update_vaes_avx10_512_0 wrt ..imagebase
+	DD	$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1 wrt ..imagebase
+	DD	$L$SEH_end_aes_gcm_dec_update_vaes_avx512_17 wrt ..imagebase
+	DD	$L$SEH_info_aes_gcm_dec_update_vaes_avx512_0 wrt ..imagebase
 
 
 section	.xdata rdata align=8
 ALIGN	4
-$L$SEH_info_gcm_gmult_vpclmulqdq_avx10_0:
+$L$SEH_info_gcm_gmult_vpclmulqdq_avx512_0:
 	DB	1
-	DB	$L$SEH_endprologue_gcm_gmult_vpclmulqdq_avx10_4-$L$SEH_begin_gcm_gmult_vpclmulqdq_avx10_1
+	DB	$L$SEH_endprologue_gcm_gmult_vpclmulqdq_avx512_4-$L$SEH_begin_gcm_gmult_vpclmulqdq_avx512_1
 	DB	3
 	DB	0
-	DB	$L$SEH_prologue_gcm_gmult_vpclmulqdq_avx10_3-$L$SEH_begin_gcm_gmult_vpclmulqdq_avx10_1
+	DB	$L$SEH_prologue_gcm_gmult_vpclmulqdq_avx512_3-$L$SEH_begin_gcm_gmult_vpclmulqdq_avx512_1
 	DB	104
 	DW	0
-	DB	$L$SEH_prologue_gcm_gmult_vpclmulqdq_avx10_2-$L$SEH_begin_gcm_gmult_vpclmulqdq_avx10_1
+	DB	$L$SEH_prologue_gcm_gmult_vpclmulqdq_avx512_2-$L$SEH_begin_gcm_gmult_vpclmulqdq_avx512_1
 	DB	34
 
 	DW	0
-$L$SEH_info_gcm_ghash_vpclmulqdq_avx10_512_0:
+$L$SEH_info_gcm_ghash_vpclmulqdq_avx512_0:
 	DB	1
-	DB	$L$SEH_endprologue_gcm_ghash_vpclmulqdq_avx10_512_11-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx10_512_1
+	DB	$L$SEH_endprologue_gcm_ghash_vpclmulqdq_avx512_11-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx512_1
 	DB	18
 	DB	0
-	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_10-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx10_512_1
+	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_10-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx512_1
 	DB	216
 	DW	7
-	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_9-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx10_512_1
+	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_9-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx512_1
 	DB	200
 	DW	6
-	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_8-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx10_512_1
+	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_8-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx512_1
 	DB	184
 	DW	5
-	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_7-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx10_512_1
+	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_7-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx512_1
 	DB	168
 	DW	4
-	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_6-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx10_512_1
+	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_6-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx512_1
 	DB	152
 	DW	3
-	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_5-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx10_512_1
+	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_5-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx512_1
 	DB	136
 	DW	2
-	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_4-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx10_512_1
+	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_4-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx512_1
 	DB	120
 	DW	1
-	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_3-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx10_512_1
+	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_3-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx512_1
 	DB	104
 	DW	0
-	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx10_512_2-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx10_512_1
+	DB	$L$SEH_prologue_gcm_ghash_vpclmulqdq_avx512_2-$L$SEH_begin_gcm_ghash_vpclmulqdq_avx512_1
 	DB	1
 	DW	17
 
-$L$SEH_info_aes_gcm_enc_update_vaes_avx10_512_0:
+$L$SEH_info_aes_gcm_enc_update_vaes_avx512_0:
 	DB	1
-	DB	$L$SEH_endprologue_aes_gcm_enc_update_vaes_avx10_512_16-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_endprologue_aes_gcm_enc_update_vaes_avx512_16-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	25
 	DB	0
-	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_15-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_15-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	248
 	DW	9
-	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_14-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_14-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	232
 	DW	8
-	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_13-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_13-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	216
 	DW	7
-	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_12-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_12-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	200
 	DW	6
-	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_11-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_11-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	184
 	DW	5
-	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_10-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_10-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	168
 	DW	4
-	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_9-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_9-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	152
 	DW	3
-	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_8-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_8-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	136
 	DW	2
-	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_7-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_7-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	120
 	DW	1
-	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_6-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_6-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	104
 	DW	0
-	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_5-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_5-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	1
 	DW	20
-	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_4-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_4-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	192
-	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_3-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_3-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	112
-	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx10_512_2-$L$SEH_begin_aes_gcm_enc_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_enc_update_vaes_avx512_2-$L$SEH_begin_aes_gcm_enc_update_vaes_avx512_1
 	DB	96
 
 	DW	0
-$L$SEH_info_aes_gcm_dec_update_vaes_avx10_512_0:
+$L$SEH_info_aes_gcm_dec_update_vaes_avx512_0:
 	DB	1
-	DB	$L$SEH_endprologue_aes_gcm_dec_update_vaes_avx10_512_16-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_endprologue_aes_gcm_dec_update_vaes_avx512_16-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	25
 	DB	0
-	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_15-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_15-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	248
 	DW	9
-	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_14-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_14-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	232
 	DW	8
-	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_13-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_13-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	216
 	DW	7
-	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_12-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_12-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	200
 	DW	6
-	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_11-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_11-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	184
 	DW	5
-	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_10-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_10-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	168
 	DW	4
-	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_9-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_9-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	152
 	DW	3
-	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_8-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_8-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	136
 	DW	2
-	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_7-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_7-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	120
 	DW	1
-	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_6-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_6-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	104
 	DW	0
-	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_5-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_5-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	1
 	DW	20
-	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_4-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_4-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	192
-	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_3-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_3-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	112
-	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx10_512_2-$L$SEH_begin_aes_gcm_dec_update_vaes_avx10_512_1
+	DB	$L$SEH_prologue_aes_gcm_dec_update_vaes_avx512_2-$L$SEH_begin_aes_gcm_dec_update_vaes_avx512_1
 	DB	96
 
 	DW	0

@@ -102,10 +102,10 @@ boringssl_bcm_internal_headers := \
   crypto/fipsmodule/tls/kdf.cc.inc
 
 boringssl_bcm_sources_asm := \
-  gen/bcm/aes-gcm-avx10-x86_64-apple.S \
-  gen/bcm/aes-gcm-avx10-x86_64-linux.S \
   gen/bcm/aes-gcm-avx2-x86_64-apple.S \
   gen/bcm/aes-gcm-avx2-x86_64-linux.S \
+  gen/bcm/aes-gcm-avx512-x86_64-apple.S \
+  gen/bcm/aes-gcm-avx512-x86_64-linux.S \
   gen/bcm/aesni-gcm-x86_64-apple.S \
   gen/bcm/aesni-gcm-x86_64-linux.S \
   gen/bcm/aesni-x86-apple.S \
@@ -203,8 +203,8 @@ boringssl_bcm_sources_asm := \
   third_party/fiat/asm/fiat_p256_adx_sqr.S
 
 boringssl_bcm_sources_nasm := \
-  gen/bcm/aes-gcm-avx10-x86_64-win.asm \
   gen/bcm/aes-gcm-avx2-x86_64-win.asm \
+  gen/bcm/aes-gcm-avx512-x86_64-win.asm \
   gen/bcm/aesni-gcm-x86_64-win.asm \
   gen/bcm/aesni-x86-win.asm \
   gen/bcm/aesni-x86_64-win.asm \

@@ -39,11 +39,11 @@ L$inc_4blocks:
 .quad	4, 0
 
 .text	
-.globl	_gcm_gmult_vpclmulqdq_avx10
-.private_extern _gcm_gmult_vpclmulqdq_avx10
+.globl	_gcm_gmult_vpclmulqdq_avx512
+.private_extern _gcm_gmult_vpclmulqdq_avx512
 
 .p2align	5
-_gcm_gmult_vpclmulqdq_avx10:
+_gcm_gmult_vpclmulqdq_avx512:
 
 
 _CET_ENDBR
@@ -77,11 +77,11 @@ _CET_ENDBR
 
 
 
-.globl	_gcm_init_vpclmulqdq_avx10_512
-.private_extern _gcm_init_vpclmulqdq_avx10_512
+.globl	_gcm_init_vpclmulqdq_avx512
+.private_extern _gcm_init_vpclmulqdq_avx512
 
 .p2align	5
-_gcm_init_vpclmulqdq_avx10_512:
+_gcm_init_vpclmulqdq_avx512:
 
 
 _CET_ENDBR
@@ -184,11 +184,11 @@ L$precompute_next__func1:
 
 
 
-.globl	_gcm_ghash_vpclmulqdq_avx10_512
-.private_extern _gcm_ghash_vpclmulqdq_avx10_512
+.globl	_gcm_ghash_vpclmulqdq_avx512
+.private_extern _gcm_ghash_vpclmulqdq_avx512
 
 .p2align	5
-_gcm_ghash_vpclmulqdq_avx10_512:
+_gcm_ghash_vpclmulqdq_avx512:
 
 
 _CET_ENDBR
@@ -344,11 +344,11 @@ L$aad_done__func1:
 
 
 
-.globl	_aes_gcm_enc_update_vaes_avx10_512
-.private_extern _aes_gcm_enc_update_vaes_avx10_512
+.globl	_aes_gcm_enc_update_vaes_avx512
+.private_extern _aes_gcm_enc_update_vaes_avx512
 
 .p2align	5
-_aes_gcm_enc_update_vaes_avx10_512:
+_aes_gcm_enc_update_vaes_avx512:
 
 
 _CET_ENDBR
@@ -835,11 +835,11 @@ L$done__func1:
 
 
 
-.globl	_aes_gcm_dec_update_vaes_avx10_512
-.private_extern _aes_gcm_dec_update_vaes_avx10_512
+.globl	_aes_gcm_dec_update_vaes_avx512
+.private_extern _aes_gcm_dec_update_vaes_avx512
 
 .p2align	5
-_aes_gcm_dec_update_vaes_avx10_512:
+_aes_gcm_dec_update_vaes_avx512:
 
 
 _CET_ENDBR

@@ -142,8 +142,8 @@
         ],
         "perlasm_x86_64": [
             {"src": "crypto/fipsmodule/aes/asm/aesni-gcm-x86_64.pl"},
-            {"src": "crypto/fipsmodule/aes/asm/aes-gcm-avx10-x86_64.pl"},
             {"src": "crypto/fipsmodule/aes/asm/aes-gcm-avx2-x86_64.pl"},
+            {"src": "crypto/fipsmodule/aes/asm/aes-gcm-avx512-x86_64.pl"},
             {"src": "crypto/fipsmodule/aes/asm/aesni-x86_64.pl"},
             {"src": "crypto/fipsmodule/aes/asm/ghash-ssse3-x86_64.pl"},
             {"src": "crypto/fipsmodule/aes/asm/ghash-x86_64.pl"},

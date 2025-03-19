@@ -39,11 +39,11 @@
 .quad	4, 0
 
 .text	
-.globl	gcm_gmult_vpclmulqdq_avx10
-.hidden gcm_gmult_vpclmulqdq_avx10
-.type	gcm_gmult_vpclmulqdq_avx10,@function
+.globl	gcm_gmult_vpclmulqdq_avx512
+.hidden gcm_gmult_vpclmulqdq_avx512
+.type	gcm_gmult_vpclmulqdq_avx512,@function
 .align	32
-gcm_gmult_vpclmulqdq_avx10:
+gcm_gmult_vpclmulqdq_avx512:
 .cfi_startproc	
 
 _CET_ENDBR
@@ -76,12 +76,12 @@ _CET_ENDBR
 	ret
 
 .cfi_endproc	
-.size	gcm_gmult_vpclmulqdq_avx10, . - gcm_gmult_vpclmulqdq_avx10
-.globl	gcm_init_vpclmulqdq_avx10_512
-.hidden gcm_init_vpclmulqdq_avx10_512
-.type	gcm_init_vpclmulqdq_avx10_512,@function
+.size	gcm_gmult_vpclmulqdq_avx512, . - gcm_gmult_vpclmulqdq_avx512
+.globl	gcm_init_vpclmulqdq_avx512
+.hidden gcm_init_vpclmulqdq_avx512
+.type	gcm_init_vpclmulqdq_avx512,@function
 .align	32
-gcm_init_vpclmulqdq_avx10_512:
+gcm_init_vpclmulqdq_avx512:
 .cfi_startproc	
 
 _CET_ENDBR
@@ -183,12 +183,12 @@ _CET_ENDBR
 	ret
 
 .cfi_endproc	
-.size	gcm_init_vpclmulqdq_avx10_512, . - gcm_init_vpclmulqdq_avx10_512
-.globl	gcm_ghash_vpclmulqdq_avx10_512
-.hidden gcm_ghash_vpclmulqdq_avx10_512
-.type	gcm_ghash_vpclmulqdq_avx10_512,@function
+.size	gcm_init_vpclmulqdq_avx512, . - gcm_init_vpclmulqdq_avx512
+.globl	gcm_ghash_vpclmulqdq_avx512
+.hidden gcm_ghash_vpclmulqdq_avx512
+.type	gcm_ghash_vpclmulqdq_avx512,@function
 .align	32
-gcm_ghash_vpclmulqdq_avx10_512:
+gcm_ghash_vpclmulqdq_avx512:
 .cfi_startproc	
 
 _CET_ENDBR
@@ -343,12 +343,12 @@ _CET_ENDBR
 	ret
 
 .cfi_endproc	
-.size	gcm_ghash_vpclmulqdq_avx10_512, . - gcm_ghash_vpclmulqdq_avx10_512
-.globl	aes_gcm_enc_update_vaes_avx10_512
-.hidden aes_gcm_enc_update_vaes_avx10_512
-.type	aes_gcm_enc_update_vaes_avx10_512,@function
+.size	gcm_ghash_vpclmulqdq_avx512, . - gcm_ghash_vpclmulqdq_avx512
+.globl	aes_gcm_enc_update_vaes_avx512
+.hidden aes_gcm_enc_update_vaes_avx512
+.type	aes_gcm_enc_update_vaes_avx512,@function
 .align	32
-aes_gcm_enc_update_vaes_avx10_512:
+aes_gcm_enc_update_vaes_avx512:
 .cfi_startproc	
 
 _CET_ENDBR
@@ -837,12 +837,12 @@ _CET_ENDBR
 	ret
 
 .cfi_endproc	
-.size	aes_gcm_enc_update_vaes_avx10_512, . - aes_gcm_enc_update_vaes_avx10_512
-.globl	aes_gcm_dec_update_vaes_avx10_512
-.hidden aes_gcm_dec_update_vaes_avx10_512
-.type	aes_gcm_dec_update_vaes_avx10_512,@function
+.size	aes_gcm_enc_update_vaes_avx512, . - aes_gcm_enc_update_vaes_avx512
+.globl	aes_gcm_dec_update_vaes_avx512
+.hidden aes_gcm_dec_update_vaes_avx512
+.type	aes_gcm_dec_update_vaes_avx512,@function
 .align	32
-aes_gcm_dec_update_vaes_avx10_512:
+aes_gcm_dec_update_vaes_avx512:
 .cfi_startproc	
 
 _CET_ENDBR
@@ -1240,5 +1240,5 @@ _CET_ENDBR
 	ret
 
 .cfi_endproc	
-.size	aes_gcm_dec_update_vaes_avx10_512, . - aes_gcm_dec_update_vaes_avx10_512
+.size	aes_gcm_dec_update_vaes_avx512, . - aes_gcm_dec_update_vaes_avx512
 #endif
