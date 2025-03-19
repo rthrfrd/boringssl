@@ -33,62 +33,17 @@ $L$gfpoly_and_internal_carrybit:
 	DQ	1,0xc200000000000001
 
 
-
-
-
 $L$ctr_pattern:
 	DQ	0,0
 	DQ	1,0
-$L$inc_2blocks:
 	DQ	2,0
 	DQ	3,0
+
+
 $L$inc_4blocks:
 	DQ	4,0
 
 section	.text code align=64
-
-global	gcm_gmult_vpclmulqdq_avx512
-
-ALIGN	32
-gcm_gmult_vpclmulqdq_avx512:
-
-$L$SEH_begin_gcm_gmult_vpclmulqdq_avx512_1:
-_CET_ENDBR
-	sub	rsp,24
-$L$SEH_prologue_gcm_gmult_vpclmulqdq_avx512_2:
-	vmovdqa	XMMWORD[rsp],xmm6
-$L$SEH_prologue_gcm_gmult_vpclmulqdq_avx512_3:
-
-$L$SEH_endprologue_gcm_gmult_vpclmulqdq_avx512_4:
-
-	vmovdqu	xmm0,XMMWORD[rcx]
-	vmovdqu	xmm1,XMMWORD[$L$bswap_mask]
-	vmovdqu	xmm2,XMMWORD[((256-16))+rdx]
-	vmovdqu	xmm3,XMMWORD[$L$gfpoly]
-	vpshufb	xmm0,xmm0,xmm1
-
-	vpclmulqdq	xmm4,xmm0,xmm2,0x00
-	vpclmulqdq	xmm5,xmm0,xmm2,0x01
-	vpclmulqdq	xmm6,xmm0,xmm2,0x10
-	vpxord	xmm5,xmm5,xmm6
-	vpclmulqdq	xmm6,xmm3,xmm4,0x01
-	vpshufd	xmm4,xmm4,0x4e
-	vpternlogd	xmm5,xmm4,xmm6,0x96
-	vpclmulqdq	xmm0,xmm0,xmm2,0x11
-	vpclmulqdq	xmm4,xmm3,xmm5,0x01
-	vpshufd	xmm5,xmm5,0x4e
-	vpternlogd	xmm0,xmm5,xmm4,0x96
-
-
-	vpshufb	xmm0,xmm0,xmm1
-	vmovdqu	XMMWORD[rcx],xmm0
-
-
-	vmovdqa	xmm6,XMMWORD[rsp]
-	add	rsp,24
-	ret
-$L$SEH_end_gcm_gmult_vpclmulqdq_avx512_5:
-
 
 global	gcm_init_vpclmulqdq_avx512
 
@@ -151,6 +106,8 @@ _CET_ENDBR
 
 	vinserti128	ymm3,ymm4,xmm3,1
 	vinserti128	ymm4,ymm4,xmm4,1
+
+
 	vpclmulqdq	ymm0,ymm3,ymm4,0x00
 	vpclmulqdq	ymm1,ymm3,ymm4,0x01
 	vpclmulqdq	ymm2,ymm3,ymm4,0x10
@@ -166,14 +123,14 @@ _CET_ENDBR
 	vinserti64x4	zmm3,zmm4,ymm3,1
 	vshufi64x2	zmm4,zmm4,zmm4,0
 
+
 	vmovdqu8	ZMMWORD[r8],zmm3
 
 
 
 
-
 	mov	eax,3
-$L$precompute_next__func1:
+$L$precompute_next:
 	sub	r8,64
 	vpclmulqdq	zmm0,zmm3,zmm4,0x00
 	vpclmulqdq	zmm1,zmm3,zmm4,0x01
@@ -189,11 +146,54 @@ $L$precompute_next__func1:
 
 	vmovdqu8	ZMMWORD[r8],zmm3
 	dec	eax
-	jnz	NEAR $L$precompute_next__func1
+	jnz	NEAR $L$precompute_next
 
 	vzeroupper
 	ret
 
+
+
+global	gcm_gmult_vpclmulqdq_avx512
+
+ALIGN	32
+gcm_gmult_vpclmulqdq_avx512:
+
+$L$SEH_begin_gcm_gmult_vpclmulqdq_avx512_1:
+_CET_ENDBR
+	sub	rsp,24
+$L$SEH_prologue_gcm_gmult_vpclmulqdq_avx512_2:
+	vmovdqa	XMMWORD[rsp],xmm6
+$L$SEH_prologue_gcm_gmult_vpclmulqdq_avx512_3:
+
+$L$SEH_endprologue_gcm_gmult_vpclmulqdq_avx512_4:
+
+	vmovdqu	xmm0,XMMWORD[rcx]
+	vmovdqu	xmm1,XMMWORD[$L$bswap_mask]
+	vmovdqu	xmm2,XMMWORD[((256-16))+rdx]
+	vmovdqu	xmm3,XMMWORD[$L$gfpoly]
+	vpshufb	xmm0,xmm0,xmm1
+
+	vpclmulqdq	xmm4,xmm0,xmm2,0x00
+	vpclmulqdq	xmm5,xmm0,xmm2,0x01
+	vpclmulqdq	xmm6,xmm0,xmm2,0x10
+	vpxord	xmm5,xmm5,xmm6
+	vpclmulqdq	xmm6,xmm3,xmm4,0x01
+	vpshufd	xmm4,xmm4,0x4e
+	vpternlogd	xmm5,xmm4,xmm6,0x96
+	vpclmulqdq	xmm0,xmm0,xmm2,0x11
+	vpclmulqdq	xmm4,xmm3,xmm5,0x01
+	vpshufd	xmm5,xmm5,0x4e
+	vpternlogd	xmm0,xmm5,xmm4,0x96
+
+
+	vpshufb	xmm0,xmm0,xmm1
+	vmovdqu	XMMWORD[rcx],xmm0
+
+
+	vmovdqa	xmm6,XMMWORD[rsp]
+	add	rsp,24
+	ret
+$L$SEH_end_gcm_gmult_vpclmulqdq_avx512_5:
 
 
 global	gcm_ghash_vpclmulqdq_avx512
@@ -236,7 +236,7 @@ $L$SEH_endprologue_gcm_ghash_vpclmulqdq_avx512_11:
 
 
 	cmp	r9,64
-	jb	NEAR $L$aad_blockbyblock__func1
+	jb	NEAR $L$aad_blockbyblock
 
 
 
@@ -246,8 +246,8 @@ $L$SEH_endprologue_gcm_ghash_vpclmulqdq_avx512_11:
 
 	vmovdqu8	zmm9,ZMMWORD[((256-64))+rdx]
 
-	cmp	r9,4*64-1
-	jbe	NEAR $L$aad_loop_1x__func1
+	cmp	r9,256
+	jb	NEAR $L$aad_loop_1x
 
 
 	vmovdqu8	zmm6,ZMMWORD[((256-256))+rdx]
@@ -255,7 +255,7 @@ $L$SEH_endprologue_gcm_ghash_vpclmulqdq_avx512_11:
 	vmovdqu8	zmm8,ZMMWORD[((256-128))+rdx]
 
 
-$L$aad_loop_4x__func1:
+$L$aad_loop_4x:
 	vmovdqu8	zmm0,ZMMWORD[r8]
 	vmovdqu8	zmm1,ZMMWORD[64+r8]
 	vmovdqu8	zmm2,ZMMWORD[128+r8]
@@ -301,15 +301,15 @@ $L$aad_loop_4x__func1:
 	vpxord	xmm5,xmm5,xmm0
 	vpternlogd	xmm5,xmm2,xmm1,0x96
 
-	sub	r8,-4*64
-	add	r9,-4*64
-	cmp	r9,4*64-1
-	ja	NEAR $L$aad_loop_4x__func1
+	add	r8,256
+	sub	r9,256
+	cmp	r9,256
+	jae	NEAR $L$aad_loop_4x
 
 
 	cmp	r9,64
-	jb	NEAR $L$aad_large_done__func1
-$L$aad_loop_1x__func1:
+	jb	NEAR $L$aad_large_done
+$L$aad_loop_1x:
 	vmovdqu8	zmm0,ZMMWORD[r8]
 	vpshufb	zmm0,zmm0,zmm4
 	vpxord	zmm5,zmm5,zmm0
@@ -334,16 +334,16 @@ $L$aad_loop_1x__func1:
 	add	r8,64
 	sub	r9,64
 	cmp	r9,64
-	jae	NEAR $L$aad_loop_1x__func1
+	jae	NEAR $L$aad_loop_1x
 
-$L$aad_large_done__func1:
+$L$aad_large_done:
 
 
-$L$aad_blockbyblock__func1:
+$L$aad_blockbyblock:
 	test	r9,r9
-	jz	NEAR $L$aad_done__func1
+	jz	NEAR $L$aad_done
 	vmovdqu	xmm9,XMMWORD[((256-16))+rdx]
-$L$aad_loop_blockbyblock__func1:
+$L$aad_loop_blockbyblock:
 	vmovdqu	xmm0,XMMWORD[r8]
 	vpshufb	xmm0,xmm0,xmm4
 	vpxor	xmm5,xmm5,xmm0
@@ -361,9 +361,9 @@ $L$aad_loop_blockbyblock__func1:
 
 	add	r8,16
 	sub	r9,16
-	jnz	NEAR $L$aad_loop_blockbyblock__func1
+	jnz	NEAR $L$aad_loop_blockbyblock
 
-$L$aad_done__func1:
+$L$aad_done:
 
 	vpshufb	xmm5,xmm5,xmm4
 	vmovdqu	XMMWORD[rcx],xmm5
@@ -458,8 +458,8 @@ EXTERN	BORINGSSL_function_hit
 
 
 
-	cmp	r8,4*64-1
-	jbe	NEAR $L$crypt_loop_4x_done__func1
+	cmp	r8,256
+	jb	NEAR $L$crypt_loop_4x_done__func1
 
 
 	vmovdqu8	zmm27,ZMMWORD[((256-256))+rdi]
@@ -509,11 +509,11 @@ $L$vaesenc_loop_first_4_vecs__func1:
 	vmovdqu8	ZMMWORD[128+rdx],zmm6
 	vmovdqu8	ZMMWORD[192+rdx],zmm7
 
-	sub	rcx,-4*64
-	sub	rdx,-4*64
-	add	r8,-4*64
-	cmp	r8,4*64-1
-	jbe	NEAR $L$ghash_last_ciphertext_4x__func1
+	add	rcx,256
+	add	rdx,256
+	sub	r8,256
+	cmp	r8,256
+	jb	NEAR $L$ghash_last_ciphertext_4x__func1
 
 	vbroadcasti32x4	zmm15,ZMMWORD[((-144))+r11]
 	vbroadcasti32x4	zmm16,ZMMWORD[((-128))+r11]
@@ -574,10 +574,15 @@ $L$aes192__func1:
 	vaesenc	zmm3,zmm3,zmm9
 
 $L$aes128__func1:
+
+
+
+
 	prefetcht0	[((512+0))+rcx]
 	prefetcht0	[((512+64))+rcx]
 	prefetcht0	[((512+128))+rcx]
 	prefetcht0	[((512+192))+rcx]
+
 
 
 
@@ -690,11 +695,11 @@ $L$aes128__func1:
 	vmovdqu8	ZMMWORD[128+rdx],zmm6
 	vmovdqu8	ZMMWORD[192+rdx],zmm7
 
-	sub	rcx,-4*64
-	sub	rdx,-4*64
-	add	r8,-4*64
-	cmp	r8,4*64-1
-	ja	NEAR $L$crypt_loop_4x__func1
+	add	rcx,256
+	add	rdx,256
+	sub	r8,256
+	cmp	r8,256
+	jae	NEAR $L$crypt_loop_4x__func1
 $L$ghash_last_ciphertext_4x__func1:
 	vpshufb	zmm4,zmm4,zmm8
 	vpxord	zmm4,zmm4,zmm10
@@ -986,8 +991,8 @@ $L$SEH_endprologue_aes_gcm_dec_update_vaes_avx512_16:
 
 
 
-	cmp	r8,4*64-1
-	jbe	NEAR $L$crypt_loop_4x_done__func2
+	cmp	r8,256
+	jb	NEAR $L$crypt_loop_4x_done__func2
 
 
 	vmovdqu8	zmm27,ZMMWORD[((256-256))+rdi]
@@ -1058,10 +1063,15 @@ $L$aes192__func2:
 	vaesenc	zmm3,zmm3,zmm9
 
 $L$aes128__func2:
+
+
+
+
 	prefetcht0	[((512+0))+rcx]
 	prefetcht0	[((512+64))+rcx]
 	prefetcht0	[((512+128))+rcx]
 	prefetcht0	[((512+192))+rcx]
+
 
 
 
@@ -1174,11 +1184,11 @@ $L$aes128__func2:
 	vmovdqu8	ZMMWORD[128+rdx],zmm6
 	vmovdqu8	ZMMWORD[192+rdx],zmm7
 
-	sub	rcx,-4*64
-	sub	rdx,-4*64
-	add	r8,-4*64
-	cmp	r8,4*64-1
-	ja	NEAR $L$crypt_loop_4x__func2
+	add	rcx,256
+	add	rdx,256
+	sub	r8,256
+	cmp	r8,256
+	jae	NEAR $L$crypt_loop_4x__func2
 $L$crypt_loop_4x_done__func2:
 
 	test	r8,r8

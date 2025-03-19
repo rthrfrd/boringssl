@@ -26,57 +26,17 @@ L$gfpoly_and_internal_carrybit:
 .quad	1, 0xc200000000000001
 
 
-
-
-
 L$ctr_pattern:
 .quad	0, 0
 .quad	1, 0
-L$inc_2blocks:
 .quad	2, 0
 .quad	3, 0
+
+
 L$inc_4blocks:
 .quad	4, 0
 
 .text	
-.globl	_gcm_gmult_vpclmulqdq_avx512
-.private_extern _gcm_gmult_vpclmulqdq_avx512
-
-.p2align	5
-_gcm_gmult_vpclmulqdq_avx512:
-
-
-_CET_ENDBR
-
-
-
-	vmovdqu	(%rdi),%xmm0
-	vmovdqu	L$bswap_mask(%rip),%xmm1
-	vmovdqu	256-16(%rsi),%xmm2
-	vmovdqu	L$gfpoly(%rip),%xmm3
-	vpshufb	%xmm1,%xmm0,%xmm0
-
-	vpclmulqdq	$0x00,%xmm2,%xmm0,%xmm4
-	vpclmulqdq	$0x01,%xmm2,%xmm0,%xmm5
-	vpclmulqdq	$0x10,%xmm2,%xmm0,%xmm6
-	vpxord	%xmm6,%xmm5,%xmm5
-	vpclmulqdq	$0x01,%xmm4,%xmm3,%xmm6
-	vpshufd	$0x4e,%xmm4,%xmm4
-	vpternlogd	$0x96,%xmm6,%xmm4,%xmm5
-	vpclmulqdq	$0x11,%xmm2,%xmm0,%xmm0
-	vpclmulqdq	$0x01,%xmm5,%xmm3,%xmm4
-	vpshufd	$0x4e,%xmm5,%xmm5
-	vpternlogd	$0x96,%xmm4,%xmm5,%xmm0
-
-
-	vpshufb	%xmm1,%xmm0,%xmm0
-	vmovdqu	%xmm0,(%rdi)
-
-
-	ret
-
-
-
 .globl	_gcm_init_vpclmulqdq_avx512
 .private_extern _gcm_init_vpclmulqdq_avx512
 
@@ -139,6 +99,8 @@ _CET_ENDBR
 
 	vinserti128	$1,%xmm3,%ymm4,%ymm3
 	vinserti128	$1,%xmm4,%ymm4,%ymm4
+
+
 	vpclmulqdq	$0x00,%ymm4,%ymm3,%ymm0
 	vpclmulqdq	$0x01,%ymm4,%ymm3,%ymm1
 	vpclmulqdq	$0x10,%ymm4,%ymm3,%ymm2
@@ -154,14 +116,14 @@ _CET_ENDBR
 	vinserti64x4	$1,%ymm3,%zmm4,%zmm3
 	vshufi64x2	$0,%zmm4,%zmm4,%zmm4
 
+
 	vmovdqu8	%zmm3,(%r8)
 
 
 
 
-
 	movl	$3,%eax
-L$precompute_next__func1:
+L$precompute_next:
 	subq	$64,%r8
 	vpclmulqdq	$0x00,%zmm4,%zmm3,%zmm0
 	vpclmulqdq	$0x01,%zmm4,%zmm3,%zmm1
@@ -177,9 +139,47 @@ L$precompute_next__func1:
 
 	vmovdqu8	%zmm3,(%r8)
 	decl	%eax
-	jnz	L$precompute_next__func1
+	jnz	L$precompute_next
 
 	vzeroupper
+	ret
+
+
+
+.globl	_gcm_gmult_vpclmulqdq_avx512
+.private_extern _gcm_gmult_vpclmulqdq_avx512
+
+.p2align	5
+_gcm_gmult_vpclmulqdq_avx512:
+
+
+_CET_ENDBR
+
+
+
+	vmovdqu	(%rdi),%xmm0
+	vmovdqu	L$bswap_mask(%rip),%xmm1
+	vmovdqu	256-16(%rsi),%xmm2
+	vmovdqu	L$gfpoly(%rip),%xmm3
+	vpshufb	%xmm1,%xmm0,%xmm0
+
+	vpclmulqdq	$0x00,%xmm2,%xmm0,%xmm4
+	vpclmulqdq	$0x01,%xmm2,%xmm0,%xmm5
+	vpclmulqdq	$0x10,%xmm2,%xmm0,%xmm6
+	vpxord	%xmm6,%xmm5,%xmm5
+	vpclmulqdq	$0x01,%xmm4,%xmm3,%xmm6
+	vpshufd	$0x4e,%xmm4,%xmm4
+	vpternlogd	$0x96,%xmm6,%xmm4,%xmm5
+	vpclmulqdq	$0x11,%xmm2,%xmm0,%xmm0
+	vpclmulqdq	$0x01,%xmm5,%xmm3,%xmm4
+	vpshufd	$0x4e,%xmm5,%xmm5
+	vpternlogd	$0x96,%xmm4,%xmm5,%xmm0
+
+
+	vpshufb	%xmm1,%xmm0,%xmm0
+	vmovdqu	%xmm0,(%rdi)
+
+
 	ret
 
 
@@ -207,7 +207,7 @@ _CET_ENDBR
 
 
 	cmpq	$64,%rcx
-	jb	L$aad_blockbyblock__func1
+	jb	L$aad_blockbyblock
 
 
 
@@ -217,8 +217,8 @@ _CET_ENDBR
 
 	vmovdqu8	256-64(%rsi),%zmm9
 
-	cmpq	$256-1,%rcx
-	jbe	L$aad_loop_1x__func1
+	cmpq	$256,%rcx
+	jb	L$aad_loop_1x
 
 
 	vmovdqu8	256-256(%rsi),%zmm6
@@ -226,7 +226,7 @@ _CET_ENDBR
 	vmovdqu8	256-128(%rsi),%zmm8
 
 
-L$aad_loop_4x__func1:
+L$aad_loop_4x:
 	vmovdqu8	0(%rdx),%zmm0
 	vmovdqu8	64(%rdx),%zmm1
 	vmovdqu8	128(%rdx),%zmm2
@@ -272,15 +272,15 @@ L$aad_loop_4x__func1:
 	vpxord	%xmm0,%xmm5,%xmm5
 	vpternlogd	$0x96,%xmm1,%xmm2,%xmm5
 
-	subq	$-256,%rdx
-	addq	$-256,%rcx
-	cmpq	$256-1,%rcx
-	ja	L$aad_loop_4x__func1
+	addq	$256,%rdx
+	subq	$256,%rcx
+	cmpq	$256,%rcx
+	jae	L$aad_loop_4x
 
 
 	cmpq	$64,%rcx
-	jb	L$aad_large_done__func1
-L$aad_loop_1x__func1:
+	jb	L$aad_large_done
+L$aad_loop_1x:
 	vmovdqu8	(%rdx),%zmm0
 	vpshufb	%zmm4,%zmm0,%zmm0
 	vpxord	%zmm0,%zmm5,%zmm5
@@ -305,16 +305,16 @@ L$aad_loop_1x__func1:
 	addq	$64,%rdx
 	subq	$64,%rcx
 	cmpq	$64,%rcx
-	jae	L$aad_loop_1x__func1
+	jae	L$aad_loop_1x
 
-L$aad_large_done__func1:
+L$aad_large_done:
 
 
-L$aad_blockbyblock__func1:
+L$aad_blockbyblock:
 	testq	%rcx,%rcx
-	jz	L$aad_done__func1
+	jz	L$aad_done
 	vmovdqu	256-16(%rsi),%xmm9
-L$aad_loop_blockbyblock__func1:
+L$aad_loop_blockbyblock:
 	vmovdqu	(%rdx),%xmm0
 	vpshufb	%xmm4,%xmm0,%xmm0
 	vpxor	%xmm0,%xmm5,%xmm5
@@ -332,9 +332,9 @@ L$aad_loop_blockbyblock__func1:
 
 	addq	$16,%rdx
 	subq	$16,%rcx
-	jnz	L$aad_loop_blockbyblock__func1
+	jnz	L$aad_loop_blockbyblock
 
-L$aad_done__func1:
+L$aad_done:
 
 	vpshufb	%xmm4,%xmm5,%xmm5
 	vmovdqu	%xmm5,(%rdi)
@@ -391,8 +391,8 @@ _CET_ENDBR
 
 
 
-	cmpq	$256-1,%rdx
-	jbe	L$crypt_loop_4x_done__func1
+	cmpq	$256,%rdx
+	jb	L$crypt_loop_4x_done__func1
 
 
 	vmovdqu8	256-256(%r9),%zmm27
@@ -442,11 +442,11 @@ L$vaesenc_loop_first_4_vecs__func1:
 	vmovdqu8	%zmm6,128(%rsi)
 	vmovdqu8	%zmm7,192(%rsi)
 
-	subq	$-256,%rdi
-	subq	$-256,%rsi
-	addq	$-256,%rdx
-	cmpq	$256-1,%rdx
-	jbe	L$ghash_last_ciphertext_4x__func1
+	addq	$256,%rdi
+	addq	$256,%rsi
+	subq	$256,%rdx
+	cmpq	$256,%rdx
+	jb	L$ghash_last_ciphertext_4x__func1
 
 	vbroadcasti32x4	-144(%r11),%zmm15
 	vbroadcasti32x4	-128(%r11),%zmm16
@@ -507,10 +507,15 @@ L$aes192__func1:
 	vaesenc	%zmm9,%zmm3,%zmm3
 
 L$aes128__func1:
+
+
+
+
 	prefetcht0	512+0(%rdi)
 	prefetcht0	512+64(%rdi)
 	prefetcht0	512+128(%rdi)
 	prefetcht0	512+192(%rdi)
+
 
 
 
@@ -623,11 +628,11 @@ L$aes128__func1:
 	vmovdqu8	%zmm6,128(%rsi)
 	vmovdqu8	%zmm7,192(%rsi)
 
-	subq	$-256,%rdi
-	subq	$-256,%rsi
-	addq	$-256,%rdx
-	cmpq	$256-1,%rdx
-	ja	L$crypt_loop_4x__func1
+	addq	$256,%rdi
+	addq	$256,%rsi
+	subq	$256,%rdx
+	cmpq	$256,%rdx
+	jae	L$crypt_loop_4x__func1
 L$ghash_last_ciphertext_4x__func1:
 	vpshufb	%zmm8,%zmm4,%zmm4
 	vpxord	%zmm10,%zmm4,%zmm4
@@ -878,8 +883,8 @@ _CET_ENDBR
 
 
 
-	cmpq	$256-1,%rdx
-	jbe	L$crypt_loop_4x_done__func2
+	cmpq	$256,%rdx
+	jb	L$crypt_loop_4x_done__func2
 
 
 	vmovdqu8	256-256(%r9),%zmm27
@@ -950,10 +955,15 @@ L$aes192__func2:
 	vaesenc	%zmm9,%zmm3,%zmm3
 
 L$aes128__func2:
+
+
+
+
 	prefetcht0	512+0(%rdi)
 	prefetcht0	512+64(%rdi)
 	prefetcht0	512+128(%rdi)
 	prefetcht0	512+192(%rdi)
+
 
 
 
@@ -1066,11 +1076,11 @@ L$aes128__func2:
 	vmovdqu8	%zmm6,128(%rsi)
 	vmovdqu8	%zmm7,192(%rsi)
 
-	subq	$-256,%rdi
-	subq	$-256,%rsi
-	addq	$-256,%rdx
-	cmpq	$256-1,%rdx
-	ja	L$crypt_loop_4x__func2
+	addq	$256,%rdi
+	addq	$256,%rsi
+	subq	$256,%rdx
+	cmpq	$256,%rdx
+	jae	L$crypt_loop_4x__func2
 L$crypt_loop_4x_done__func2:
 
 	testq	%rdx,%rdx
