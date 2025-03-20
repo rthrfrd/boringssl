@@ -23,10 +23,8 @@
 #include <string.h>
 
 #if defined(_MSC_VER)
-OPENSSL_MSVC_PRAGMA(warning(push, 3))
 #include <immintrin.h>
 #include <intrin.h>
-OPENSSL_MSVC_PRAGMA(warning(pop))
 #endif
 
 #include "internal.h"

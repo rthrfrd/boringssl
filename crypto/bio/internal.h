@@ -26,9 +26,7 @@ typedef unsigned short u_short;
 #include <sys/types.h>
 #include <sys/socket.h>
 #else
-OPENSSL_MSVC_PRAGMA(warning(push, 3))
 #include <winsock2.h>
-OPENSSL_MSVC_PRAGMA(warning(pop))
 typedef int socklen_t;
 #endif
 #endif  // !OPENSSL_NO_SOCK
