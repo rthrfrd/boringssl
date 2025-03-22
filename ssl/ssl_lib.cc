@@ -332,8 +332,9 @@ void SSL_set_handoff_mode(SSL *ssl, bool on) {
 bool SSL_get_traffic_secrets(const SSL *ssl,
                              Span<const uint8_t> *out_read_traffic_secret,
                              Span<const uint8_t> *out_write_traffic_secret) {
-  // This API is not well-defined for DTLS 1.3 (see https://crbug.com/42290608)
-  // or QUIC, where multiple epochs may be alive at once.
+  // This API is not well-defined for DTLS, where multiple epochs may be alive
+  // at once. Callers should use |SSL_get_dtls_*_traffic_secret| instead. In
+  // QUIC, the application is already handed the traffic secret.
   if (SSL_is_dtls(ssl) || SSL_is_quic(ssl)) {
     OPENSSL_PUT_ERROR(SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     return false;
@@ -2813,17 +2814,8 @@ int SSL_get_ivs(const SSL *ssl, const uint8_t **out_read_iv,
 
 uint64_t SSL_get_read_sequence(const SSL *ssl) {
   if (SSL_is_dtls(ssl)) {
-    // TODO(crbug.com/42290608): This API needs to reworked.
-    //
-    // In DTLS 1.2, right at an epoch transition, |read_epoch| may not have
-    // received any records. We will then return that sequence 0 is the highest
-    // received, but it's really -1, which is not representable. This is mostly
-    // moot because, after the handshake, we will never be in the state.
-    //
-    // In DTLS 1.3, epochs do not transition until the first record comes in.
-    // This avoids the DTLS 1.2 problem but introduces a different problem:
-    // during a KeyUpdate (which may occur in the steady state), both epochs are
-    // live. We'll likely need a new API for DTLS offload.
+    // TODO(crbug.com/42290608): This API should not be implemented for DTLS or
+    // QUIC. In QUIC we do not maintain a sequence number.
     const DTLSReadEpoch *read_epoch = &ssl->d1->read_epoch;
     return DTLSRecordNumber(read_epoch->epoch, read_epoch->bitmap.max_seq_num())
         .combined();
@@ -2832,11 +2824,118 @@ uint64_t SSL_get_read_sequence(const SSL *ssl) {
 }
 
 uint64_t SSL_get_write_sequence(const SSL *ssl) {
+  // TODO(crbug.com/42290608): This API should not be implemented for DTLS or
+  // QUIC. In QUIC we do not maintain a sequence number. In DTLS, this API isn't
+  // harmful per se, but the caller already needs to use a DTLS-specific API on
+  // the read side.
   if (SSL_is_dtls(ssl)) {
     return ssl->d1->write_epoch.next_record.combined();
   }
 
   return ssl->s3->write_sequence;
+}
+
+int SSL_is_dtls_handshake_idle(const SSL *ssl) {
+  BSSL_CHECK(SSL_is_dtls(ssl));
+
+  return !SSL_in_init(ssl) &&
+         // No unacknowledged messages in DTLS 1.3. In DTLS 1.2, there no ACKs
+         // and we currently never clear |outgoing_messages| on the side that
+         // speaks last.
+         (ssl_protocol_version(ssl) < TLS1_3_VERSION ||
+          ssl->d1->outgoing_messages.empty()) &&
+         // No partial or out-of-order messages.
+         std::all_of(std::begin(ssl->d1->incoming_messages),
+                     std::end(ssl->d1->incoming_messages),
+                     [](const auto &msg) { return msg == nullptr; }) &&
+         // Not trying to send a KeyUpdate.
+         !ssl->s3->key_update_pending &&
+         ssl->d1->queued_key_update == bssl::QueuedKeyUpdate::kNone;
+}
+
+uint32_t SSL_get_dtls_handshake_read_seq(const SSL *ssl) {
+  BSSL_CHECK(SSL_is_dtls(ssl));
+  return ssl->d1->handshake_read_overflow
+             ? uint32_t{0x10000}
+             : uint32_t{ssl->d1->handshake_read_seq};
+}
+
+uint32_t SSL_get_dtls_handshake_write_seq(const SSL *ssl) {
+  BSSL_CHECK(SSL_is_dtls(ssl));
+  return ssl->d1->handshake_write_overflow
+             ? uint32_t{0x10000}
+             : uint32_t{ssl->d1->handshake_write_seq};
+}
+
+uint16_t SSL_get_dtls_read_epoch(const SSL *ssl) {
+  BSSL_CHECK(SSL_is_dtls(ssl));
+  // Return the highest available epoch.
+  return ssl->d1->next_read_epoch ? ssl->d1->next_read_epoch->epoch
+                                  : ssl->d1->read_epoch.epoch;
+}
+
+uint16_t SSL_get_dtls_write_epoch(const SSL *ssl) {
+  BSSL_CHECK(SSL_is_dtls(ssl));
+  return ssl->d1->write_epoch.epoch();
+}
+
+uint64_t SSL_get_dtls_read_sequence(const SSL *ssl, uint16_t epoch) {
+  BSSL_CHECK(SSL_is_dtls(ssl));
+  const DTLSReadEpoch *read_epoch = dtls_get_read_epoch(ssl, epoch);
+  if (read_epoch == nullptr) {
+    return UINT64_MAX;
+  }
+  uint64_t max_seq_num = read_epoch->bitmap.max_seq_num();
+  assert(max_seq_num <= DTLSRecordNumber::kMaxSequence);
+  if (read_epoch->bitmap.ShouldDiscard(max_seq_num)) {
+    // Increment to get to an available sequence number.
+    max_seq_num++;
+  } else {
+    // If |max_seq_num| was available, the bitmap must have been empty.
+    assert(max_seq_num == 0);
+  }
+  return max_seq_num;
+}
+
+uint64_t SSL_get_dtls_write_sequence(const SSL *ssl, uint16_t epoch) {
+  BSSL_CHECK(SSL_is_dtls(ssl));
+  const DTLSWriteEpoch *write_epoch = dtls_get_write_epoch(ssl, epoch);
+  if (write_epoch == nullptr) {
+    return UINT64_MAX;
+  }
+  return write_epoch->next_record.sequence();
+}
+
+template <typename EpochState>
+static int get_dtls_traffic_secret(
+    const SSL *ssl, EpochState *(*get_epoch)(const SSL *, uint16_t),
+    const uint8_t **out_data, size_t *out_len, uint16_t epoch) {
+  BSSL_CHECK(SSL_is_dtls(ssl));
+  // This function only applies to encrypted DTLS 1.3 epochs.
+  if (epoch == 0 || ssl->s3->version == 0 ||
+      ssl_protocol_version(ssl) < TLS1_3_VERSION) {
+    return 0;
+  }
+  const EpochState *epoch_state = get_epoch(ssl, epoch);
+  if (epoch_state == nullptr) {
+    return 0;
+  }
+  assert(!epoch_state->traffic_secret.empty());
+  *out_data = epoch_state->traffic_secret.data();
+  *out_len = epoch_state->traffic_secret.size();
+  return 1;
+}
+
+int SSL_get_dtls_read_traffic_secret(const SSL *ssl, const uint8_t **out_data,
+                                     size_t *out_len, uint16_t epoch) {
+  return get_dtls_traffic_secret(ssl, dtls_get_read_epoch, out_data, out_len,
+                                 epoch);
+}
+
+int SSL_get_dtls_write_traffic_secret(const SSL *ssl, const uint8_t **out_data,
+                                      size_t *out_len, uint16_t epoch) {
+  return get_dtls_traffic_secret(ssl, dtls_get_write_epoch, out_data, out_len,
+                                 epoch);
 }
 
 uint16_t SSL_get_peer_signature_algorithm(const SSL *ssl) {

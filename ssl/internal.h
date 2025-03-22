@@ -1093,7 +1093,7 @@ class DTLSReplayBitmap {
   // to |max_seq_num_ - i|.
   std::bitset<256> map_;
   // max_seq_num_ is the largest sequence number seen so far as a 64-bit
-  // integer.
+  // integer, or zero if none have been seen.
   uint64_t max_seq_num_ = 0;
 };
 
@@ -1177,6 +1177,7 @@ struct DTLSReadEpoch {
   UniquePtr<SSLAEADContext> aead;
   UniquePtr<RecordNumberEncrypter> rn_encrypter;
   DTLSReplayBitmap bitmap;
+  InplaceVector<uint8_t, SSL_MAX_MD_SIZE> traffic_secret;
 };
 
 struct DTLSWriteEpoch {
@@ -1187,6 +1188,7 @@ struct DTLSWriteEpoch {
   DTLSRecordNumber next_record;
   UniquePtr<SSLAEADContext> aead;
   UniquePtr<RecordNumberEncrypter> rn_encrypter;
+  InplaceVector<uint8_t, SSL_MAX_MD_SIZE> traffic_secret;
 };
 
 // ssl_record_prefix_len returns the length of the prefix before the ciphertext
@@ -1274,6 +1276,11 @@ size_t dtls_seal_prefix_len(const SSL *ssl, uint16_t epoch);
 // dtls_seal_max_input_len returns the maximum number of input bytes that can
 // fit in a record of up to |max_out| bytes, or zero if none may fit.
 size_t dtls_seal_max_input_len(const SSL *ssl, uint16_t epoch, size_t max_out);
+
+// dtls_get_read_epoch and dtls_get_write_epoch return the epoch corresponding
+// to |epoch| or nullptr if there is none.
+DTLSReadEpoch *dtls_get_read_epoch(const SSL *ssl, uint16_t epoch);
+DTLSWriteEpoch *dtls_get_write_epoch(const SSL *ssl, uint16_t epoch);
 
 // dtls_seal_record implements |tls_seal_record| for DTLS. |epoch| selects which
 // epoch's cipher state to use. Unlike |tls_seal_record|, |in| and |out| may

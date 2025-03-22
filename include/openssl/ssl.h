@@ -4482,19 +4482,117 @@ OPENSSL_EXPORT int SSL_generate_key_block(const SSL *ssl, uint8_t *out,
                                           size_t out_len);
 
 // SSL_get_read_sequence returns, in TLS, the expected sequence number of the
-// next incoming record in the current epoch. In DTLS, it returns the maximum
-// sequence number received in the current epoch and includes the epoch number
-// in the two most significant bytes.
+// next incoming record in the current epoch.
+//
+// TODO(crbug.com/42290608): In DTLS, it returns the maximum sequence number
+// received in the current epoch (for some notion of "current" specific to
+// BoringSSL) and includes the epoch number in the two most significant bytes,
+// but this is deprecated. Use |SSL_get_dtls_read_sequence| instead.
 OPENSSL_EXPORT uint64_t SSL_get_read_sequence(const SSL *ssl);
 
 // SSL_get_write_sequence returns the sequence number of the next outgoing
-// record in the current epoch. In DTLS, it includes the epoch number in the
-// two most significant bytes.
+// record in the current epoch.
+//
+// TODO(crbug.com/42290608): In DTLS, it includes the epoch number in the two
+// most significant bytes, but this is deprecated. Use
+// |SSL_get_dtls_read_sequence| instead.
 OPENSSL_EXPORT uint64_t SSL_get_write_sequence(const SSL *ssl);
 
 // SSL_CTX_set_record_protocol_version returns whether |version| is zero.
 OPENSSL_EXPORT int SSL_CTX_set_record_protocol_version(SSL_CTX *ctx,
                                                        int version);
+
+// SSL_is_dtls_handshake_idle returns one |ssl|'s handshake is idle and zero if
+// it is busy. The handshake is considered idle if all of the following are
+// true:
+//
+// - |ssl| is not mid handshake or post-handshake transaction.
+// - In DTLS 1.3, all sent handshake messages have been acknowledged. That is,
+//   |ssl| does not have data to retransmit.
+// - All received handshake data has been processed. That is, |ssl| has no
+//   buffered partial or out-of-order messages.
+//
+// If any condition is false, the handshake is considered busy. If this function
+// reports the handshake is busy, it is expected that the handshake will become
+// idle after short timers and a few roundtrips of successful communication.
+// However, this is not guaranteed if, e.g., the peer misbehaves or sends many
+// KeyUpdates.
+//
+// WARNING: In DTLS 1.3, this function may return one while multiple active read
+// epochs exist in |ssl|.
+//
+// WARNING: In DTLS 1.2 (or earlier), if |ssl| is the role that speaks last, it
+// retains its final flight for retransmission in case of loss. There is no
+// explicit protocol signal for when this completes, though after receiving
+// application data and/or a timeout it is likely that this is no longer needed.
+// BoringSSL does not currently evaluate either condition and leaves it it to
+// the caller to determine whether this is now unnecessary. This applies when
+// |ssl| is a server for full handshakes and when |ssl| is a client for full
+// handshakes.
+OPENSSL_EXPORT int SSL_is_dtls_handshake_idle(const SSL *ssl);
+
+// SSL_get_dtls_handshake_read_seq returns the 16-bit sequence number of the
+// next DTLS handshake message to be read, or 0x10000 if handshake message
+// 0xffff (the maximum) has already been read.
+OPENSSL_EXPORT uint32_t SSL_get_dtls_handshake_read_seq(const SSL *ssl);
+
+// SSL_get_dtls_handshake_write_seq returns the 16-bit sequence number of the
+// next DTLS handshake message to be written or 0x10000 if handshake message
+// 0xffff (the maximum) has already been written.
+OPENSSL_EXPORT uint32_t SSL_get_dtls_handshake_write_seq(const SSL *ssl);
+
+// SSL_get_dtls_read_epoch returns the highest available DTLS read epoch in
+// |ssl|. In DTLS 1.3, |ssl| may have earlier epochs also active, sometimes to
+// optionally improve handling of reordered packets and sometimes as an
+// important part of the protocol correctness in the face of packet loss.
+//
+// The failure conditions of |SSL_get_dtls_read_traffic_secret| and
+// |SSL_get_dtls_read_sequence| can be used to determine if past epochs are
+// active.
+OPENSSL_EXPORT uint16_t SSL_get_dtls_read_epoch(const SSL *ssl);
+
+// SSL_get_dtls_write_epoch returns the current DTLS write epoch. If the
+// handshake is idle (see |SSL_is_dtls_handshake_idle|), no other write epochs
+// will be active.
+OPENSSL_EXPORT uint16_t SSL_get_dtls_write_epoch(const SSL *ssl);
+
+// SSL_get_dtls_read_sequence returns one more than the sequence number of the
+// highest record received in |epoch|. If no records have been received in
+// |epoch|. If the epoch does not exist, it returns |UINT64_MAX|.
+//
+// It is safe to discard all sequence numbers less than the return value of this
+// function. The sequence numbers returned by this function do not include the
+// epoch number in the upper 16 bits.
+OPENSSL_EXPORT uint64_t SSL_get_dtls_read_sequence(const SSL *ssl,
+                                                   uint16_t epoch);
+
+// SSL_get_dtls_write_sequence returns the sequence number of the next record to
+// be sent in |epoch|. If the epoch does not exist, it returns |UINT64_MAX|.
+//
+// The sequence numbers returned by this function do not include the epoch
+// number in the upper 16 bits.
+OPENSSL_EXPORT uint64_t SSL_get_dtls_write_sequence(const SSL *ssl,
+                                                    uint16_t epoch);
+
+// SSL_get_dtls_read_traffic_secret looks up the traffic secret for read epoch
+// |epoch|. If the epoch exists and is an encrypted (not epoch zero) DTLS 1.3
+// epoch, it sets |*out_data| and |*out_len| to a buffer containing the secrets
+// and returns one. Otherwise, it returns zero. The buffer is valid until the
+// next operation on |ssl|.
+OPENSSL_EXPORT int SSL_get_dtls_read_traffic_secret(const SSL *ssl,
+                                                    const uint8_t **out_data,
+                                                    size_t *out_len,
+                                                    uint16_t epoch);
+
+// SSL_get_dtls_write_traffic_secret looks up the traffic secret for write epoch
+// |epoch|. If the epoch exists and is an encrypted (not epoch zero) DTLS 1.3
+// epoch, it sets |*out_data| and |*out_len| to a buffer containing the secrets
+// and returns one. Otherwise, it returns zero. The buffer is valid until the
+// next operation on |ssl|.
+OPENSSL_EXPORT int SSL_get_dtls_write_traffic_secret(const SSL *ssl,
+                                                     const uint8_t **out_data,
+                                                     size_t *out_len,
+                                                     uint16_t epoch);
 
 
 // Handshake hints.
