@@ -36,7 +36,6 @@
 #include <openssl/curve25519.h>
 #include <openssl/err.h>
 #include <openssl/hpke.h>
-#include <openssl/lhash.h>
 #include <openssl/mem.h>
 #include <openssl/span.h>
 #include <openssl/ssl.h>

@@ -30,7 +30,6 @@
 #include <openssl/ecdh.h>
 #include <openssl/ecdsa.h>
 #include <openssl/evp.h>
-#include <openssl/lhash.h>
 #include <openssl/obj.h>
 #include <openssl/pkcs7.h>
 #include <openssl/pool.h>
@@ -4976,11 +4975,7 @@ OPENSSL_EXPORT X509_EXTENSION *X509V3_EXT_nconf_nid(const CONF *conf,
                                                     const char *value);
 
 // X509V3_EXT_conf_nid calls |X509V3_EXT_nconf_nid|. |conf| must be NULL.
-//
-// TODO(davidben): This is the only exposed instance of an LHASH in our public
-// headers. cryptography.io wraps this function so we cannot, yet, replace the
-// type with a dummy struct.
-OPENSSL_EXPORT X509_EXTENSION *X509V3_EXT_conf_nid(LHASH_OF(CONF_VALUE) *conf,
+OPENSSL_EXPORT X509_EXTENSION *X509V3_EXT_conf_nid(CRYPTO_MUST_BE_NULL *conf,
                                                    const X509V3_CTX *ctx,
                                                    int ext_nid,
                                                    const char *value);
