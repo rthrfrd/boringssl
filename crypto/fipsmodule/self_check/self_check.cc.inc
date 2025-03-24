@@ -1034,12 +1034,21 @@ err:
 
 int BORINGSSL_self_test(void) {
   if (!boringssl_self_test_fast() ||
-      // When requested to run self tests, also run the lazy tests.
+      // When requested to run self tests, also run some of the lazy tests.
       !boringssl_self_test_rsa() ||    //
       !boringssl_self_test_ecc() ||    //
       !boringssl_self_test_ffdh() ||   //
       !boringssl_self_test_mlkem() ||  //
-      !boringssl_self_test_mldsa() ||  //
+      !boringssl_self_test_mldsa()) {
+    return 0;
+  }
+
+  return 1;
+}
+
+int BORINGSSL_self_test_all(void) {
+  if (!BORINGSSL_self_test() ||
+      // When requested to run all self tests, add in the really slow tests.
       !boringssl_self_test_slhdsa()) {
     return 0;
   }
