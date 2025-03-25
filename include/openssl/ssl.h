@@ -4495,7 +4495,7 @@ OPENSSL_EXPORT uint64_t SSL_get_read_sequence(const SSL *ssl);
 //
 // TODO(crbug.com/42290608): In DTLS, it includes the epoch number in the two
 // most significant bytes, but this is deprecated. Use
-// |SSL_get_dtls_read_sequence| instead.
+// |SSL_get_dtls_write_sequence| instead.
 OPENSSL_EXPORT uint64_t SSL_get_write_sequence(const SSL *ssl);
 
 // SSL_CTX_set_record_protocol_version returns whether |version| is zero.
