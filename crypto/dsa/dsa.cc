@@ -679,9 +679,20 @@ int DSA_do_check_signature(int *out_valid, const uint8_t *digest,
       goto err;
     }
 
-    // Calculate W = inv(S) mod Q
-    // save W in u2
-    if (BN_mod_inverse(&u2, sig->s, dsa->q, ctx) == NULL) {
+    if (!BN_MONT_CTX_set_locked((BN_MONT_CTX **)&dsa->method_mont_p,
+                                (CRYPTO_MUTEX *)&dsa->method_mont_lock, dsa->p,
+                                ctx) ||
+        !BN_MONT_CTX_set_locked((BN_MONT_CTX **)&dsa->method_mont_q,
+                                (CRYPTO_MUTEX *)&dsa->method_mont_lock, dsa->q,
+                                ctx)) {
+      goto err;
+    }
+
+    // Calculate W = inv(S) mod Q, in the Montgomery domain. This is slightly
+    // more efficiently computed as FromMont(s)^-1 = (s * R^-1)^-1 = s^-1 * R,
+    // instead of ToMont(s^-1) = s^-1 * R.
+    if (!BN_from_montgomery(&u2, sig->s, dsa->method_mont_q, ctx) ||
+        !BN_mod_inverse(&u2, &u2, dsa->q, ctx)) {
       goto err;
     }
 
@@ -698,19 +709,15 @@ int DSA_do_check_signature(int *out_valid, const uint8_t *digest,
       goto err;
     }
 
-    // u1 = M * w mod q
-    if (!BN_mod_mul(&u1, &u1, &u2, dsa->q, ctx)) {
+    // u1 = M * w mod q. w was stored in the Montgomery domain while M was not,
+    // so the result will already be out of the Montgomery domain.
+    if (!BN_mod_mul_montgomery(&u1, &u1, &u2, dsa->method_mont_q, ctx)) {
       goto err;
     }
 
-    // u2 = r * w mod q
-    if (!BN_mod_mul(&u2, sig->r, &u2, dsa->q, ctx)) {
-      goto err;
-    }
-
-    if (!BN_MONT_CTX_set_locked((BN_MONT_CTX **)&dsa->method_mont_p,
-                                (CRYPTO_MUTEX *)&dsa->method_mont_lock, dsa->p,
-                                ctx)) {
+    // u2 = r * w mod q. w was stored in the Montgomery domain while r was not,
+    // so the result will already be out of the Montgomery domain.
+    if (!BN_mod_mul_montgomery(&u2, sig->r, &u2, dsa->method_mont_q, ctx)) {
       goto err;
     }
 
@@ -719,7 +726,6 @@ int DSA_do_check_signature(int *out_valid, const uint8_t *digest,
       goto err;
     }
 
-    // BN_copy(&u1,&t1);
     // let u1 = u1 mod q
     if (!BN_mod(&u1, &t1, dsa->q, ctx)) {
       goto err;
