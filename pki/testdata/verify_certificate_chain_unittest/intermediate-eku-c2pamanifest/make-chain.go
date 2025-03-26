@@ -14,6 +14,7 @@
 
 //go:build ignore
 
+// make-chain generates a test certificate chain.
 package main
 
 import (
