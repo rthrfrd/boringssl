@@ -21,10 +21,22 @@
 
 #include "internal.h"
 
+#if (defined(OPENSSL_X86) || defined(OPENSSL_X86_64)) && defined(_MSC_VER) && \
+    !defined(__clang__)
+#define HAVE_MSVC_DIV_INTRINSICS
+#include <immintrin.h>
+#if defined(OPENSSL_X86)
+#pragma intrinsic(_udiv64)
+#else
+#pragma intrinsic(_udiv128)
+#endif
+#endif
+
 
 // bn_div_words divides a double-width |h|,|l| by |d| and returns the result,
-// which must fit in a |BN_ULONG|.
+// which must fit in a |BN_ULONG|, i.e. |h < d|.
 static inline BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d) {
+  assert(h < d);
   BN_ULONG dh, dl, q, ret = 0, th, tl, t;
   int i, count = 2;
 
@@ -93,42 +105,49 @@ static inline BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d) {
   return ret;
 }
 
+// bn_div_rem_words divides a double-width numerator (high half |nh| and low
+// half |nl|) with a single-width divisor. It sets |*quotient_out| and
+// |*rem_out| to be the quotient and numerator, respectively. The quotient must
+// fit in a |BN_ULONG|, i.e. |nh < d|.
 static inline void bn_div_rem_words(BN_ULONG *quotient_out, BN_ULONG *rem_out,
-                                    BN_ULONG n0, BN_ULONG n1, BN_ULONG d0) {
-  // GCC and Clang generate function calls to |__udivdi3| and |__umoddi3| when
-  // the |BN_ULLONG|-based C code is used.
-  //
-  // GCC bugs:
-  //   * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=14224
-  //   * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=43721
-  //   * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54183
-  //   * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58897
-  //   * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65668
-  //
-  // Clang bugs:
-  //   * https://github.com/llvm/llvm-project/issues/6769
-  //   * https://github.com/llvm/llvm-project/issues/12790
+                                    BN_ULONG nh, BN_ULONG nl, BN_ULONG d) {
+  assert(nh < d);
+  // This operation is the x86 and x86_64 DIV instruction, but it is difficult
+  // for the compiler to emit it. Dividing a |BN_ULLONG| by a |BN_ULONG| does
+  // not work because, a priori, the quotient may not fit in |BN_ULONG| and DIV
+  // will trap on overflow, not truncate. The compiler will instead emit a call
+  // to a more expensive support function (e.g. |__udivdi3|). Thus we use inline
+  // assembly or intrinsics to get the instruction.
   //
   // These is specific to x86 and x86_64; Arm and RISC-V do not have double-wide
   // division instructions.
 #if defined(BN_CAN_USE_INLINE_ASM) && defined(OPENSSL_X86)
   __asm__ volatile("divl %4"
                    : "=a"(*quotient_out), "=d"(*rem_out)
-                   : "a"(n1), "d"(n0), "rm"(d0)
+                   : "a"(nl), "d"(nh), "rm"(d)
                    : "cc");
 #elif defined(BN_CAN_USE_INLINE_ASM) && defined(OPENSSL_X86_64)
   __asm__ volatile("divq %4"
                    : "=a"(*quotient_out), "=d"(*rem_out)
-                   : "a"(n1), "d"(n0), "rm"(d0)
+                   : "a"(nl), "d"(nh), "rm"(d)
                    : "cc");
+#elif defined(HAVE_MSVC_DIV_INTRINSICS) && defined(OPENSSL_X86)
+  BN_ULLONG n = (((BN_ULLONG)nh) << BN_BITS2) | nl;
+  unsigned rem;
+  *quotient_out = _udiv64(n, d, &rem);
+  *rem_out = rem;
+#elif defined(HAVE_MSVC_DIV_INTRINSICS) && defined(OPENSSL_X86_64)
+  unsigned __int64 rem;
+  *quotient_out = _udiv128(nh, nl, d, &rem);
+  *rem_out = rem;
 #else
 #if defined(BN_CAN_DIVIDE_ULLONG)
-  BN_ULLONG n = (((BN_ULLONG)n0) << BN_BITS2) | n1;
-  *quotient_out = (BN_ULONG)(n / d0);
+  BN_ULLONG n = (((BN_ULLONG)nh) << BN_BITS2) | nl;
+  *quotient_out = (BN_ULONG)(n / d);
 #else
-  *quotient_out = bn_div_words(n0, n1, d0);
-#endif
-  *rem_out = n1 - (*quotient_out * d0);
+  *quotient_out = bn_div_words(nh, nl, d);
+#endif  // BN_CAN_DIVIDE_ULLONG
+  *rem_out = nl - (*quotient_out * d);
 #endif
 }
 
