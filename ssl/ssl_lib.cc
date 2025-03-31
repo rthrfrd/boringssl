@@ -580,7 +580,7 @@ SSL_CONFIG::SSL_CONFIG(SSL *ssl_arg)
       jdk11_workaround(false),
       quic_use_legacy_codepoint(false),
       permute_extensions(false),
-      alps_use_new_codepoint(false) {
+      alps_use_new_codepoint(true) {
   assert(ssl);
 }
 

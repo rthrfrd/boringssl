@@ -8902,6 +8902,32 @@ TEST_F(AlpsNewCodepointTest, Enabled) {
   ASSERT_TRUE(SSL_has_application_settings(client_.get()));
 }
 
+TEST_F(AlpsNewCodepointTest, ClientExplictServerDefault) {
+  SetUpExpectedNewCodePoint(server_ctx_.get());
+
+  ASSERT_TRUE(CreateClientAndServer(&client_, &server_, client_ctx_.get(),
+                                    server_ctx_.get()));
+
+  SSL_set_alps_use_new_codepoint(client_.get(), 1);
+
+  SetUpApplicationSetting();
+  ASSERT_TRUE(CompleteHandshakes(client_.get(), server_.get()));
+  ASSERT_TRUE(SSL_has_application_settings(client_.get()));
+}
+
+TEST_F(AlpsNewCodepointTest, ClientDefaultServerExplicit) {
+  SetUpExpectedNewCodePoint(server_ctx_.get());
+
+  ASSERT_TRUE(CreateClientAndServer(&client_, &server_, client_ctx_.get(),
+                                    server_ctx_.get()));
+
+  SSL_set_alps_use_new_codepoint(server_.get(), 1);
+
+  SetUpApplicationSetting();
+  ASSERT_TRUE(CompleteHandshakes(client_.get(), server_.get()));
+  ASSERT_TRUE(SSL_has_application_settings(client_.get()));
+}
+
 TEST_F(AlpsNewCodepointTest, Disabled) {
   // Both client and server disable alps new codepoint.
   SetUpExpectedOldCodePoint(server_ctx_.get());
