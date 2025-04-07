@@ -138,11 +138,11 @@ extern "C" {
 // corresponding |B_ASN1_*| constant, |B_ASN1_UNKNOWN|, or zero. If the
 // |B_ASN1_*| constant above is defined, it will map the corresponding
 // |V_ASN1_*| constant to it. Otherwise, whether it returns |B_ASN1_UNKNOWN| or
-// zero is ill-defined and callers should not rely on it.
+// zero is ill-defined and a consequence of some historical behavior. Callers
+// should not rely on it.
 //
-// TODO(crbug.com/42290275): Figure out what |B_ASN1_UNKNOWN| vs zero is meant
-// to be. The main impact is what values go in |B_ASN1_PRINTABLE|. To that end,
-// we must return zero on types that can't go in |ASN1_STRING|.
+// TODO(crbug.com/42290275): Remove |B_ASN1_UNKNOWN| once |X509_NAME| no longer
+// depends on it.
 OPENSSL_EXPORT unsigned long ASN1_tag2bit(int tag);
 
 // ASN1_tag2str returns a string representation of |tag|, interpret as a tag
@@ -1854,50 +1854,6 @@ OPENSSL_EXPORT void ASN1_STRING_TABLE_cleanup(void);
 #define M_ASN1_VISIBLESTRING_free(a) ASN1_VISIBLESTRING_free(a)
 #define M_ASN1_UTF8STRING_new() ASN1_UTF8STRING_new()
 #define M_ASN1_UTF8STRING_free(a) ASN1_UTF8STRING_free(a)
-
-// B_ASN1_PRINTABLE is a bitmask for an ad-hoc subset of string-like types. Note
-// the presence of |B_ASN1_UNKNOWN| means it includes types which |ASN1_tag2bit|
-// maps to |B_ASN1_UNKNOWN|.
-//
-// Do not use this. Despite the name, it has no connection to PrintableString or
-// printable characters. See https://crbug.com/42290275.
-#define B_ASN1_PRINTABLE                                              \
-  (B_ASN1_NUMERICSTRING | B_ASN1_PRINTABLESTRING | B_ASN1_T61STRING | \
-   B_ASN1_IA5STRING | B_ASN1_BIT_STRING | B_ASN1_UNIVERSALSTRING |    \
-   B_ASN1_BMPSTRING | B_ASN1_UTF8STRING | B_ASN1_SEQUENCE | B_ASN1_UNKNOWN)
-
-// ASN1_PRINTABLE_new returns a newly-allocated |ASN1_STRING| with type -1, or
-// NULL on error. The resulting |ASN1_STRING| is not a valid ASN.1 value until
-// initialized with a value.
-OPENSSL_EXPORT ASN1_STRING *ASN1_PRINTABLE_new(void);
-
-// ASN1_PRINTABLE_free calls |ASN1_STRING_free|.
-OPENSSL_EXPORT void ASN1_PRINTABLE_free(ASN1_STRING *str);
-
-// d2i_ASN1_PRINTABLE parses up to |len| bytes from |*inp| as a DER-encoded
-// CHOICE of an ad-hoc subset of string-like types, as described in
-// |d2i_SAMPLE|.
-//
-// Do not use this. Despite, the name it has no connection to PrintableString or
-// printable characters. See https://crbug.com/42290275.
-//
-// TODO(https://crbug.com/boringssl/354): This function currently also accepts
-// BER, but this will be removed in the future.
-OPENSSL_EXPORT ASN1_STRING *d2i_ASN1_PRINTABLE(ASN1_STRING **out,
-                                               const uint8_t **inp, long len);
-
-// i2d_ASN1_PRINTABLE marshals |in| as DER, as described in |i2d_SAMPLE|.
-//
-// Do not use this. Despite the name, it has no connection to PrintableString or
-// printable characters. See https://crbug.com/42290275.
-OPENSSL_EXPORT int i2d_ASN1_PRINTABLE(const ASN1_STRING *in, uint8_t **outp);
-
-// ASN1_PRINTABLE is an |ASN1_ITEM| whose ASN.1 type is a CHOICE of an ad-hoc
-// subset of string-like types, and whose C type is |ASN1_STRING*|.
-//
-// Do not use this. Despite the name, it has no connection to PrintableString or
-// printable characters. See https://crbug.com/42290275.
-DECLARE_ASN1_ITEM(ASN1_PRINTABLE)
 
 // ASN1_INTEGER_set sets |a| to an INTEGER with value |v|. It returns one on
 // success and zero on error.

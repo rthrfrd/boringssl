@@ -651,10 +651,10 @@ static int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *out_omit,
     case V_ASN1_OTHER:
     // TODO(crbug.com/42290275): This default case should be removed, now that
     // we've resolved https://crbug.com/42290430. However, it is still needed to
-    // support some edge cases in |ASN1_PRINTABLE| and |ASN1_ANY_AS_STRING|.
-    // They broadly don't tolerate unrecognized universal tags, except for eight
-    // values that map to |B_ASN1_UNKNOWN| instead of zero. See the
-    // X509Test.NameAttributeValues test.
+    // support some edge cases in |ASN1_ANY_AS_STRING|. It broadly doesn't
+    // tolerate unrecognized universal tags, except for eight values that map to
+    // |B_ASN1_UNKNOWN| instead of zero. See the X509Test.NameAttributeValues
+    // test.
     default:
       // All based on ASN1_STRING and handled the same
       strtmp = (ASN1_STRING *)*pval;

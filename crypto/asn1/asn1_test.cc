@@ -111,8 +111,8 @@ TEST(ASN1Test, UnknownTags) {
   // longer used but is still accepted by the encoder.
   //
   // TODO(crbug.com/42290275): The encoder should reject it. However, it is
-  // still needed to support some edge cases in |ASN1_ANY_AS_STRING| and
-  // |ASN1_PRINTABLE|. When that is fixed, test that we reject it.
+  // still needed to support some edge cases in |ASN1_ANY_AS_STRING|. When that
+  // is fixed, test that we reject it.
   obj.reset(ASN1_TYPE_new());
   ASSERT_TRUE(obj);
   obj->type = 128;
@@ -1962,18 +1962,6 @@ TEST(ASN1Test, StringByCustomNIDThreads) {
   }
 }
 #endif  // OPENSSL_THREADS
-
-// Test that multi-string types correctly encode negative ENUMERATED.
-// Multi-string types cannot contain INTEGER, so we only test ENUMERATED.
-TEST(ASN1Test, NegativeEnumeratedMultistring) {
-  static const uint8_t kMinusOne[] = {0x0a, 0x01, 0xff};  // ENUMERATED { -1 }
-  // |ASN1_PRINTABLE| is a multi-string type that allows ENUMERATED.
-  const uint8_t *p = kMinusOne;
-  bssl::UniquePtr<ASN1_STRING> str(
-      d2i_ASN1_PRINTABLE(nullptr, &p, sizeof(kMinusOne)));
-  ASSERT_TRUE(str);
-  TestSerialize(str.get(), i2d_ASN1_PRINTABLE, kMinusOne);
-}
 
 // Encoding a CHOICE type with an invalid selector should fail.
 TEST(ASN1Test, InvalidChoice) {
