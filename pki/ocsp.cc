@@ -1056,6 +1056,11 @@ bool CreateOCSPRequest(const ParsedCertificate *cert,
   //       issuerNameHash      OCTET STRING, -- Hash of issuer's DN
   //       issuerKeyHash       OCTET STRING, -- Hash of issuer's public key
   //       serialNumber        CertificateSerialNumber }
+  //
+  // It is unclear whether the parameters for hashAlgorithm should be omitted or
+  // NULL. Section 2.1 of RFC 4055 would suggest omitting it is the right
+  // default behavior. However, both OpenSSL and Go include it, so we match them
+  // for now.
 
   // TODO(eroman): Don't use SHA1.
   const EVP_MD *md = EVP_sha1();

@@ -1282,6 +1282,16 @@ PKCS12 *PKCS12_create(const char *password, const char *name,
     CBB mac_data, digest_info, mac_cbb, mac_salt_cbb;
     if (!CBB_add_asn1(&pfx, &mac_data, CBS_ASN1_SEQUENCE) ||
         !CBB_add_asn1(&mac_data, &digest_info, CBS_ASN1_SEQUENCE) ||
+        // OpenSSL and NSS always include a NULL parameter with the digest
+        // algorithm. Windows does not. RFC 7292 imports DigestInfo from PKCS
+        // #7. PKCS #7 does not actually use DigestInfo. It just describes
+        // RSASSA-PKCS1-v1_5 signing as encoding a DigestInfo and then
+        // "encrypting" it with the private key. In that context, NULL should be
+        // included. Confusingly, there is also a digestAlgorithm field in
+        // SignerInfo. There, RFC 5754 says to omit the NULL. But that field
+        // does not use DigestInfo per se.
+        //
+        // We match OpenSSL, NSS, and RSASSA-PKCS1-v1_5 in including the NULL.
         !EVP_marshal_digest_algorithm(&digest_info, mac_md) ||
         !CBB_add_asn1(&digest_info, &mac_cbb, CBS_ASN1_OCTETSTRING) ||
         !CBB_add_bytes(&mac_cbb, mac, mac_len) ||

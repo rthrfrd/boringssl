@@ -368,13 +368,10 @@ int PKCS7_type_is_signedAndEnveloped(const PKCS7 *p7) { return 0; }
 // write_sha256_ai writes an AlgorithmIdentifier for SHA-256 to
 // |digest_algos_set|.
 static int write_sha256_ai(CBB *digest_algos_set, const void *arg) {
-  CBB seq;
-  return CBB_add_asn1(digest_algos_set, &seq, CBS_ASN1_SEQUENCE) &&
-         OBJ_nid2cbb(&seq, NID_sha256) &&  //
-         // https://datatracker.ietf.org/doc/html/rfc5754#section-2
-         // "Implementations MUST generate SHA2 AlgorithmIdentifiers with absent
-         //  parameters."
-         CBB_flush(digest_algos_set);
+  // https://datatracker.ietf.org/doc/html/rfc5754#section-2
+  // "Implementations MUST generate SHA2 AlgorithmIdentifiers with absent
+  //  parameters."
+  return EVP_marshal_digest_algorithm_no_params(digest_algos_set, EVP_sha256());
 }
 
 // sign_sha256 writes at most |max_out_sig| bytes of the signature of |data| by
