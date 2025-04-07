@@ -337,6 +337,7 @@ set(
   crypto/cipher/e_tls.cc
   crypto/cipher/get_cipher.cc
   crypto/cipher/tls_cbc.cc
+  crypto/cms/cms.cc
   crypto/conf/conf.cc
   crypto/cpu_aarch64_apple.cc
   crypto/cpu_aarch64_fuchsia.cc
@@ -541,6 +542,7 @@ set(
   include/openssl/chacha.h
   include/openssl/cipher.h
   include/openssl/cmac.h
+  include/openssl/cms.h
   include/openssl/conf.h
   include/openssl/cpu.h
   include/openssl/crypto.h
@@ -734,6 +736,7 @@ set(
   crypto/chacha/chacha_test.cc
   crypto/cipher/aead_test.cc
   crypto/cipher/cipher_test.cc
+  crypto/cms/cms_test.cc
   crypto/compiler_test.cc
   crypto/conf/conf_test.cc
   crypto/constant_time_test.cc
@@ -882,7 +885,10 @@ set(
   crypto/pkcs7/test/openssl_crl.p7c
   crypto/pkcs7/test/sign_cert.pem
   crypto/pkcs7/test/sign_key.pem
+  crypto/pkcs7/test/sign_sha1.p7s
+  crypto/pkcs7/test/sign_sha1_key_id.p7s
   crypto/pkcs7/test/sign_sha256.p7s
+  crypto/pkcs7/test/sign_sha256_key_id.p7s
   crypto/pkcs7/test/windows.p7c
   crypto/pkcs8/test/bad1.p12
   crypto/pkcs8/test/bad2.p12

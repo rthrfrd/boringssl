@@ -130,7 +130,7 @@ err:
   return ret;
 }
 
-static int pkcs7_bundle_raw_certificates_cb(CBB *out, const void *arg) {
+static int pkcs7_bundle_raw_certificates_cb(CBB *out, void *arg) {
   const STACK_OF(CRYPTO_BUFFER) *certs =
       reinterpret_cast<const STACK_OF(CRYPTO_BUFFER) *>(arg);
   CBB certificates;
@@ -155,18 +155,20 @@ static int pkcs7_bundle_raw_certificates_cb(CBB *out, const void *arg) {
 
 int PKCS7_bundle_raw_certificates(CBB *out,
                                   const STACK_OF(CRYPTO_BUFFER) *certs) {
-  return pkcs7_add_signed_data(out, /*digest_algos_cb=*/NULL,
+  return pkcs7_add_signed_data(out, /*signed_data_version=*/1,
+                               /*digest_algos_cb=*/nullptr,
                                pkcs7_bundle_raw_certificates_cb,
-                               /*signer_infos_cb=*/NULL, certs);
+                               /*signer_infos_cb=*/nullptr,
+                               const_cast<STACK_OF(CRYPTO_BUFFER) *>(certs));
 }
 
-int pkcs7_add_signed_data(CBB *out,
-                          int (*digest_algos_cb)(CBB *out, const void *arg),
-                          int (*cert_crl_cb)(CBB *out, const void *arg),
-                          int (*signer_infos_cb)(CBB *out, const void *arg),
-                          const void *arg) {
-  CBB outer_seq, oid, wrapped_seq, seq, version_bytes, digest_algos_set,
-      content_info, signer_infos;
+int pkcs7_add_signed_data(CBB *out, uint64_t signed_data_version,
+                          int (*digest_algos_cb)(CBB *out, void *arg),
+                          int (*cert_crl_cb)(CBB *out, void *arg),
+                          int (*signer_infos_cb)(CBB *out, void *arg),
+                          void *arg) {
+  CBB outer_seq, oid, wrapped_seq, seq, digest_algos_set, content_info,
+      signer_infos;
 
   // See https://tools.ietf.org/html/rfc2315#section-7
   if (!CBB_add_asn1(out, &outer_seq, CBS_ASN1_SEQUENCE) ||
@@ -176,8 +178,7 @@ int pkcs7_add_signed_data(CBB *out,
                     CBS_ASN1_CONTEXT_SPECIFIC | CBS_ASN1_CONSTRUCTED | 0) ||
       // See https://tools.ietf.org/html/rfc2315#section-9.1
       !CBB_add_asn1(&wrapped_seq, &seq, CBS_ASN1_SEQUENCE) ||
-      !CBB_add_asn1(&seq, &version_bytes, CBS_ASN1_INTEGER) ||
-      !CBB_add_u8(&version_bytes, 1) ||
+      !CBB_add_asn1_uint64(&seq, signed_data_version) ||
       !CBB_add_asn1(&seq, &digest_algos_set, CBS_ASN1_SET) ||
       (digest_algos_cb != NULL && !digest_algos_cb(&digest_algos_set, arg)) ||
       !CBB_flush_asn1_set_of(&digest_algos_set) ||
