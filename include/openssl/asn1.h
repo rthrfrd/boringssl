@@ -132,21 +132,13 @@ extern "C" {
 #define B_ASN1_OCTET_STRING 0x0200
 #define B_ASN1_BIT_STRING 0x0400
 #define B_ASN1_BMPSTRING 0x0800
-#define B_ASN1_UNKNOWN 0x1000
 #define B_ASN1_UTF8STRING 0x2000
 #define B_ASN1_UTCTIME 0x4000
 #define B_ASN1_GENERALIZEDTIME 0x8000
 #define B_ASN1_SEQUENCE 0x10000
 
 // ASN1_tag2bit converts |tag| from the tag number of a universal type to a
-// corresponding |B_ASN1_*| constant, |B_ASN1_UNKNOWN|, or zero. If the
-// |B_ASN1_*| constant above is defined, it will map the corresponding
-// |V_ASN1_*| constant to it. Otherwise, whether it returns |B_ASN1_UNKNOWN| or
-// zero is ill-defined and a consequence of some historical behavior. Callers
-// should not rely on it.
-//
-// TODO(crbug.com/42290275): Remove |B_ASN1_UNKNOWN| once |X509_NAME| no longer
-// depends on it.
+// corresponding |B_ASN1_*| constant, or zero if |tag| has no bitmask.
 OPENSSL_EXPORT unsigned long ASN1_tag2bit(int tag);
 
 // ASN1_tag2str returns a string representation of |tag|, interpret as a tag

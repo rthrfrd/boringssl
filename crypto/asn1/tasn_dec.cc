@@ -52,46 +52,43 @@ static int asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in,
                             long len, const ASN1_ITEM *it, int tag, int aclass,
                             char opt, CRYPTO_BUFFER *buf, int depth);
 
-// Table to convert tags to bit values, used for MSTRING type
-static const unsigned long tag2bit[31] = {
-    0,  // (reserved)
-    0,  // BOOLEAN
-    0,  // INTEGER
-    B_ASN1_BIT_STRING,
-    B_ASN1_OCTET_STRING,
-    0,               // NULL
-    0,               // OBJECT IDENTIFIER
-    B_ASN1_UNKNOWN,  // ObjectDescriptor
-    B_ASN1_UNKNOWN,  // EXTERNAL
-    B_ASN1_UNKNOWN,  // REAL
-    B_ASN1_UNKNOWN,  // ENUMERATED
-    B_ASN1_UNKNOWN,  // EMBEDDED PDV
-    B_ASN1_UTF8STRING,
-    B_ASN1_UNKNOWN,  // RELATIVE-OID
-    B_ASN1_UNKNOWN,  // TIME
-    B_ASN1_UNKNOWN,  // (reserved)
-    B_ASN1_SEQUENCE,
-    0,  // SET
-    B_ASN1_NUMERICSTRING,
-    B_ASN1_PRINTABLESTRING,
-    B_ASN1_T61STRING,
-    B_ASN1_VIDEOTEXSTRING,
-    B_ASN1_IA5STRING,
-    B_ASN1_UTCTIME,
-    B_ASN1_GENERALIZEDTIME,
-    B_ASN1_GRAPHICSTRING,
-    B_ASN1_ISO64STRING,
-    B_ASN1_GENERALSTRING,
-    B_ASN1_UNIVERSALSTRING,
-    B_ASN1_UNKNOWN,  // CHARACTER STRING
-    B_ASN1_BMPSTRING,
-};
-
 unsigned long ASN1_tag2bit(int tag) {
-  if (tag < 0 || tag > 30) {
-    return 0;
+  switch (tag) {
+    case V_ASN1_BIT_STRING:
+      return B_ASN1_BIT_STRING;
+    case V_ASN1_OCTET_STRING:
+      return B_ASN1_OCTET_STRING;
+    case V_ASN1_UTF8STRING:
+      return B_ASN1_UTF8STRING;
+    case V_ASN1_SEQUENCE:
+      return B_ASN1_SEQUENCE;
+    case V_ASN1_NUMERICSTRING:
+      return B_ASN1_NUMERICSTRING;
+    case V_ASN1_PRINTABLESTRING:
+      return B_ASN1_PRINTABLESTRING;
+    case V_ASN1_T61STRING:
+      return B_ASN1_T61STRING;
+    case V_ASN1_VIDEOTEXSTRING:
+      return B_ASN1_VIDEOTEXSTRING;
+    case V_ASN1_IA5STRING:
+      return B_ASN1_IA5STRING;
+    case V_ASN1_UTCTIME:
+      return B_ASN1_UTCTIME;
+    case V_ASN1_GENERALIZEDTIME:
+      return B_ASN1_GENERALIZEDTIME;
+    case V_ASN1_GRAPHICSTRING:
+      return B_ASN1_GRAPHICSTRING;
+    case V_ASN1_ISO64STRING:
+      return B_ASN1_ISO64STRING;
+    case V_ASN1_GENERALSTRING:
+      return B_ASN1_GENERALSTRING;
+    case V_ASN1_UNIVERSALSTRING:
+      return B_ASN1_UNIVERSALSTRING;
+    case V_ASN1_BMPSTRING:
+      return B_ASN1_BMPSTRING;
+    default:
+      return 0;
   }
-  return tag2bit[tag];
 }
 
 static int is_supported_universal_type(int tag, int aclass) {
