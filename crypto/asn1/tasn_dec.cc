@@ -797,12 +797,12 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, long len,
     case V_ASN1_OTHER:
     case V_ASN1_SET:
     case V_ASN1_SEQUENCE:
-    // TODO(crbug.com/boringssl/412): This default case should be removed, now
-    // that we've resolved https://crbug.com/boringssl/561. However, it is still
-    // needed to support some edge cases in |ASN1_PRINTABLE|. |ASN1_PRINTABLE|
-    // broadly doesn't tolerate unrecognized universal tags, but except for
-    // eight values that map to |B_ASN1_UNKNOWN| instead of zero. See the
-    // X509Test.NameAttributeValues test.
+    // TODO(crbug.com/42290275): This default case should be removed, now
+    // that we've resolved https://crbug.com/42290430. However, it is still
+    // needed to support some edge cases in |ASN1_PRINTABLE| and
+    // |ASN1_ANY_AS_STRING|. They broadly don't tolerate unrecognized universal
+    // tags, except for eight values that map to |B_ASN1_UNKNOWN| instead of
+    // zero. See the X509Test.NameAttributeValues test.
     default: {
       CBS cbs;
       CBS_init(&cbs, cont, (size_t)len);

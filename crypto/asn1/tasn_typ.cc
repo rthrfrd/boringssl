@@ -16,7 +16,8 @@
 
 #include <openssl/asn1t.h>
 
-// Declarations for string types
+#include "internal.h"
+
 
 #define IMPLEMENT_ASN1_STRING_FUNCTIONS(sname)                         \
   IMPLEMENT_ASN1_TYPE(sname)                                           \
@@ -63,6 +64,8 @@ IMPLEMENT_ASN1_FUNCTIONS_const_fname(ASN1_STRING, DISPLAYTEXT, DISPLAYTEXT)
 IMPLEMENT_ASN1_MSTRING(DIRECTORYSTRING, B_ASN1_DIRECTORYSTRING)
 IMPLEMENT_ASN1_FUNCTIONS_const_fname(ASN1_STRING, DIRECTORYSTRING,
                                      DIRECTORYSTRING)
+
+IMPLEMENT_ASN1_MSTRING(ASN1_ANY_AS_STRING, B_ASN1_ANY_AS_STRING)
 
 // Three separate BOOLEAN type: normal, DEFAULT TRUE and DEFAULT FALSE
 IMPLEMENT_ASN1_TYPE_ex(ASN1_BOOLEAN, ASN1_BOOLEAN, ASN1_BOOLEAN_NONE)

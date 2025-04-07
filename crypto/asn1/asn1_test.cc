@@ -110,9 +110,9 @@ TEST(ASN1Test, UnknownTags) {
   // |obj->type| and |obj->value.asn1_string->type| to be 128. This is no
   // longer used but is still accepted by the encoder.
   //
-  // TODO(crbug.com/boringssl/412): The encoder should reject it. However, it is
-  // still needed to support some edge cases in |ASN1_PRINTABLE|. When that is
-  // fixed, test that we reject it.
+  // TODO(crbug.com/42290275): The encoder should reject it. However, it is
+  // still needed to support some edge cases in |ASN1_ANY_AS_STRING| and
+  // |ASN1_PRINTABLE|. When that is fixed, test that we reject it.
   obj.reset(ASN1_TYPE_new());
   ASSERT_TRUE(obj);
   obj->type = 128;

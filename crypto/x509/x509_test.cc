@@ -7165,6 +7165,7 @@ TEST(X509Test, NameAttributeValues) {
        V_ASN1_UNIVERSALSTRING, std::string("\0\0\0a", 4)},
       {CBS_ASN1_BMPSTRING, std::string("\0a", 2), V_ASN1_BMPSTRING,
        std::string("\0a", 2)},
+      {CBS_ASN1_OCTETSTRING, "abc", V_ASN1_OCTET_STRING, "abc"},
 
       // ENUMERATED is supported but, currently, INTEGER is not.
       {CBS_ASN1_ENUMERATED, "\x01", V_ASN1_ENUMERATED, "\x01"},
@@ -7190,8 +7191,8 @@ TEST(X509Test, NameAttributeValues) {
       {15, "", 15 /* not a type; reserved value */, ""},
       {29, "", 29 /* CHARACTER STRING */, ""},
 
-      // TODO(crbug.com/boringssl/412): Attribute values are an ANY DEFINED BY
-      // type, so we actually shoudl be accepting all ASN.1 types. We currently
+      // TODO(crbug.com/42290275): Attribute values are an ANY DEFINED BY type,
+      // so we actually should be accepting all ASN.1 types. We currently
       // do not and only accept the above types. Extend this test when we fix
       // this.
   };
@@ -7268,17 +7269,16 @@ TEST(X509Test, NameAttributeValues) {
       {CBS_ASN1_UTF8STRING | CBS_ASN1_CONSTRUCTED, ""},
       {CBS_ASN1_SEQUENCE & ~CBS_ASN1_CONSTRUCTED, ""},
 
-      // TODO(crbug.com/boringssl/412): The following inputs should parse, but
-      // are currently rejected because they cannot be represented in
-      // |ASN1_PRINTABLE|, either because they don't fit in |ASN1_STRING| or
-      // simply in the |B_ASN1_PRINTABLE| bitmask.
+      // TODO(crbug.com/42290275): The following inputs should parse, but are
+      // currently rejected because they cannot be represented in
+      // |ASN1_ANY_AS_STRING|, either because they don't fit in |ASN1_STRING| or
+      // simply in the |B_ASN1_ANY_AS_STRING| bitmask.
       {CBS_ASN1_NULL, ""},
       {CBS_ASN1_BOOLEAN, std::string("\x00", 1)},
       {CBS_ASN1_BOOLEAN, "\xff"},
       {CBS_ASN1_OBJECT, "\x01\x02\x03\x04"},
       {CBS_ASN1_INTEGER, "\x01"},
       {CBS_ASN1_INTEGER, "\xff"},
-      {CBS_ASN1_OCTETSTRING, ""},
       {CBS_ASN1_UTCTIME, "700101000000Z"},
       {CBS_ASN1_GENERALIZEDTIME, "19700101000000Z"},
       {CBS_ASN1_SET, ""},

@@ -556,9 +556,9 @@ static int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *out_omit,
     //
     // TODO(davidben): Is this a bug? Although arguably one of the MSTRING
     // types should contain more values, rather than less. See
-    // https://crbug.com/boringssl/412. But it is not possible to fit all
-    // possible ANY values into an |ASN1_STRING|, so matching the spec here
-    // is somewhat hopeless.
+    // https://crbug.com/42290275. But it is not possible to fit all possible
+    // ANY values into an |ASN1_STRING|, so matching the spec here is somewhat
+    // hopeless.
     if (utype == V_ASN1_NEG_INTEGER) {
       utype = V_ASN1_INTEGER;
     } else if (utype == V_ASN1_NEG_ENUMERATED) {
@@ -649,11 +649,11 @@ static int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *out_omit,
     case V_ASN1_SET:
     // This is not a valid |ASN1_ITEM| type, but it appears in |ASN1_TYPE|.
     case V_ASN1_OTHER:
-    // TODO(crbug.com/boringssl/412): This default case should be removed, now
-    // that we've resolved https://crbug.com/boringssl/561. However, it is still
-    // needed to support some edge cases in |ASN1_PRINTABLE|. |ASN1_PRINTABLE|
-    // broadly doesn't tolerate unrecognized universal tags, but except for
-    // eight values that map to |B_ASN1_UNKNOWN| instead of zero. See the
+    // TODO(crbug.com/42290275): This default case should be removed, now that
+    // we've resolved https://crbug.com/42290430. However, it is still needed to
+    // support some edge cases in |ASN1_PRINTABLE| and |ASN1_ANY_AS_STRING|.
+    // They broadly don't tolerate unrecognized universal tags, except for eight
+    // values that map to |B_ASN1_UNKNOWN| instead of zero. See the
     // X509Test.NameAttributeValues test.
     default:
       // All based on ASN1_STRING and handled the same
