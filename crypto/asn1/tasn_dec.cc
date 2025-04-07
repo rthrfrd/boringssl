@@ -629,6 +629,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in,
     return 0;  // Should never happen
   }
 
+  assert(it->itype == ASN1_ITYPE_PRIMITIVE || it->itype == ASN1_ITYPE_MSTRING);
   if (it->itype == ASN1_ITYPE_MSTRING) {
     utype = tag;
     tag = -1;
@@ -636,7 +637,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in,
     utype = it->utype;
   }
 
-  if (utype == V_ASN1_ANY) {
+  if (utype == V_ASN1_ANY || utype == V_ASN1_ANY_AS_STRING) {
     // If type is ANY need to figure out type from tag
     unsigned char oclass;
     if (tag >= 0) {
@@ -647,13 +648,45 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in,
       OPENSSL_PUT_ERROR(ASN1, ASN1_R_ILLEGAL_OPTIONAL_ANY);
       return 0;
     }
+    const int is_string = utype == V_ASN1_ANY_AS_STRING;
     p = *in;
-    ret = asn1_check_tlen(NULL, &utype, &oclass, NULL, &p, inlen, -1, 0, 0);
+    ret = asn1_check_tlen(&plen, &utype, &oclass, &cst, &p, inlen, -1, 0, 0);
     if (!ret) {
       OPENSSL_PUT_ERROR(ASN1, ASN1_R_NESTED_ASN1_ERROR);
       return 0;
     }
     if (!is_supported_universal_type(utype, oclass)) {
+      utype = V_ASN1_OTHER;
+    }
+    // These three types are not represented as |ASN1_STRING|, so they must be
+    // parsed separately and then treated as an opaque |V_ASN1_OTHER|.
+    if (is_string && (utype == V_ASN1_OBJECT || utype == V_ASN1_NULL ||
+                      utype == V_ASN1_BOOLEAN)) {
+      if (cst) {
+        OPENSSL_PUT_ERROR(ASN1, ASN1_R_TYPE_NOT_PRIMITIVE);
+        return 0;
+      }
+      CBS cbs;
+      CBS_init(&cbs, p, plen);
+      if (utype == V_ASN1_OBJECT && !CBS_is_valid_asn1_oid(&cbs)) {
+        OPENSSL_PUT_ERROR(ASN1, ASN1_R_INVALID_OBJECT_ENCODING);
+        return 0;
+      }
+      if (utype == V_ASN1_NULL && CBS_len(&cbs) != 0) {
+        OPENSSL_PUT_ERROR(ASN1, ASN1_R_NULL_IS_WRONG_LENGTH);
+        return 0;
+      }
+      if (utype == V_ASN1_BOOLEAN) {
+        if (CBS_len(&cbs) != 1) {
+          OPENSSL_PUT_ERROR(ASN1, ASN1_R_BOOLEAN_IS_WRONG_LENGTH);
+          return 0;
+        }
+        uint8_t v = CBS_data(&cbs)[0];
+        if (v != 0 && v != 0xff) {
+          OPENSSL_PUT_ERROR(ASN1, ASN1_R_DECODE_ERROR);
+          return 0;
+        }
+      }
       utype = V_ASN1_OTHER;
     }
   }
@@ -738,6 +771,10 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, long len,
     opval = pval;
     pval = &typ->value.asn1_value;
   }
+
+  // If implementing a type that is not represented in |ASN1_STRING|, the
+  // |V_ASN1_ANY_AS_STRING| logic must be modified to redirect it to
+  // |V_ASN1_OTHER|.
   switch (utype) {
     case V_ASN1_OBJECT:
       if (!c2i_ASN1_OBJECT((ASN1_OBJECT **)pval, &cont, len)) {
@@ -796,14 +833,7 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, long len,
     case V_ASN1_UTF8STRING:
     case V_ASN1_OTHER:
     case V_ASN1_SET:
-    case V_ASN1_SEQUENCE:
-    // TODO(crbug.com/42290275): This default case should be removed, now
-    // that we've resolved https://crbug.com/42290430. However, it is still
-    // needed to support some edge cases in |ASN1_ANY_AS_STRING|. It broadly
-    // doesn't tolerate unrecognized universal tags, except for eight values
-    // that map to |B_ASN1_UNKNOWN| instead of zero. See the
-    // X509Test.NameAttributeValues test.
-    default: {
+    case V_ASN1_SEQUENCE: {
       CBS cbs;
       CBS_init(&cbs, cont, (size_t)len);
       if (utype == V_ASN1_BMPSTRING) {
@@ -866,6 +896,10 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, long len,
       }
       break;
     }
+
+    default:
+      OPENSSL_PUT_ERROR(ASN1, ASN1_R_BAD_TEMPLATE);
+      goto err;
   }
   // If ASN1_ANY and NULL type fix up value
   if (typ && (utype == V_ASN1_NULL)) {

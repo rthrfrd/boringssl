@@ -106,22 +106,6 @@ TEST(ASN1Test, UnknownTags) {
                                   obj->value.asn1_string->length));
   TestSerialize(obj.get(), i2d_ASN1_TYPE, kTag128);
 
-  // The historical in-memory representation of |kTag128| was for both
-  // |obj->type| and |obj->value.asn1_string->type| to be 128. This is no
-  // longer used but is still accepted by the encoder.
-  //
-  // TODO(crbug.com/42290275): The encoder should reject it. However, it is
-  // still needed to support some edge cases in |ASN1_ANY_AS_STRING|. When that
-  // is fixed, test that we reject it.
-  obj.reset(ASN1_TYPE_new());
-  ASSERT_TRUE(obj);
-  obj->type = 128;
-  obj->value.asn1_string = ASN1_STRING_type_new(128);
-  ASSERT_TRUE(obj->value.asn1_string);
-  const uint8_t zero = 0;
-  ASSERT_TRUE(ASN1_STRING_set(obj->value.asn1_string, &zero, sizeof(zero)));
-  TestSerialize(obj.get(), i2d_ASN1_TYPE, kTag128);
-
   // If a tag is known, but has the wrong constructed bit, it should be
   // rejected, not placed in |V_ASN1_OTHER|.
   static const uint8_t kConstructedOctetString[] = {0x24, 0x00};
@@ -1996,6 +1980,16 @@ TEST(ASN1Test, InvalidASN1Type) {
   bssl::UniquePtr<ASN1_TYPE> obj(ASN1_TYPE_new());
   ASSERT_TRUE(obj);
   EXPECT_EQ(-1, obj->type);
+  EXPECT_EQ(-1, i2d_ASN1_TYPE(obj.get(), nullptr));
+
+  // The historical in-memory representation of [UNIVERSAL 128] was for both
+  // |obj->type| and |obj->value.asn1_string->type| to be 128. This is no longer
+  // used and should be rejected by the encoder.
+  obj.reset(ASN1_TYPE_new());
+  ASSERT_TRUE(obj);
+  obj->type = 128;
+  obj->value.asn1_string = ASN1_STRING_type_new(128);
+  ASSERT_TRUE(obj->value.asn1_string);
   EXPECT_EQ(-1, i2d_ASN1_TYPE(obj.get(), nullptr));
 }
 

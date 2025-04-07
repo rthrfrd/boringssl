@@ -214,17 +214,9 @@ typedef struct ASN1_EXTERN_FUNCS_st {
   ASN1_ex_i2d *asn1_ex_i2d;
 } ASN1_EXTERN_FUNCS;
 
-// ASN1_ANY_AS_STRING is an MSTRING that supports an arbitrary subset of types
-// representable in ASN1_STRING, used by X.509 name attribute values.
-//
-// TODO(crbug.com/42290275): This should support all types and also encode
-// non-ASN1_STRING values in a V_ASN1_OTHER structure.
-#define B_ASN1_ANY_AS_STRING                                          \
-  (B_ASN1_NUMERICSTRING | B_ASN1_PRINTABLESTRING | B_ASN1_T61STRING | \
-   B_ASN1_IA5STRING | B_ASN1_BIT_STRING | B_ASN1_UNIVERSALSTRING |    \
-   B_ASN1_BMPSTRING | B_ASN1_UTF8STRING | B_ASN1_SEQUENCE |           \
-   B_ASN1_OCTET_STRING | B_ASN1_UNKNOWN)
-
+// ASN1_ANY_AS_STRING is an |ASN1_ITEM| with ASN.1 type ANY and C type
+// |ASN1_STRING*|. Types which are not represented with |ASN1_STRING|, such as
+// |ASN1_OBJECT|, are represented with type |V_ASN1_OTHER|.
 DECLARE_ASN1_ITEM(ASN1_ANY_AS_STRING)
 
 
