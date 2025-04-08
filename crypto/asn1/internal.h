@@ -180,6 +180,17 @@ int asn1_is_printable(uint32_t value);
 int asn1_bit_string_length(const ASN1_BIT_STRING *str,
                            uint8_t *out_padding_bits);
 
+// asn1_marshal_bit_string marshals |in| as a DER-encoded, ASN.1 BIT STRING and
+// writes the result to |out|. It returns one on success and zero on error. If
+// |tag| is non-zero, the tag is replaced with |tag|.
+int asn1_marshal_bit_string(CBB *out, const ASN1_BIT_STRING *in,
+                            CBS_ASN1_TAG tag);
+
+// asn1_marshal_integer marshals |in| as a DER-encoded, ASN.1 INTEGER and writes
+// the result to |out|. It returns one on success and zero on error. If |tag| is
+// non-zero, the tag is replaced with |tag|.
+int asn1_marshal_integer(CBB *out, const ASN1_INTEGER *in, CBS_ASN1_TAG tag);
+
 typedef struct {
   int nid;
   long minsize;

@@ -490,3 +490,12 @@ int X509_NAME_get0_der(X509_NAME *nm, const unsigned char **out_der,
   }
   return 1;
 }
+
+int x509_marshal_name(CBB *out, X509_NAME *in) {
+  int len = i2d_X509_NAME(in, nullptr);
+  if (len <= 0) {
+    return 0;
+  }
+  uint8_t *ptr;
+  return CBB_add_space(out, &ptr, len) && i2d_X509_NAME(in, &ptr) == len;
+}

@@ -223,42 +223,26 @@ int i2d_X509(X509 *x509, uint8_t **outp) {
     return -1;
   }
 
-  CBB cbb, cert;
-  int len;
-  if (!CBB_init(&cbb, 64) ||  //
-      !CBB_add_asn1(&cbb, &cert, CBS_ASN1_SEQUENCE)) {
-    goto err;
+  bssl::ScopedCBB cbb;
+  CBB cert;
+  if (!CBB_init(cbb.get(), 64) ||  //
+      !CBB_add_asn1(cbb.get(), &cert, CBS_ASN1_SEQUENCE)) {
+    return -1;
   }
 
   // TODO(crbug.com/boringssl/443): When the rest of the library is decoupled
   // from the tasn_*.c implementation, replace this with |CBS|-based functions.
   uint8_t *out;
-  len = i2d_X509_CINF(x509->cert_info, NULL);
+  int len = i2d_X509_CINF(x509->cert_info, NULL);
   if (len < 0 ||  //
-      !CBB_add_space(&cert, &out, (size_t)len) ||
-      i2d_X509_CINF(x509->cert_info, &out) != len) {
-    goto err;
+      !CBB_add_space(&cert, &out, static_cast<size_t>(len)) ||
+      i2d_X509_CINF(x509->cert_info, &out) != len ||
+      !x509_marshal_algorithm(&cert, x509->sig_alg) ||
+      !asn1_marshal_bit_string(&cert, x509->signature, /*tag=*/0)) {
+    return -1;
   }
 
-  len = i2d_X509_ALGOR(x509->sig_alg, NULL);
-  if (len < 0 ||  //
-      !CBB_add_space(&cert, &out, (size_t)len) ||
-      i2d_X509_ALGOR(x509->sig_alg, &out) != len) {
-    goto err;
-  }
-
-  len = i2d_ASN1_BIT_STRING(x509->signature, NULL);
-  if (len < 0 ||  //
-      !CBB_add_space(&cert, &out, (size_t)len) ||
-      i2d_ASN1_BIT_STRING(x509->signature, &out) != len) {
-    goto err;
-  }
-
-  return CBB_finish_i2d(&cbb, outp);
-
-err:
-  CBB_cleanup(&cbb);
-  return -1;
+  return CBB_finish_i2d(cbb.get(), outp);
 }
 
 static int x509_new_cb(ASN1_VALUE **pval, const ASN1_ITEM *it) {

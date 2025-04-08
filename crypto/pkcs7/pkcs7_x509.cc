@@ -26,6 +26,8 @@
 #include <openssl/stack.h>
 #include <openssl/x509.h>
 
+#include "../asn1/internal.h"
+#include "../x509/internal.h"
 #include "../internal.h"
 #include "internal.h"
 
@@ -431,24 +433,16 @@ static int write_signer_info(CBB *out, const void *arg) {
   const struct signer_info_data *const si_data =
       reinterpret_cast<const struct signer_info_data *>(arg);
 
-  int ret = 0;
-  uint8_t *subject_bytes = NULL;
-  uint8_t *serial_bytes = NULL;
-
-  const int subject_len =
-      i2d_X509_NAME(X509_get_subject_name(si_data->sign_cert), &subject_bytes);
-  const int serial_len = i2d_ASN1_INTEGER(
-      (ASN1_INTEGER *)X509_get0_serialNumber(si_data->sign_cert),
-      &serial_bytes);
-
   CBB seq, issuer_and_serial, signing_algo, null, signature;
-  if (subject_len < 0 || serial_len < 0 ||
-      !CBB_add_asn1(out, &seq, CBS_ASN1_SEQUENCE) ||
+  if (!CBB_add_asn1(out, &seq, CBS_ASN1_SEQUENCE) ||
       // version
       !CBB_add_asn1_uint64(&seq, 1) ||
       !CBB_add_asn1(&seq, &issuer_and_serial, CBS_ASN1_SEQUENCE) ||
-      !CBB_add_bytes(&issuer_and_serial, subject_bytes, subject_len) ||
-      !CBB_add_bytes(&issuer_and_serial, serial_bytes, serial_len) ||
+      !x509_marshal_name(&issuer_and_serial,
+                         X509_get_subject_name(si_data->sign_cert)) ||
+      !asn1_marshal_integer(&issuer_and_serial,
+                            X509_get0_serialNumber(si_data->sign_cert),
+                            /*tag=*/0) ||
       !write_sha256_ai(&seq, NULL) ||
       !CBB_add_asn1(&seq, &signing_algo, CBS_ASN1_SEQUENCE) ||
       !OBJ_nid2cbb(&signing_algo, NID_rsaEncryption) ||
@@ -456,15 +450,10 @@ static int write_signer_info(CBB *out, const void *arg) {
       !CBB_add_asn1(&seq, &signature, CBS_ASN1_OCTETSTRING) ||
       !CBB_add_bytes(&signature, si_data->signature, si_data->signature_len) ||
       !CBB_flush(out)) {
-    goto out;
+    return 0;
   }
 
-  ret = 1;
-
-out:
-  OPENSSL_free(subject_bytes);
-  OPENSSL_free(serial_bytes);
-  return ret;
+  return 1;
 }
 
 PKCS7 *PKCS7_sign(X509 *sign_cert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
