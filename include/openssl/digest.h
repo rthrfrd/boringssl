@@ -166,11 +166,6 @@ OPENSSL_EXPORT size_t EVP_MD_size(const EVP_MD *md);
 // EVP_MD_block_size returns the native block-size of |md|, in bytes.
 OPENSSL_EXPORT size_t EVP_MD_block_size(const EVP_MD *md);
 
-// EVP_MD_FLAG_PKEY_DIGEST indicates that the digest function is used with a
-// specific public key in order to verify signatures. (For example,
-// EVP_dss1.)
-#define EVP_MD_FLAG_PKEY_DIGEST 1
-
 // EVP_MD_FLAG_DIGALGID_ABSENT indicates that the parameter type in an X.509
 // DigestAlgorithmIdentifier representing this digest function should be
 // undefined rather than NULL.
