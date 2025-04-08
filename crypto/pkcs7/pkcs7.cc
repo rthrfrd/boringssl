@@ -180,12 +180,14 @@ int pkcs7_add_signed_data(CBB *out,
       !CBB_add_u8(&version_bytes, 1) ||
       !CBB_add_asn1(&seq, &digest_algos_set, CBS_ASN1_SET) ||
       (digest_algos_cb != NULL && !digest_algos_cb(&digest_algos_set, arg)) ||
+      !CBB_flush_asn1_set_of(&digest_algos_set) ||
       !CBB_add_asn1(&seq, &content_info, CBS_ASN1_SEQUENCE) ||
       !CBB_add_asn1(&content_info, &oid, CBS_ASN1_OBJECT) ||
       !CBB_add_bytes(&oid, kPKCS7Data, sizeof(kPKCS7Data)) ||
       (cert_crl_cb != NULL && !cert_crl_cb(&seq, arg)) ||
       !CBB_add_asn1(&seq, &signer_infos, CBS_ASN1_SET) ||
-      (signer_infos_cb != NULL && !signer_infos_cb(&signer_infos, arg))) {
+      (signer_infos_cb != NULL && !signer_infos_cb(&signer_infos, arg)) ||
+      !CBB_flush_asn1_set_of(&signer_infos)) {
     return 0;
   }
 
