@@ -167,13 +167,12 @@ int pkcs7_add_signed_data(CBB *out, uint64_t signed_data_version,
                           int (*cert_crl_cb)(CBB *out, void *arg),
                           int (*signer_infos_cb)(CBB *out, void *arg),
                           void *arg) {
-  CBB outer_seq, oid, wrapped_seq, seq, digest_algos_set, content_info,
-      signer_infos;
+  CBB outer_seq, wrapped_seq, seq, digest_algos_set, content_info, signer_infos;
 
   // See https://tools.ietf.org/html/rfc2315#section-7
   if (!CBB_add_asn1(out, &outer_seq, CBS_ASN1_SEQUENCE) ||
-      !CBB_add_asn1(&outer_seq, &oid, CBS_ASN1_OBJECT) ||
-      !CBB_add_bytes(&oid, kPKCS7SignedData, sizeof(kPKCS7SignedData)) ||
+      !CBB_add_asn1_element(&outer_seq, CBS_ASN1_OBJECT, kPKCS7SignedData,
+                            sizeof(kPKCS7SignedData)) ||
       !CBB_add_asn1(&outer_seq, &wrapped_seq,
                     CBS_ASN1_CONTEXT_SPECIFIC | CBS_ASN1_CONSTRUCTED | 0) ||
       // See https://tools.ietf.org/html/rfc2315#section-9.1
@@ -183,8 +182,8 @@ int pkcs7_add_signed_data(CBB *out, uint64_t signed_data_version,
       (digest_algos_cb != NULL && !digest_algos_cb(&digest_algos_set, arg)) ||
       !CBB_flush_asn1_set_of(&digest_algos_set) ||
       !CBB_add_asn1(&seq, &content_info, CBS_ASN1_SEQUENCE) ||
-      !CBB_add_asn1(&content_info, &oid, CBS_ASN1_OBJECT) ||
-      !CBB_add_bytes(&oid, kPKCS7Data, sizeof(kPKCS7Data)) ||
+      !CBB_add_asn1_element(&content_info, CBS_ASN1_OBJECT, kPKCS7Data,
+                            sizeof(kPKCS7Data)) ||
       (cert_crl_cb != NULL && !cert_crl_cb(&seq, arg)) ||
       !CBB_add_asn1(&seq, &signer_infos, CBS_ASN1_SET) ||
       (signer_infos_cb != NULL && !signer_infos_cb(&signer_infos, arg)) ||

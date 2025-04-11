@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <functional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -7151,20 +7152,16 @@ TEST(X509Test, NameAttributeValues) {
   static const char kOIDText[] = "1.2.840.113554.4.1.72585.0";
 
   auto encode_single_attribute_name =
-      [](CBS_ASN1_TAG tag,
-         const std::string &contents) -> std::vector<uint8_t> {
+      [](CBS_ASN1_TAG tag, std::string_view contents) -> std::vector<uint8_t> {
+    auto bytes = bssl::StringAsBytes(contents);
     bssl::ScopedCBB cbb;
-    CBB seq, rdn, attr, attr_type, attr_value;
+    CBB seq, rdn, attr;
     if (!CBB_init(cbb.get(), 128) ||
         !CBB_add_asn1(cbb.get(), &seq, CBS_ASN1_SEQUENCE) ||
         !CBB_add_asn1(&seq, &rdn, CBS_ASN1_SET) ||
         !CBB_add_asn1(&rdn, &attr, CBS_ASN1_SEQUENCE) ||
-        !CBB_add_asn1(&attr, &attr_type, CBS_ASN1_OBJECT) ||
-        !CBB_add_bytes(&attr_type, kOID, sizeof(kOID)) ||
-        !CBB_add_asn1(&attr, &attr_value, tag) ||
-        !CBB_add_bytes(&attr_value,
-                       reinterpret_cast<const uint8_t *>(contents.data()),
-                       contents.size()) ||
+        !CBB_add_asn1_element(&attr, CBS_ASN1_OBJECT, kOID, sizeof(kOID)) ||
+        !CBB_add_asn1_element(&attr, tag, bytes.data(), bytes.size()) ||
         !CBB_flush(cbb.get())) {
       ADD_FAILURE() << "Could not encode name";
       return {};

@@ -3002,9 +3002,8 @@ void TestEmbedType(bssl::Span<const uint8_t> inp,
   // Test only the first field present.
   bssl::ScopedCBB cbb;
   ASSERT_TRUE(CBB_init(cbb.get(), 64));
-  CBB seq;
-  ASSERT_TRUE(CBB_add_asn1(cbb.get(), &seq, CBS_ASN1_SEQUENCE));
-  ASSERT_TRUE(CBB_add_bytes(&seq, inp.data(), inp.size()));
+  ASSERT_TRUE(CBB_add_asn1_element(cbb.get(), CBS_ASN1_SEQUENCE, inp.data(),
+                                   inp.size()));
   ASSERT_TRUE(CBB_flush(cbb.get()));
   const uint8_t *ptr = CBB_data(cbb.get());
   obj.reset(d2i_embed(nullptr, &ptr, CBB_len(cbb.get())));
@@ -3020,6 +3019,7 @@ void TestEmbedType(bssl::Span<const uint8_t> inp,
   // Test all fields present.
   cbb.Reset();
   ASSERT_TRUE(CBB_init(cbb.get(), 64));
+  CBB seq;
   ASSERT_TRUE(CBB_add_asn1(cbb.get(), &seq, CBS_ASN1_SEQUENCE));
   ASSERT_TRUE(CBB_add_bytes(&seq, inp.data(), inp.size()));
   CBB child;

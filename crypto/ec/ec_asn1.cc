@@ -320,10 +320,7 @@ int EC_KEY_marshal_curve_name(CBB *cbb, const EC_GROUP *group) {
     return 0;
   }
 
-  CBB child;
-  return CBB_add_asn1(cbb, &child, CBS_ASN1_OBJECT) &&
-         CBB_add_bytes(&child, group->oid, group->oid_len) &&  //
-         CBB_flush(cbb);
+  return CBB_add_asn1_element(cbb, CBS_ASN1_OBJECT, group->oid, group->oid_len);
 }
 
 EC_GROUP *EC_KEY_parse_parameters(CBS *cbs) {

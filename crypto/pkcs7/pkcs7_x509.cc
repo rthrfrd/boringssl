@@ -422,9 +422,9 @@ static int write_signer_info(CBB *out, void *arg) {
       return 0;
     }
     // subjectKeyIdentifier is implicitly-tagged.
-    if (!CBB_add_asn1(&seq, &child, CBS_ASN1_CONTEXT_SPECIFIC | 0) ||
-        !CBB_add_bytes(&child, ASN1_STRING_get0_data(skid),
-                       ASN1_STRING_length(skid))) {
+    if (!CBB_add_asn1_element(&seq, CBS_ASN1_CONTEXT_SPECIFIC | 0,
+                              ASN1_STRING_get0_data(skid),
+                              ASN1_STRING_length(skid))) {
       return 0;
     }
   } else {
