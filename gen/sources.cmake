@@ -317,6 +317,7 @@ set(
   crypto/blake2/blake2.cc
   crypto/bn/bn_asn1.cc
   crypto/bn/convert.cc
+  crypto/bn/div.cc
   crypto/bn/exponentiation.cc
   crypto/bn/sqrt.cc
   crypto/buf/buf.cc
