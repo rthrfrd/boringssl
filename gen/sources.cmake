@@ -318,6 +318,7 @@ set(
   crypto/bn/bn_asn1.cc
   crypto/bn/convert.cc
   crypto/bn/exponentiation.cc
+  crypto/bn/sqrt.cc
   crypto/buf/buf.cc
   crypto/bytestring/asn1_compat.cc
   crypto/bytestring/ber.cc
