@@ -63,7 +63,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx) {
     return ret;
   }
 
-  BN_CTX_start(ctx);
+  bssl::BN_CTXScope scope(ctx);
   A = BN_CTX_get(ctx);
   b = BN_CTX_get(ctx);
   q = BN_CTX_get(ctx);
@@ -378,7 +378,6 @@ end:
     }
     ret = NULL;
   }
-  BN_CTX_end(ctx);
   return ret;
 }
 
@@ -395,7 +394,7 @@ int BN_sqrt(BIGNUM *out_sqrt, const BIGNUM *in, BN_CTX *ctx) {
     return 1;
   }
 
-  BN_CTX_start(ctx);
+  bssl::BN_CTXScope scope(ctx);
   if (out_sqrt == in) {
     estimate = BN_CTX_get(ctx);
   } else {
@@ -454,6 +453,5 @@ err:
   if (ok && out_sqrt == in && !BN_copy(out_sqrt, estimate)) {
     ok = 0;
   }
-  BN_CTX_end(ctx);
   return ok;
 }
