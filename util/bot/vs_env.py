@@ -27,9 +27,10 @@ def SetEnvironmentForCPU(cpu):
   sdk_dir = os.path.join(sdk_root, 'Windows Kits', '10')
   os.environ['WINDOWSSDKDIR'] = sdk_dir
   # Include the VS runtime in the PATH in case it's not machine-installed.
-  runtime_dir = {'x86': 'sys32', 'x64': 'sys64', 'arm64': 'sysarm64'}
-  os.environ['PATH'] = os.path.join(sdk_root, runtime_dir[cpu]) + \
-      os.pathsep + os.environ['PATH']
+  runtime_dirs = \
+      [os.path.join(sdk_root, d) for d in ['sys64', 'sys32', 'sysarm64']]
+  os.environ['PATH'] = \
+      os.pathsep.join(runtime_dirs) + os.pathsep + os.environ['PATH']
 
   # Set up the architecture-specific environment from the SetEnv files. See
   # _LoadToolchainEnv() from setup_toolchain.py in Chromium.
