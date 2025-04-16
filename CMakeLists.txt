@@ -708,14 +708,6 @@ set_target_properties(
 add_executable(bssl ${BSSL_SOURCES})
 target_link_libraries(bssl ssl crypto)
 
-# Historically, targets were built in subdirectories. For compatibility with
-# existing tools, we, for now, copy the targets into the subdirectories. This
-# will be removed sometime in 2024.
-copy_post_build(crypto crypto crypto_test urandom_test)
-copy_post_build(ssl ssl ssl_test)
-copy_post_build(decrepit decrepit decrepit_test)
-copy_post_build(tool bssl)
-
 if(FUZZ)
   if(LIBFUZZER_FROM_DEPS)
     file(GLOB LIBFUZZER_SOURCES "util/bot/libFuzzer/*.cpp")
