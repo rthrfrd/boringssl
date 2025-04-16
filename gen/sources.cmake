@@ -1159,6 +1159,19 @@ set(
 )
 
 set(
+  MODULEWRAPPER_SOURCES
+
+  util/fipstools/acvp/modulewrapper/main.cc
+  util/fipstools/acvp/modulewrapper/modulewrapper.cc
+)
+
+set(
+  MODULEWRAPPER_INTERNAL_HEADERS
+
+  util/fipstools/acvp/modulewrapper/modulewrapper.h
+)
+
+set(
   PKI_SOURCES
 
   pki/cert_error_id.cc

@@ -1124,6 +1124,15 @@ fuzz_sources = [
   "fuzz/verify_name_match_verifynameinsubtree_fuzzer.cc",
 ]
 
+modulewrapper_sources = [
+  "util/fipstools/acvp/modulewrapper/main.cc",
+  "util/fipstools/acvp/modulewrapper/modulewrapper.cc",
+]
+
+modulewrapper_internal_headers = [
+  "util/fipstools/acvp/modulewrapper/modulewrapper.h",
+]
+
 pki_sources = [
   "pki/cert_error_id.cc",
   "pki/cert_error_params.cc",

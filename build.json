@@ -1056,5 +1056,14 @@
             "rust/bssl-crypto/src/*.rs",
             "rust/bssl-crypto/src/*/*.rs"
         ]
+    },
+    "modulewrapper": {
+        "srcs": [
+            "util/fipstools/acvp/modulewrapper/main.cc",
+            "util/fipstools/acvp/modulewrapper/modulewrapper.cc"
+        ],
+        "internal_hdrs": [
+            "util/fipstools/acvp/modulewrapper/modulewrapper.h"
+        ]
     }
 }

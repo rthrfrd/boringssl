@@ -1107,6 +1107,13 @@ boringssl_fuzz_sources := \
   fuzz/verify_name_match_normalizename_fuzzer.cc \
   fuzz/verify_name_match_verifynameinsubtree_fuzzer.cc
 
+boringssl_modulewrapper_sources := \
+  util/fipstools/acvp/modulewrapper/main.cc \
+  util/fipstools/acvp/modulewrapper/modulewrapper.cc
+
+boringssl_modulewrapper_internal_headers := \
+  util/fipstools/acvp/modulewrapper/modulewrapper.h
+
 boringssl_pki_sources := \
   pki/cert_error_id.cc \
   pki/cert_error_params.cc \

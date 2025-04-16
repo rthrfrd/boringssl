@@ -507,9 +507,6 @@ if(BUILD_TESTING)
   add_subdirectory(ssl/test)
 endif()
 
-add_subdirectory(util/fipstools)
-add_subdirectory(util/fipstools/acvp/modulewrapper)
-
 if(OPENSSL_ASM)
   set(CRYPTO_SOURCES_ASM_USED ${CRYPTO_SOURCES_ASM})
   set(BCM_SOURCES_ASM_USED ${BCM_SOURCES_ASM})
@@ -707,6 +704,14 @@ if(BUILD_TESTING)
   target_link_libraries(pki_test test_support_lib boringssl_gtest pki crypto)
   target_compile_options(pki_test PRIVATE ${PKI_CXX_FLAGS})
   add_dependencies(all_tests pki_test)
+
+  add_executable(test_fips util/fipstools/test_fips.cc)
+  target_link_libraries(test_fips crypto)
+endif()
+
+if(FIPS)
+  add_executable(modulewrapper ${MODULEWRAPPER_SOURCES})
+  target_link_libraries(modulewrapper crypto)
 endif()
 
 add_executable(bssl ${BSSL_SOURCES})

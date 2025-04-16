@@ -1106,6 +1106,15 @@
       "fuzz/verify_name_match_verifynameinsubtree_fuzzer.cc"
     ]
   },
+  "modulewrapper": {
+    "srcs": [
+      "util/fipstools/acvp/modulewrapper/main.cc",
+      "util/fipstools/acvp/modulewrapper/modulewrapper.cc"
+    ],
+    "internal_hdrs": [
+      "util/fipstools/acvp/modulewrapper/modulewrapper.h"
+    ]
+  },
   "pki": {
     "srcs": [
       "pki/cert_error_id.cc",
