@@ -20,7 +20,10 @@
 
 #include <openssl/bio.h>
 #include <openssl/digest.h>
+#include <openssl/err.h>
+#include <openssl/nid.h>
 #include <openssl/pem.h>
+#include <openssl/x509.h>
 
 #include "../test/test_data.h"
 #include "../test/test_util.h"
