@@ -129,7 +129,7 @@ static void *v2i_AUTHORITY_INFO_ACCESS(const X509V3_EXT_METHOD *method,
   for (size_t i = 0; i < sk_CONF_VALUE_num(nval); i++) {
     const CONF_VALUE *cnf = sk_CONF_VALUE_value(nval, i);
     bssl::UniquePtr<ACCESS_DESCRIPTION> acc(ACCESS_DESCRIPTION_new());
-    if (acc == nullptr || !bssl::PushToStack(ainfo.get(), std::move(acc))) {
+    if (acc == nullptr) {
       return nullptr;
     }
     char *ptmp = strchr(cnf->name, ';');
@@ -151,6 +151,9 @@ static void *v2i_AUTHORITY_INFO_ACCESS(const X509V3_EXT_METHOD *method,
     if (!acc->method) {
       OPENSSL_PUT_ERROR(X509V3, X509V3_R_BAD_OBJECT);
       ERR_add_error_data(2, "value=", objtmp.get());
+      return nullptr;
+    }
+    if (!bssl::PushToStack(ainfo.get(), std::move(acc))) {
       return nullptr;
     }
   }
