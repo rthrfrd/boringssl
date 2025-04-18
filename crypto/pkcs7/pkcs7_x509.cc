@@ -17,9 +17,12 @@
 #include <assert.h>
 #include <limits.h>
 
+#include <openssl/asn1.h>
 #include <openssl/bytestring.h>
 #include <openssl/cms.h>
+#include <openssl/digest.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/mem.h>
 #include <openssl/obj.h>
 #include <openssl/pem.h>

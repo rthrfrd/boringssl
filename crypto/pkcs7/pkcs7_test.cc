@@ -23,6 +23,8 @@
 #include <openssl/stack.h>
 #include <openssl/x509.h>
 
+#include <string>
+
 #include "../internal.h"
 #include "../test/test_data.h"
 #include "../test/test_util.h"

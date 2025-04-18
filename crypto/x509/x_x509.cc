@@ -17,6 +17,7 @@
 #include <stdio.h>
 
 #include <openssl/asn1t.h>
+#include <openssl/bytestring.h>
 #include <openssl/evp.h>
 #include <openssl/mem.h>
 #include <openssl/obj.h>
