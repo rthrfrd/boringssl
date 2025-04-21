@@ -684,6 +684,11 @@ OPENSSL_EXPORT int BIO_meth_set_ctrl(BIO_METHOD *method,
                                      long (*ctrl_func)(BIO *, int, long,
                                                        void *));
 
+// BIO_meth_set_callback_ctrl sets the implementation of |BIO_callback_ctrl| for
+// |method| and returns one.
+OPENSSL_EXPORT int BIO_meth_set_callback_ctrl(
+    BIO_METHOD *method, long (*callback_ctrl_func)(BIO *, int, BIO_info_cb *));
+
 // BIO_set_data sets custom data on |bio|. It may be retried with
 // |BIO_get_data|.
 //

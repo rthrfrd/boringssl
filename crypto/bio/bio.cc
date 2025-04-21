@@ -625,6 +625,13 @@ int BIO_meth_set_ctrl(BIO_METHOD *method,
   return 1;
 }
 
+int BIO_meth_set_callback_ctrl(BIO_METHOD *method,
+                               long (*callback_ctrl_func)(BIO *, int,
+                                                          BIO_info_cb *)) {
+  method->callback_ctrl = callback_ctrl_func;
+  return 1;
+}
+
 void BIO_set_data(BIO *bio, void *ptr) { bio->ptr = ptr; }
 
 void *BIO_get_data(BIO *bio) { return bio->ptr; }
