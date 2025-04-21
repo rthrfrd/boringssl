@@ -184,30 +184,12 @@ OPENSSL_EXPORT void BIO_clear_retry_flags(BIO *bio);
 // values.
 OPENSSL_EXPORT int BIO_method_type(const BIO *bio);
 
-// These are passed to the BIO callback
-#define BIO_CB_FREE 0x01
-#define BIO_CB_READ 0x02
-#define BIO_CB_WRITE 0x03
-#define BIO_CB_PUTS 0x04
-#define BIO_CB_GETS 0x05
-#define BIO_CB_CTRL 0x06
-
-// The callback is called before and after the underling operation,
-// The BIO_CB_RETURN flag indicates if it is after the call
-#define BIO_CB_RETURN 0x80
-
-// bio_info_cb is the type of a callback function that can be called for most
-// BIO operations. The |event| argument is one of |BIO_CB_*| and can be ORed
-// with |BIO_CB_RETURN| if the callback is being made after the operation in
-// question. In that case, |return_value| will contain the return value from
-// the operation.
-typedef long (*bio_info_cb)(BIO *bio, int event, const char *parg, int cmd,
-                            long larg, long return_value);
+typedef int BIO_info_cb(BIO *, int, int);
 
 // BIO_callback_ctrl allows the callback function to be manipulated. The |cmd|
 // arg will generally be |BIO_CTRL_SET_CALLBACK| but arbitrary command values
 // can be interpreted by the |BIO|.
-OPENSSL_EXPORT long BIO_callback_ctrl(BIO *bio, int cmd, bio_info_cb fp);
+OPENSSL_EXPORT long BIO_callback_ctrl(BIO *bio, int cmd, BIO_info_cb *fp);
 
 // BIO_pending returns the number of bytes pending to be read.
 OPENSSL_EXPORT size_t BIO_pending(const BIO *bio);
@@ -787,6 +769,8 @@ OPENSSL_EXPORT void *BIO_get_ex_data(const BIO *bio, int idx);
 
 // Deprecated functions.
 
+typedef BIO_info_cb bio_info_cb;
+
 // BIO_f_base64 returns a filter |BIO| that base64-encodes data written into
 // it, and decodes data read from it. |BIO_gets| is not supported. Call
 // |BIO_flush| when done writing, to signal that no more data are to be
@@ -871,7 +855,7 @@ struct bio_method_st {
   long (*ctrl)(BIO *, int, long, void *);
   int (*create)(BIO *);
   int (*destroy)(BIO *);
-  long (*callback_ctrl)(BIO *, int, bio_info_cb);
+  long (*callback_ctrl)(BIO *, int, BIO_info_cb *);
 };
 
 struct bio_st {

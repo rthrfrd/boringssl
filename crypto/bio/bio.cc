@@ -244,7 +244,7 @@ void BIO_copy_next_retry(BIO *bio) {
   bio->retry_reason = bio->next_bio->retry_reason;
 }
 
-long BIO_callback_ctrl(BIO *bio, int cmd, bio_info_cb fp) {
+long BIO_callback_ctrl(BIO *bio, int cmd, BIO_info_cb *fp) {
   if (bio == NULL) {
     return 0;
   }

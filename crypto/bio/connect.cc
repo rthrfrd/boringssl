@@ -62,7 +62,7 @@ typedef struct bio_connect_st {
   // info_callback is called when the connection is initially made
   // callback(BIO,state,ret);  The callback should return 'ret', state is for
   // compatibility with the SSL info_callback.
-  int (*info_callback)(const BIO *bio, int state, int ret);
+  int (*info_callback)(BIO *bio, int state, int ret);
 } BIO_CONNECT;
 }  // namespace
 
@@ -124,7 +124,7 @@ static int split_host_and_port(char **out_host, char **out_port,
 
 static int conn_state(BIO *bio, BIO_CONNECT *c) {
   int ret = -1, i;
-  int (*cb)(const BIO *, int, int) = NULL;
+  int (*cb)(BIO *, int, int) = NULL;
 
   if (c->info_callback != NULL) {
     cb = c->info_callback;
@@ -410,9 +410,8 @@ static long conn_ctrl(BIO *bio, int cmd, long num, void *ptr) {
     case BIO_CTRL_FLUSH:
       return 1;
     case BIO_CTRL_GET_CALLBACK: {
-      auto fptr =
-          reinterpret_cast<int (**)(const BIO *bio, int state, int xret)>(ptr);
-      *fptr = data->info_callback;
+      auto out = reinterpret_cast<int (**)(BIO *bio, int state, int xret)>(ptr);
+      *out = data->info_callback;
       return 1;
     }
     default:
@@ -420,22 +419,11 @@ static long conn_ctrl(BIO *bio, int cmd, long num, void *ptr) {
   }
 }
 
-static long conn_callback_ctrl(BIO *bio, int cmd, bio_info_cb fp) {
+static long conn_callback_ctrl(BIO *bio, int cmd, BIO_info_cb *fp) {
   BIO_CONNECT *data = static_cast<BIO_CONNECT *>(bio->ptr);
   switch (cmd) {
     case BIO_CTRL_SET_CALLBACK:
-      // This is the actual type signature of |fp|. The caller is expected to
-      // cast it to |bio_info_cb| due to the |BIO_callback_ctrl| calling
-      // convention.
-      OPENSSL_MSVC_PRAGMA(warning(push))
-      OPENSSL_MSVC_PRAGMA(warning(disable : 4191))
-      OPENSSL_CLANG_PRAGMA("clang diagnostic push")
-      OPENSSL_CLANG_PRAGMA(
-          "clang diagnostic ignored \"-Wunknown-warning-option\"")
-      OPENSSL_CLANG_PRAGMA("clang diagnostic ignored \"-Wcast-function-type\"")
-      data->info_callback = (int (*)(const struct bio_st *, int, int))fp;
-      OPENSSL_CLANG_PRAGMA("clang diagnostic pop")
-      OPENSSL_MSVC_PRAGMA(warning(pop))
+      data->info_callback = fp;
       return 1;
     default:
       return 0;
