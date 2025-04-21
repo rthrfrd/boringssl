@@ -17,8 +17,6 @@
 
 #include <openssl/base.h>   // IWYU pragma: export
 
-#include <openssl/stack.h>
-
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -29,9 +27,6 @@ extern "C" {
 // assigned indexes in which to store their data. Each index has callback
 // functions that are called when an object of that type is freed or
 // duplicated.
-
-
-typedef struct crypto_ex_data_st CRYPTO_EX_DATA;
 
 
 // Type-specific functions.
@@ -76,6 +71,11 @@ OPENSSL_EXPORT void *TYPE_get_app_data(const TYPE *t);
 
 // Callback types.
 
+// TODO(davidben): This is only declared in public headers to be a parameter of
+// |CRYPTO_EX_*| callbacks. Callers cannot do anything useful with it, so we may
+// as well pass NULL and use an internal type for the actual storage.
+typedef struct crypto_ex_data_st CRYPTO_EX_DATA;
+
 // CRYPTO_EX_free is a callback function that is called when an object of the
 // class with extra data pointers is being destroyed. For example, if this
 // callback has been passed to |SSL_get_ex_new_index| then it may be called each
@@ -103,16 +103,9 @@ OPENSSL_EXPORT void CRYPTO_cleanup_all_ex_data(void);
 typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
                           void **from_d, int index, long argl, void *argp);
 
-
-// Private structures.
-
 // CRYPTO_EX_unused is a placeholder for an unused callback. It is aliased to
 // int to ensure non-NULL callers fail to compile rather than fail silently.
 typedef int CRYPTO_EX_unused;
-
-struct crypto_ex_data_st {
-  STACK_OF(void) *sk;
-};
 
 
 #if defined(__cplusplus)

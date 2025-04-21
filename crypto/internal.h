@@ -715,6 +715,10 @@ OPENSSL_EXPORT int CRYPTO_set_thread_local(
 
 // ex_data
 
+struct crypto_ex_data_st {
+  STACK_OF(void) *sk;
+} /* CRYPTO_EX_DATA */;
+
 typedef struct crypto_ex_data_func_st CRYPTO_EX_DATA_FUNCS;
 
 // CRYPTO_EX_DATA_CLASS tracks the ex_indices registered for a type which
