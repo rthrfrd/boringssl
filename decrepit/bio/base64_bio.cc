@@ -24,6 +24,7 @@
 #include <openssl/mem.h>
 
 #include "../../crypto/internal.h"
+#include "../../crypto/bio/internal.h"
 
 
 #define B64_BLOCK_SIZE 1024

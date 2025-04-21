@@ -40,6 +40,7 @@
 #include <openssl/mem.h>
 
 #include "../internal.h"
+#include "internal.h"
 
 #if defined(OPENSSL_WINDOWS)
 #include <fcntl.h>

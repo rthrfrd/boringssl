@@ -22,6 +22,7 @@
 #include <openssl/mem.h>
 
 #include "../internal.h"
+#include "internal.h"
 
 
 BIO *BIO_new_mem_buf(const void *buf, ossl_ssize_t len) {

@@ -16,6 +16,8 @@
 
 #include <openssl/bio.h>
 
+#include "../crypto/bio/internal.h"
+
 
 static SSL *get_ssl(BIO *bio) { return reinterpret_cast<SSL *>(bio->ptr); }
 
