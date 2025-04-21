@@ -796,6 +796,43 @@ OPENSSL_EXPORT int BIO_get_shutdown(BIO *bio);
 OPENSSL_EXPORT int BIO_meth_set_puts(BIO_METHOD *method,
                                      int (*puts)(BIO *, const char *));
 
+#if !defined(OPENSSL_NO_SOCK)
+// The following functions return function pointers, possibly NULL, which are
+// compatible with the corresponding |BIO_meth_set_*| function. |method| must be
+// |BIO_s_socket| or the program will abort.
+//
+// Using these functions is inherently unsafe and fragile. It is not possible to
+// use them in a future-proof way. See
+// https://github.com/openssl/openssl/issues/26047 for details. BoringSSL
+// implements them solely for compatibility with older versions of PostgreSQL.
+// To work around the future-proofing problems, the return values may diverge
+// from the true implementation of |BIO_s_socket|.
+//
+// Caller should not use these functions. They are not necessary to define
+// custom |BIO_METHOD|s. Instead, callers should either:
+//
+// - Define a custom |BIO_METHOD| that owns a socket |BIO| somewhere in the
+//   custom data. See |BIO_set_data|.
+//
+// - Define a custom |BIO_METHOD| that wraps a socket |BIO| as a filter. See
+//   |BIO_push| and |BIO_next|.
+//
+// - Define a custom |BIO_METHOD| without |BIO_s_socket| at all. If not using
+//   the built-in read or write functions, |BIO_s_socket| only provides a no-op
+//   |BIO_CTRL_FLUSH| implementation. This can be implemented by the caller.
+OPENSSL_EXPORT int (*BIO_meth_get_gets(const BIO_METHOD *method))(BIO *, char *,
+                                                                  int);
+OPENSSL_EXPORT int (*BIO_meth_get_puts(const BIO_METHOD *method))(BIO *,
+                                                                  const char *);
+OPENSSL_EXPORT long (*BIO_meth_get_ctrl(const BIO_METHOD *method))(BIO *, int,
+                                                                   long,
+                                                                   void *);
+OPENSSL_EXPORT int (*BIO_meth_get_create(const BIO_METHOD *method))(BIO *);
+OPENSSL_EXPORT int (*BIO_meth_get_destroy(const BIO_METHOD *method))(BIO *);
+OPENSSL_EXPORT long (*BIO_meth_get_callback_ctrl(const BIO_METHOD *method))(
+    BIO *, int, BIO_info_cb *);
+#endif  // !OPENSSL_NO_SOCK
+
 
 // Private functions
 
