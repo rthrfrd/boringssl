@@ -123,6 +123,9 @@ OPENSSL_EXPORT int BIO_eof(BIO *bio);
 // BIO_set_flags ORs |flags| with |bio->flags|.
 OPENSSL_EXPORT void BIO_set_flags(BIO *bio, int flags);
 
+// BIO_clear_flags ANDs |bio->flags| with the bitwise-complement of |flags|.
+OPENSSL_EXPORT void BIO_clear_flags(BIO *bio, int flags);
+
 // BIO_test_flags returns |bio->flags| AND |flags|.
 OPENSSL_EXPORT int BIO_test_flags(const BIO *bio, int flags);
 
@@ -160,9 +163,6 @@ OPENSSL_EXPORT int BIO_get_retry_reason(const BIO *bio);
 // BIO_set_retry_reason sets the special I/O operation that needs to be retried
 // to |reason|, which should be one of the |BIO_RR_*| values.
 OPENSSL_EXPORT void BIO_set_retry_reason(BIO *bio, int reason);
-
-// BIO_clear_flags ANDs |bio->flags| with the bitwise-complement of |flags|.
-OPENSSL_EXPORT void BIO_clear_flags(BIO *bio, int flags);
 
 // BIO_set_retry_read sets the |BIO_FLAGS_READ| and |BIO_FLAGS_SHOULD_RETRY|
 // flags on |bio|.
