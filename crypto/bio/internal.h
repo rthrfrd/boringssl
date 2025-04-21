@@ -18,7 +18,8 @@
 #include <openssl/bio.h>
 
 #include <openssl/ex_data.h>
-#include <openssl/thread.h>
+
+#include "../internal.h"
 
 #if !defined(OPENSSL_NO_SOCK)
 #if !defined(OPENSSL_WINDOWS)

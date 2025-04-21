@@ -24,19 +24,6 @@ extern "C" {
 #endif
 
 
-// CRYPTO_refcount_t is the type of a reference count.
-//
-// We use C++11 atomics to access this, so it should have type
-// std::atomic<uint32_t>. However, this header is included by C programs, so it
-// is not possible to do that. Instead we statically assert that the size and
-// native alignment of a plain uint32_t and a std::atomic<uint32_t> are equal in
-// refcount.cc.
-//
-// TODO(crbug.com/412269080): Remove this type from public headers, which will
-// remove the need for this hack.
-typedef uint32_t CRYPTO_refcount_t;
-
-
 // Deprecated functions.
 //
 // Historically, OpenSSL required callers to provide locking callbacks.

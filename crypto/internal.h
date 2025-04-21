@@ -18,7 +18,6 @@
 #include <openssl/crypto.h>
 #include <openssl/ex_data.h>
 #include <openssl/stack.h>
-#include <openssl/thread.h>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -579,6 +578,8 @@ static_assert(alignof(CRYPTO_atomic_u32) == alignof(uint32_t),
 
 // CRYPTO_REFCOUNT_MAX is the value at which the reference count saturates.
 #define CRYPTO_REFCOUNT_MAX 0xffffffff
+
+using CRYPTO_refcount_t = CRYPTO_atomic_u32;
 
 // CRYPTO_refcount_inc atomically increments the value at |*count| unless the
 // value would overflow. It's safe for multiple threads to concurrently call

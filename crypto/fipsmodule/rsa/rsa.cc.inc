@@ -26,7 +26,6 @@
 #include <openssl/md5.h>
 #include <openssl/mem.h>
 #include <openssl/nid.h>
-#include <openssl/thread.h>
 
 #include "../../internal.h"
 #include "../bcm_interface.h"
