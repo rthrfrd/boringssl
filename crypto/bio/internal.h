@@ -44,8 +44,6 @@ struct bio_method_st {
   const char *name;
   int (*bwrite)(BIO *, const char *, int);
   int (*bread)(BIO *, char *, int);
-  // TODO(crbug.com/412269080): remove bputs.
-  int (*bputs)(BIO *, const char *);
   int (*bgets)(BIO *, char *, int);
   long (*ctrl)(BIO *, int, long, void *);
   int (*create)(BIO *);
