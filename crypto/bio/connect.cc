@@ -353,93 +353,75 @@ static int conn_write(BIO *bio, const char *in, int in_len) {
 }
 
 static long conn_ctrl(BIO *bio, int cmd, long num, void *ptr) {
-  int *ip;
-  long ret = 1;
-  BIO_CONNECT *data;
-
-  data = (BIO_CONNECT *)bio->ptr;
-
+  BIO_CONNECT *data = static_cast<BIO_CONNECT *>(bio->ptr);
   switch (cmd) {
     case BIO_CTRL_RESET:
-      ret = 0;
       data->state = BIO_CONN_S_BEFORE;
       conn_close_socket(bio);
       bio->flags = 0;
-      break;
+      return 0;
     case BIO_C_DO_STATE_MACHINE:
       // use this one to start the connection
       if (data->state != BIO_CONN_S_OK) {
-        ret = (long)conn_state(bio, data);
+        return conn_state(bio, data);
       } else {
-        ret = 1;
+        return 1;
       }
-      break;
     case BIO_C_SET_CONNECT:
-      if (ptr != NULL) {
-        bio->init = 1;
-        if (num == 0) {
-          OPENSSL_free(data->param_hostname);
-          data->param_hostname =
-              OPENSSL_strdup(reinterpret_cast<const char *>(ptr));
-          if (data->param_hostname == NULL) {
-            ret = 0;
-          }
-        } else if (num == 1) {
-          OPENSSL_free(data->param_port);
-          data->param_port =
-              OPENSSL_strdup(reinterpret_cast<const char *>(ptr));
-          if (data->param_port == NULL) {
-            ret = 0;
-          }
-        } else {
-          ret = 0;
-        }
+      if (ptr == nullptr) {
+        return 0;
       }
-      break;
+      bio->init = 1;
+      if (num == 0) {
+        OPENSSL_free(data->param_hostname);
+        data->param_hostname =
+            OPENSSL_strdup(reinterpret_cast<const char *>(ptr));
+        if (data->param_hostname == nullptr) {
+          return 0;
+        }
+      } else if (num == 1) {
+        OPENSSL_free(data->param_port);
+        data->param_port = OPENSSL_strdup(reinterpret_cast<const char *>(ptr));
+        if (data->param_port == nullptr) {
+          return 0;
+        }
+      } else {
+        return 0;
+      }
+      return 1;
     case BIO_C_SET_NBIO:
-      data->nbio = (int)num;
-      break;
+      data->nbio = static_cast<int>(num);
+      return 1;
     case BIO_C_GET_FD:
       if (bio->init) {
-        ip = (int *)ptr;
-        if (ip != NULL) {
-          *ip = bio->num;
+        int *out = static_cast<int *>(ptr);
+        if (out != nullptr) {
+          *out = bio->num;
         }
-        ret = bio->num;
+        return bio->num;
       } else {
-        ret = -1;
+        return -1;
       }
-      break;
     case BIO_CTRL_GET_CLOSE:
-      ret = bio->shutdown;
-      break;
+      return bio->shutdown;
     case BIO_CTRL_SET_CLOSE:
-      bio->shutdown = (int)num;
-      break;
-    case BIO_CTRL_PENDING:
-    case BIO_CTRL_WPENDING:
-      ret = 0;
-      break;
+      bio->shutdown = static_cast<int>(num);
+      return 1;
     case BIO_CTRL_FLUSH:
-      break;
+      return 1;
     case BIO_CTRL_GET_CALLBACK: {
-      int (**fptr)(const BIO *bio, int state, int xret);
-      fptr = reinterpret_cast<decltype(fptr)>(ptr);
+      auto fptr =
+          reinterpret_cast<int (**)(const BIO *bio, int state, int xret)>(ptr);
       *fptr = data->info_callback;
-    } break;
+      return 1;
+    }
     default:
-      ret = 0;
-      break;
+      return 0;
   }
-  return ret;
 }
 
 static long conn_callback_ctrl(BIO *bio, int cmd, bio_info_cb fp) {
-  long ret = 1;
-  BIO_CONNECT *data;
-
-  data = (BIO_CONNECT *)bio->ptr;
-
+  BIO_CONNECT *data = static_cast<BIO_CONNECT *>(bio->ptr);
   switch (cmd) {
     case BIO_CTRL_SET_CALLBACK:
       // This is the actual type signature of |fp|. The caller is expected to
@@ -454,12 +436,10 @@ static long conn_callback_ctrl(BIO *bio, int cmd, bio_info_cb fp) {
       data->info_callback = (int (*)(const struct bio_st *, int, int))fp;
       OPENSSL_CLANG_PRAGMA("clang diagnostic pop")
       OPENSSL_MSVC_PRAGMA(warning(pop))
-      break;
+      return 1;
     default:
-      ret = 0;
-      break;
+      return 0;
   }
-  return ret;
 }
 
 BIO *BIO_new_connect(const char *hostname) {

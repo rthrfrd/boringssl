@@ -83,41 +83,32 @@ static int sock_write(BIO *b, const char *in, int inl) {
 }
 
 static long sock_ctrl(BIO *b, int cmd, long num, void *ptr) {
-  long ret = 1;
-  int *ip;
-
   switch (cmd) {
     case BIO_C_SET_FD:
       sock_free(b);
-      b->num = *((int *)ptr);
-      b->shutdown = (int)num;
+      b->num = *static_cast<int *>(ptr);
+      b->shutdown = static_cast<int>(num);
       b->init = 1;
-      break;
+      return 1;
     case BIO_C_GET_FD:
       if (b->init) {
-        ip = (int *)ptr;
-        if (ip != NULL) {
-          *ip = b->num;
+        int *out = static_cast<int*>(ptr);
+        if (out != nullptr) {
+          *out = b->num;
         }
-        ret = b->num;
-      } else {
-        ret = -1;
+        return b->num;
       }
-      break;
+      return -1;
     case BIO_CTRL_GET_CLOSE:
-      ret = b->shutdown;
-      break;
+      return b->shutdown;
     case BIO_CTRL_SET_CLOSE:
-      b->shutdown = (int)num;
-      break;
+      b->shutdown = static_cast<int>(num);
+      return 1;
     case BIO_CTRL_FLUSH:
-      ret = 1;
-      break;
+      return 1;
     default:
-      ret = 0;
-      break;
+      return 0;
   }
-  return ret;
 }
 
 static const BIO_METHOD methods_sockp = {
