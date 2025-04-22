@@ -381,12 +381,10 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr) {
       return 1;
 
     case BIO_CTRL_EOF: {
-      BIO *other_bio = reinterpret_cast<BIO *>(ptr);
-      if (other_bio) {
-        struct bio_bio_st *other_b =
-            reinterpret_cast<bio_bio_st *>(other_bio->ptr);
-        assert(other_b != nullptr);
-        return other_b->len == 0 && other_b->closed;
+      if (b->peer) {
+        auto *peer_b = reinterpret_cast<bio_bio_st *>(b->peer->ptr);
+        assert(peer_b != nullptr);
+        return peer_b->len == 0 && peer_b->closed;
       }
       return 1;
     }
