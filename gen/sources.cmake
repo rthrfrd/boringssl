@@ -365,6 +365,7 @@ set(
   crypto/ec/hash_to_curve.cc
   crypto/ecdh/ecdh.cc
   crypto/ecdsa/ecdsa_asn1.cc
+  crypto/ecdsa/ecdsa_p1363.cc
   crypto/engine/engine.cc
   crypto/err/err.cc
   crypto/evp/evp.cc
@@ -751,6 +752,7 @@ set(
   crypto/digest/digest_test.cc
   crypto/dsa/dsa_test.cc
   crypto/ecdh/ecdh_test.cc
+  crypto/ecdsa/ecdsa_p1363_test.cc
   crypto/err/err_test.cc
   crypto/evp/evp_extra_test.cc
   crypto/evp/evp_test.cc
@@ -1009,13 +1011,21 @@ set(
   third_party/wycheproof_testvectors/ecdh_secp256r1_test.txt
   third_party/wycheproof_testvectors/ecdh_secp384r1_test.txt
   third_party/wycheproof_testvectors/ecdh_secp521r1_test.txt
+  third_party/wycheproof_testvectors/ecdsa_secp224r1_sha224_p1363_test.txt
   third_party/wycheproof_testvectors/ecdsa_secp224r1_sha224_test.txt
+  third_party/wycheproof_testvectors/ecdsa_secp224r1_sha256_p1363_test.txt
   third_party/wycheproof_testvectors/ecdsa_secp224r1_sha256_test.txt
+  third_party/wycheproof_testvectors/ecdsa_secp224r1_sha512_p1363_test.txt
   third_party/wycheproof_testvectors/ecdsa_secp224r1_sha512_test.txt
+  third_party/wycheproof_testvectors/ecdsa_secp256r1_sha256_p1363_test.txt
   third_party/wycheproof_testvectors/ecdsa_secp256r1_sha256_test.txt
+  third_party/wycheproof_testvectors/ecdsa_secp256r1_sha512_p1363_test.txt
   third_party/wycheproof_testvectors/ecdsa_secp256r1_sha512_test.txt
+  third_party/wycheproof_testvectors/ecdsa_secp384r1_sha384_p1363_test.txt
   third_party/wycheproof_testvectors/ecdsa_secp384r1_sha384_test.txt
+  third_party/wycheproof_testvectors/ecdsa_secp384r1_sha512_p1363_test.txt
   third_party/wycheproof_testvectors/ecdsa_secp384r1_sha512_test.txt
+  third_party/wycheproof_testvectors/ecdsa_secp521r1_sha512_p1363_test.txt
   third_party/wycheproof_testvectors/ecdsa_secp521r1_sha512_test.txt
   third_party/wycheproof_testvectors/eddsa_test.txt
   third_party/wycheproof_testvectors/hkdf_sha1_test.txt
