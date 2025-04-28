@@ -114,6 +114,23 @@ class Array {
     return data_[i];
   }
 
+  T &front() {
+    BSSL_CHECK(size_ != 0);
+    return data_[0];
+  }
+  const T &front() const {
+    BSSL_CHECK(size_ != 0);
+    return data_[0];
+  }
+  T &back() {
+    BSSL_CHECK(size_ != 0);
+    return data_[size_ - 1];
+  }
+  const T &back() const {
+    BSSL_CHECK(size_ != 0);
+    return data_[size_ - 1];
+  }
+
   T *begin() { return data_; }
   const T *begin() const { return data_; }
   T *end() { return data_ + size_; }
@@ -240,6 +257,23 @@ class Vector {
     return data_[i];
   }
 
+  T &front() {
+    BSSL_CHECK(size_ != 0);
+    return data_[0];
+  }
+  const T &front() const {
+    BSSL_CHECK(size_ != 0);
+    return data_[0];
+  }
+  T &back() {
+    BSSL_CHECK(size_ != 0);
+    return data_[size_ - 1];
+  }
+  const T &back() const {
+    BSSL_CHECK(size_ != 0);
+    return data_[size_ - 1];
+  }
+
   T *begin() { return data_; }
   const T *begin() const { return data_; }
   T *end() { return data_ + size_; }
@@ -251,6 +285,12 @@ class Vector {
     data_ = nullptr;
     size_ = 0;
     capacity_ = 0;
+  }
+
+  void pop_back() {
+    BSSL_CHECK(size_ != 0);
+    std::destroy_at(&data_[size_ - 1]);
+    size_--;
   }
 
   // Push adds |elem| at the end of the internal array, growing if necessary. It
@@ -369,12 +409,34 @@ class InplaceVector {
     return data()[i];
   }
 
+  T &front() {
+    BSSL_CHECK(size_ != 0);
+    return data()[0];
+  }
+  const T &front() const {
+    BSSL_CHECK(size_ != 0);
+    return data()[0];
+  }
+  T &back() {
+    BSSL_CHECK(size_ != 0);
+    return data()[size_ - 1];
+  }
+  const T &back() const {
+    BSSL_CHECK(size_ != 0);
+    return data()[size_ - 1];
+  }
+
   T *begin() { return data(); }
   const T *begin() const { return data(); }
   T *end() { return data() + size_; }
   const T *end() const { return data() + size_; }
 
   void clear() { Shrink(0); }
+
+  void pop_back() {
+    BSSL_CHECK(size_ != 0);
+    Shrink(size_ - 1);
+  }
 
   // Shrink resizes the vector to |new_size|, which must not be larger than the
   // current size. Unlike |Resize|, this can be called when |T| is not

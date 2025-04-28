@@ -21,6 +21,22 @@
 BSSL_NAMESPACE_BEGIN
 namespace {
 
+TEST(ArrayTest, Basic) {
+  Array<int> array;
+  EXPECT_TRUE(array.empty());
+  EXPECT_EQ(array.size(), 0u);
+  const int v[] = {1, 2, 3, 4};
+  ASSERT_TRUE(array.CopyFrom(v));
+  EXPECT_FALSE(array.empty());
+  EXPECT_EQ(array.size(), 4u);
+  EXPECT_EQ(array[0], 1);
+  EXPECT_EQ(array[1], 2);
+  EXPECT_EQ(array[2], 3);
+  EXPECT_EQ(array[3], 4);
+  EXPECT_EQ(array.front(), 1);
+  EXPECT_EQ(array.back(), 4);
+}
+
 TEST(ArrayTest, InitValueConstructs) {
   Array<uint8_t> array;
   ASSERT_TRUE(array.Init(10));
@@ -32,6 +48,8 @@ TEST(ArrayTest, InitValueConstructs) {
 
 TEST(ArrayDeathTest, BoundsChecks) {
   Array<int> array;
+  EXPECT_DEATH_IF_SUPPORTED(array.front(), "");
+  EXPECT_DEATH_IF_SUPPORTED(array.back(), "");
   const int v[] = {1, 2, 3, 4};
   ASSERT_TRUE(array.CopyFrom(v));
   EXPECT_DEATH_IF_SUPPORTED(array[4], "");
@@ -57,6 +75,8 @@ TEST(VectorTest, Resize) {
   for (size_t i = 0; i < vec.size(); i++) {
     EXPECT_EQ(vec[i], i == 0 ? 42 : i);
   }
+  EXPECT_EQ(vec.front(), 42u);
+  EXPECT_EQ(vec.back(), 16u);
 
   // Clearing the vector should give an empty one.
   vec.clear();
@@ -67,6 +87,8 @@ TEST(VectorTest, Resize) {
   ASSERT_TRUE(!vec.empty());
   EXPECT_EQ(vec.size(), 1u);
   EXPECT_EQ(vec[0], 42u);
+  EXPECT_EQ(vec.front(), 42u);
+  EXPECT_EQ(vec.back(), 42u);
 }
 
 TEST(VectorTest, MoveConstructor) {
@@ -97,10 +119,19 @@ TEST(VectorTest, VectorContainingVectors) {
     }
     ASSERT_TRUE(vec.Push(std::move(elem)));
   }
-  EXPECT_EQ(vec.size(), static_cast<size_t>(100));
+  EXPECT_EQ(vec.size(), 100u);
+
+  // Add and remove some element.
+  TagAndArray extra;
+  extra.tag = 1234;
+  ASSERT_TRUE(extra.vec.Push(1234));
+  ASSERT_TRUE(vec.Push(std::move(extra)));
+  EXPECT_EQ(vec.size(), 101u);
+  vec.pop_back();
+  EXPECT_EQ(vec.size(), 100u);
 
   Vector<TagAndArray> vec_moved(std::move(vec));
-  EXPECT_EQ(vec_moved.size(), static_cast<size_t>(100));
+  EXPECT_EQ(vec_moved.size(), 100u);
   size_t count = 0;
   for (const TagAndArray &elem : vec_moved) {
     // Test the square bracket operator returns the same value as iteration.
@@ -135,6 +166,9 @@ TEST(VectorTest, NotDefaultConstructible) {
 
 TEST(VectorDeathTest, BoundsChecks) {
   Vector<int> vec;
+  EXPECT_DEATH_IF_SUPPORTED(vec.front(), "");
+  EXPECT_DEATH_IF_SUPPORTED(vec.back(), "");
+  EXPECT_DEATH_IF_SUPPORTED(vec.pop_back(), "");
   ASSERT_TRUE(vec.Push(1));
   // Within bounds of the capacity, but not the vector.
   EXPECT_DEATH_IF_SUPPORTED(vec[1], "");
@@ -164,6 +198,8 @@ TEST(InplaceVector, Basic) {
   iter++;
   EXPECT_EQ(iter, vec.end());
   EXPECT_EQ(Span(vec), Span(data3));
+  EXPECT_EQ(vec.front(), 1);
+  EXPECT_EQ(vec.back(), 3);
 
   InplaceVector<int, 4> vec2 = vec;
   EXPECT_EQ(Span(vec), Span(vec2));
@@ -204,6 +240,11 @@ TEST(InplaceVectorTest, ComplexType) {
 
   vec_of_vecs.Resize(2);
   EXPECT_EQ(Span(vec_of_vecs), Span(data, 2));
+
+  vec_of_vecs.PushBack({42});
+  EXPECT_EQ(3u, vec_of_vecs.size());
+  vec_of_vecs.pop_back();
+  EXPECT_EQ(2u, vec_of_vecs.size());
 
   vec_of_vecs.Resize(4);
   EXPECT_EQ(4u, vec_of_vecs.size());
@@ -344,6 +385,9 @@ TEST(InplaceVectorDeathTest, BoundsChecks) {
   InplaceVector<int, 4> vec;
   // The vector is currently empty.
   EXPECT_DEATH_IF_SUPPORTED(vec[0], "");
+  EXPECT_DEATH_IF_SUPPORTED(vec.front(), "");
+  EXPECT_DEATH_IF_SUPPORTED(vec.back(), "");
+  EXPECT_DEATH_IF_SUPPORTED(vec.pop_back(), "");
   int data[] = {1, 2, 3};
   vec.CopyFrom(data);
   // Some more out-of-bounds elements.
