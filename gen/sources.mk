@@ -638,6 +638,7 @@ boringssl_crypto_internal_headers := \
   crypto/kyber/internal.h \
   crypto/lhash/internal.h \
   crypto/md5/internal.h \
+  crypto/mem_internal.h \
   crypto/obj/obj_dat.h \
   crypto/pem/internal.h \
   crypto/pkcs7/internal.h \
@@ -743,6 +744,7 @@ boringssl_crypto_test_sources := \
   crypto/kyber/kyber_test.cc \
   crypto/lhash/lhash_test.cc \
   crypto/md5/md5_test.cc \
+  crypto/mem_test.cc \
   crypto/mldsa/mldsa_test.cc \
   crypto/mlkem/mlkem_test.cc \
   crypto/obj/obj_test.cc \
