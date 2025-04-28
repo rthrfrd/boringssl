@@ -541,6 +541,10 @@ if(FIPS_DELOCATE)
     # Clang warns when passing both -c (from CMake) and -S.
     target_compile_options(bcm_c_generated_asm PRIVATE "-Wno-unused-command-line-argument")
   endif()
+  if(CFI)
+    # Delocate needs real assembly code so we need to disable CFI and LTO in the FIPS module.
+    target_compile_options(bcm_c_generated_asm PRIVATE "-fno-lto" "-fno-sanitize=cfi")
+  endif()
 
   set(TARGET_FLAG "")
   if(CMAKE_ASM_COMPILER_TARGET)
