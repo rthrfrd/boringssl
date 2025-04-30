@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include <openssl/bio.h>
 #include <openssl/mem.h>
 
 #include "../../crypto/internal.h"

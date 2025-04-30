@@ -14,7 +14,6 @@
 
 #include <stdio.h>
 
-#include <utility>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -27,7 +26,6 @@
 #include <openssl/rand.h>
 
 #include "../test/file_test.h"
-#include "../test/test_util.h"
 #include "../test/wycheproof_util.h"
 
 

@@ -33,6 +33,7 @@
 #include <openssl/nid.h>
 #include <openssl/pem.h>
 #include <openssl/pool.h>
+#include <openssl/span.h>
 #include <openssl/x509.h>
 
 #include "../internal.h"
