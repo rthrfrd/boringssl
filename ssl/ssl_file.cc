@@ -384,8 +384,6 @@ int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file) {
   int ret = 0;
   X509 *x = NULL;
 
-  ERR_clear_error();  // clear error stack for SSL_CTX_use_certificate()
-
   in = BIO_new(BIO_s_file());
   if (in == NULL) {
     OPENSSL_PUT_ERROR(SSL, ERR_R_BUF_LIB);
@@ -405,11 +403,6 @@ int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file) {
   }
 
   ret = SSL_CTX_use_certificate(ctx, x);
-
-  if (ERR_peek_error() != 0) {
-    ret = 0;  // Key/certificate mismatch doesn't imply ret==0 ...
-  }
-
   if (ret) {
     // If we could set up our certificate, now proceed to the CA
     // certificates.
