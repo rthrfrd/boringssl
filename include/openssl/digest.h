@@ -290,7 +290,7 @@ struct evp_md_pctx_ops;
 // EVP_MAX_MD_DATA_SIZE is a private constant which specifies the size of the
 // largest digest state. SHA-512 and BLAKE2b are joint-largest. Consuming code
 // only uses this via the `EVP_MD_CTX` type.
-#define EVP_MAX_MD_DATA_SIZE 216
+#define EVP_MAX_MD_DATA_SIZE 208
 
 // env_md_ctx_st is typoed ("evp" -> "env"), but the typo comes from OpenSSL
 // and some consumers forward-declare these structures so we're leaving it
