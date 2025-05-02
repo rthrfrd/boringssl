@@ -180,7 +180,6 @@ hooks = [
     'action': [ 'download_from_google_storage',
                 '--no_resume',
                 '--platform=win32',
-                '--no_auth',
                 '--bucket', 'chromium-tools',
                 '-s', 'boringssl/util/bot/nasm-win32.exe.sha1',
     ],
