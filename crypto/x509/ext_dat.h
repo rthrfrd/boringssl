@@ -24,9 +24,7 @@ extern const X509V3_EXT_METHOD v3_ns_ia5_list[], v3_alt[], v3_skey_id,
     v3_akey_id;
 extern const X509V3_EXT_METHOD v3_crl_num, v3_crl_reason, v3_crl_invdate;
 extern const X509V3_EXT_METHOD v3_delta_crl, v3_cpols, v3_crld, v3_freshest_crl;
-extern const X509V3_EXT_METHOD v3_ocsp_nonce, v3_ocsp_accresp, v3_ocsp_acutoff;
-extern const X509V3_EXT_METHOD v3_ocsp_crlid, v3_ocsp_nocheck,
-    v3_ocsp_serviceloc;
+extern const X509V3_EXT_METHOD v3_ocsp_nocheck;
 extern const X509V3_EXT_METHOD v3_crl_hold;
 extern const X509V3_EXT_METHOD v3_policy_mappings, v3_policy_constraints;
 extern const X509V3_EXT_METHOD v3_name_constraints, v3_inhibit_anyp, v3_idp;
@@ -34,9 +32,6 @@ extern const X509V3_EXT_METHOD v3_addr, v3_asid;
 
 // This table will be searched using OBJ_bsearch so it *must* kept in order
 // of the ext_nid values.
-
-// TODO(fork): OCSP support
-#define OPENSSL_NO_OCSP
 
 static const X509V3_EXT_METHOD *const standard_exts[] = {
     &v3_nscert,
@@ -61,19 +56,9 @@ static const X509V3_EXT_METHOD *const standard_exts[] = {
     &v3_crl_reason,
     &v3_crl_invdate,
     &v3_info,
-#ifndef OPENSSL_NO_OCSP
-    &v3_ocsp_nonce,
-    &v3_ocsp_crlid,
-    &v3_ocsp_accresp,
-    &v3_ocsp_acutoff,
-    &v3_ocsp_serviceloc,
-#endif
     &v3_ocsp_nocheck,
     &v3_sinfo,
     &v3_policy_constraints,
-#ifndef OPENSSL_NO_OCSP
-    &v3_crl_hold,
-#endif
     &v3_name_constraints,
     &v3_policy_mappings,
     &v3_inhibit_anyp,

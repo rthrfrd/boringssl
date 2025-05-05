@@ -47,24 +47,6 @@ const X509V3_EXT_METHOD v3_ext_ku = {
     NULL,
 };
 
-// NB OCSP acceptable responses also is a SEQUENCE OF OBJECT
-const X509V3_EXT_METHOD v3_ocsp_accresp = {
-    NID_id_pkix_OCSP_acceptableResponses,
-    0,
-    ASN1_ITEM_ref(EXTENDED_KEY_USAGE),
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    i2v_EXTENDED_KEY_USAGE,
-    v2i_EXTENDED_KEY_USAGE,
-    0,
-    0,
-    NULL,
-};
-
 ASN1_ITEM_TEMPLATE(EXTENDED_KEY_USAGE) = ASN1_EX_TEMPLATE_TYPE(
     ASN1_TFLG_SEQUENCE_OF, 0, EXTENDED_KEY_USAGE, ASN1_OBJECT)
 ASN1_ITEM_TEMPLATE_END(EXTENDED_KEY_USAGE)
