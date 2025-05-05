@@ -650,7 +650,6 @@ boringssl_crypto_internal_headers := \
   crypto/rsa/internal.h \
   crypto/spake2plus/internal.h \
   crypto/trust_token/internal.h \
-  crypto/x509/ext_dat.h \
   crypto/x509/internal.h \
   third_party/fiat/curve25519_32.h \
   third_party/fiat/curve25519_64.h \
@@ -767,7 +766,6 @@ boringssl_crypto_test_sources := \
   crypto/test/gtest_main.cc \
   crypto/thread_test.cc \
   crypto/trust_token/trust_token_test.cc \
-  crypto/x509/tab_test.cc \
   crypto/x509/x509_test.cc \
   crypto/x509/x509_time_test.cc
 
