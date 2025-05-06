@@ -28,6 +28,15 @@ extern "C" {
 // https://datatracker.ietf.org/doc/html/draft-connolly-cfrg-xwing-kem-06.
 
 
+// XWING_private_key contains an X-Wing private key. The contents of this object
+// should never leave the address space since the format is unstable.
+struct XWING_private_key {
+  union {
+    uint8_t bytes[512 * (3 + 3 + 9) + 32 + 32 + 32 + 32 + 32];
+    uint16_t alignment;
+  } opaque;
+};
+
 // XWING_PUBLIC_KEY_BYTES is the number of bytes in an encoded X-Wing public
 // key.
 #define XWING_PUBLIC_KEY_BYTES 1216
@@ -42,19 +51,19 @@ extern "C" {
 // XWING_SHARED_SECRET_BYTES is the number of bytes in an X-Wing shared secret.
 #define XWING_SHARED_SECRET_BYTES 32
 
+
 // XWING_generate_key generates a random public/private key pair, writes the
-// encoded public key to |out_encoded_public_key| and the encoded private key to
-// |out_encoded_private_key|. Returns one on success and zero on error.
+// encoded public key to |out_encoded_public_key| and the private key to
+// |out_private_key|. Returns one on success and zero on error.
 OPENSSL_EXPORT int XWING_generate_key(
     uint8_t out_encoded_public_key[XWING_PUBLIC_KEY_BYTES],
-    uint8_t out_encoded_private_key[XWING_PRIVATE_KEY_BYTES]);
+    struct XWING_private_key *out_private_key);
 
 // XWING_public_from_private sets |out_encoded_public_key| to the public key
-// that corresponds to |encoded_private_key|. Returns one on success and zero on
-// error.
+// that corresponds to |private_key|. Returns one on success and zero on error.
 OPENSSL_EXPORT int XWING_public_from_private(
     uint8_t out_encoded_public_key[XWING_PUBLIC_KEY_BYTES],
-    const uint8_t encoded_private_key[XWING_PRIVATE_KEY_BYTES]);
+    const struct XWING_private_key *private_key);
 
 // XWING_encap encapsulates a random shared secret for |encoded_public_key|,
 // writes the ciphertext to |out_ciphertext|, and writes the random shared
@@ -75,12 +84,27 @@ OPENSSL_EXPORT int XWING_encap_external_entropy(
     const uint8_t eseed[64]);
 
 // XWING_decap decapsulates a shared secret from |ciphertext| using
-// |encoded_private_key| and writes it to |out_shared_secret|. Returns one on
-// success and zero on error.
+// |private_key| and writes it to |out_shared_secret|. Returns one on success
+// and zero on error.
 OPENSSL_EXPORT int XWING_decap(
     uint8_t out_shared_secret[XWING_SHARED_SECRET_BYTES],
     const uint8_t ciphertext[XWING_CIPHERTEXT_BYTES],
-    const uint8_t encoded_private_key[XWING_PRIVATE_KEY_BYTES]);
+    const struct XWING_private_key *private_key);
+
+// Serialisation of keys.
+
+// XWING_marshal_private_key serializes |private_key| to |out| in the standard
+// format for X-Wing private keys. It returns one on success or zero on
+// allocation error.
+OPENSSL_EXPORT int XWING_marshal_private_key(
+    CBB *out, const struct XWING_private_key *private_key);
+
+// XWING_parse_private_key parses a private key in the standard format for
+// X-Wing private keys from |in| and writes the result to |out_public_key|. It
+// returns one on success or zero on parse error or if there are trailing bytes
+// in |in|.
+OPENSSL_EXPORT int XWING_parse_private_key(
+    struct XWING_private_key *out_private_key, CBS *in);
 
 
 #if defined(__cplusplus)

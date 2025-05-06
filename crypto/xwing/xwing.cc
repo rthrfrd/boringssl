@@ -23,31 +23,67 @@
 #include "../fipsmodule/keccak/internal.h"
 #include "../internal.h"
 
-int XWING_generate_key(
-    uint8_t out_encoded_public_key[XWING_PUBLIC_KEY_BYTES],
-    uint8_t out_encoded_private_key[XWING_PRIVATE_KEY_BYTES]) {
-  RAND_bytes(out_encoded_private_key, XWING_PRIVATE_KEY_BYTES);
-  return XWING_public_from_private(out_encoded_public_key,
-                                   out_encoded_private_key);
+struct private_key {
+  MLKEM768_private_key mlkem_private_key;
+  uint8_t x25519_private_key[32];
+  uint8_t seed[XWING_PRIVATE_KEY_BYTES];
+};
+
+static struct private_key *private_key_from_external(
+    const struct XWING_private_key *external) {
+  static_assert(sizeof(struct XWING_private_key) == sizeof(struct private_key),
+                "XWING private key size is incorrect");
+  static_assert(
+      alignof(struct XWING_private_key) == alignof(struct private_key),
+      "XWING private key alignment is incorrect");
+  return (struct private_key *)external;
 }
 
-int XWING_public_from_private(
-    uint8_t out_encoded_public_key[XWING_PUBLIC_KEY_BYTES],
-    const uint8_t encoded_private_key[XWING_PRIVATE_KEY_BYTES]) {
-  uint8_t expanded_seed[96];
-  BORINGSSL_keccak(expanded_seed, sizeof(expanded_seed), encoded_private_key,
-                   XWING_PRIVATE_KEY_BYTES, boringssl_shake256);
+static void xwing_expand_private_key(struct private_key *inout_private_key) {
+  struct BORINGSSL_keccak_st context;
+  BORINGSSL_keccak_init(&context, boringssl_shake256);
+  BORINGSSL_keccak_absorb(&context, inout_private_key->seed,
+                          sizeof(inout_private_key->seed));
 
+  // ML-KEM-768
+  uint8_t mlkem_seed[64];
+  BORINGSSL_keccak_squeeze(&context, mlkem_seed, sizeof(mlkem_seed));
+  MLKEM768_private_key_from_seed(&inout_private_key->mlkem_private_key,
+                                 mlkem_seed, sizeof(mlkem_seed));
+
+  // X25519
+  BORINGSSL_keccak_squeeze(&context, inout_private_key->x25519_private_key,
+                           sizeof(inout_private_key->x25519_private_key));
+}
+
+static int xwing_parse_private_key(struct private_key *out_private_key,
+                                   CBS *in) {
+  if (!CBS_copy_bytes(in, out_private_key->seed,
+                      sizeof(out_private_key->seed))) {
+    return 0;
+  }
+
+  xwing_expand_private_key(out_private_key);
+  return 1;
+}
+
+static int xwing_marshal_private_key(CBB *out,
+                                     const struct private_key *private_key) {
+  return CBB_add_bytes(out, private_key->seed, sizeof(private_key->seed));
+}
+
+static int xwing_public_from_private(
+    uint8_t out_encoded_public_key[XWING_PUBLIC_KEY_BYTES],
+    const struct private_key *private_key) {
   CBB cbb;
   if (!CBB_init_fixed(&cbb, out_encoded_public_key, XWING_PUBLIC_KEY_BYTES)) {
     return 0;
   }
 
   // ML-KEM-768
-  MLKEM768_private_key mlkem_private_key;
-  MLKEM768_private_key_from_seed(&mlkem_private_key, expanded_seed, 64);
   MLKEM768_public_key mlkem_public_key;
-  MLKEM768_public_from_private(&mlkem_public_key, &mlkem_private_key);
+  MLKEM768_public_from_private(&mlkem_public_key,
+                               &private_key->mlkem_private_key);
 
   if (!MLKEM768_marshal_public_key(&cbb, &mlkem_public_key)) {
     return 0;
@@ -58,7 +94,7 @@ int XWING_public_from_private(
   if (!CBB_add_space(&cbb, &buf, 32)) {
     return 0;
   }
-  X25519_public_from_private(buf, expanded_seed + 64);
+  X25519_public_from_private(buf, private_key->x25519_private_key);
 
   if (CBB_len(&cbb) != XWING_PUBLIC_KEY_BYTES) {
     return 0;
@@ -85,6 +121,40 @@ static void xwing_combiner(
 
   BORINGSSL_keccak_squeeze(&context, out_shared_secret,
                            XWING_SHARED_SECRET_BYTES);
+}
+
+// Public API.
+
+int XWING_parse_private_key(struct XWING_private_key *out_private_key,
+                            CBS *in) {
+  if (!xwing_parse_private_key(private_key_from_external(out_private_key),
+                               in) ||
+      CBS_len(in) != 0) {
+    return 0;
+  }
+  return 1;
+}
+
+int XWING_marshal_private_key(CBB *out,
+                              const struct XWING_private_key *private_key) {
+  return xwing_marshal_private_key(out, private_key_from_external(private_key));
+}
+
+int XWING_generate_key(uint8_t out_encoded_public_key[XWING_PUBLIC_KEY_BYTES],
+                       struct XWING_private_key *out_private_key) {
+  struct private_key *private_key = private_key_from_external(out_private_key);
+  RAND_bytes(private_key->seed, sizeof(private_key->seed));
+
+  xwing_expand_private_key(private_key);
+
+  return XWING_public_from_private(out_encoded_public_key, out_private_key);
+}
+
+int XWING_public_from_private(
+    uint8_t out_encoded_public_key[XWING_PUBLIC_KEY_BYTES],
+    const struct XWING_private_key *private_key) {
+  return xwing_public_from_private(out_encoded_public_key,
+                                   private_key_from_external(private_key));
 }
 
 int XWING_encap(uint8_t out_ciphertext[XWING_CIPHERTEXT_BYTES],
@@ -142,34 +212,29 @@ int XWING_encap_external_entropy(
   return 1;
 }
 
-int XWING_decap(uint8_t out_shared_secret[XWING_SHARED_SECRET_BYTES],
-                const uint8_t ciphertext[XWING_CIPHERTEXT_BYTES],
-                const uint8_t encoded_private_key[XWING_PRIVATE_KEY_BYTES]) {
-  uint8_t expanded_seed[96];
-  BORINGSSL_keccak(expanded_seed, sizeof(expanded_seed), encoded_private_key,
-                   XWING_PRIVATE_KEY_BYTES, boringssl_shake256);
-
-  // Define these upfront so that they don't cross a goto.
+static int xwing_decap(uint8_t out_shared_secret[XWING_SHARED_SECRET_BYTES],
+                       const uint8_t ciphertext[XWING_CIPHERTEXT_BYTES],
+                       const struct private_key *private_key) {
+  // Define this upfront so that it doesn't cross a goto.
   const uint8_t *x25519_ciphertext = ciphertext + MLKEM768_CIPHERTEXT_BYTES;
-  const uint8_t *x25519_private_key = expanded_seed + 64;
 
   // ML-KEM-768
-  MLKEM768_private_key mlkem_private_key;
-  MLKEM768_private_key_from_seed(&mlkem_private_key, expanded_seed, 64);
-
   const uint8_t *mlkem_ciphertext = ciphertext;
   uint8_t mlkem_shared_secret[MLKEM_SHARED_SECRET_BYTES];
   if (!MLKEM768_decap(mlkem_shared_secret, mlkem_ciphertext,
-                      MLKEM768_CIPHERTEXT_BYTES, &mlkem_private_key)) {
+                      MLKEM768_CIPHERTEXT_BYTES,
+                      &private_key->mlkem_private_key)) {
     goto error;
   }
 
   // X25519
   uint8_t x25519_public_key[32];
-  X25519_public_from_private(x25519_public_key, x25519_private_key);
+  X25519_public_from_private(x25519_public_key,
+                             private_key->x25519_private_key);
 
   uint8_t x25519_shared_secret[32];
-  if (!X25519(x25519_shared_secret, x25519_private_key, x25519_ciphertext)) {
+  if (!X25519(x25519_shared_secret, private_key->x25519_private_key,
+              x25519_ciphertext)) {
     goto error;
   }
 
@@ -186,4 +251,11 @@ error:
   //   with it wouldn't be trivially decryptable by an attacker.
   RAND_bytes(out_shared_secret, XWING_SHARED_SECRET_BYTES);
   return 0;
+}
+
+int XWING_decap(uint8_t out_shared_secret[XWING_SHARED_SECRET_BYTES],
+                const uint8_t ciphertext[XWING_CIPHERTEXT_BYTES],
+                const struct XWING_private_key *private_key) {
+  return xwing_decap(out_shared_secret, ciphertext,
+                     private_key_from_external(private_key));
 }

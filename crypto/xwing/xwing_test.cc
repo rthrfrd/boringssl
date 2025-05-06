@@ -14,6 +14,7 @@
 
 #include <gtest/gtest.h>
 
+#include <openssl/bytestring.h>
 #include <openssl/xwing.h>
 
 #include "../test/test_util.h"
@@ -22,26 +23,54 @@ namespace {
 
 TEST(XWingTest, EncapsulateDecapsulate) {
   uint8_t public_key[1216];
-  uint8_t private_key[32];
-  ASSERT_TRUE(XWING_generate_key(public_key, private_key));
+  XWING_private_key private_key;
+  ASSERT_TRUE(XWING_generate_key(public_key, &private_key));
 
   uint8_t ciphertext[1120];
   uint8_t shared_secret[32];
   ASSERT_TRUE(XWING_encap(ciphertext, shared_secret, public_key));
 
   uint8_t decapsulated[32];
-  ASSERT_TRUE(XWING_decap(decapsulated, ciphertext, private_key));
+  ASSERT_TRUE(XWING_decap(decapsulated, ciphertext, &private_key));
   EXPECT_EQ(Bytes(decapsulated), Bytes(shared_secret));
 }
 
 TEST(XWingTest, PublicFromPrivate) {
   uint8_t public_key[1216];
-  uint8_t private_key[32];
-  ASSERT_TRUE(XWING_generate_key(public_key, private_key));
+  XWING_private_key private_key;
+  ASSERT_TRUE(XWING_generate_key(public_key, &private_key));
 
   uint8_t public_key2[1216];
-  ASSERT_TRUE(XWING_public_from_private(public_key2, private_key));
+  ASSERT_TRUE(XWING_public_from_private(public_key2, &private_key));
   EXPECT_EQ(Bytes(public_key2), Bytes(public_key));
+}
+
+TEST(XWingTest, MarshalParsePrivateKey) {
+  uint8_t public_key[1216];
+  XWING_private_key private_key;
+  ASSERT_TRUE(XWING_generate_key(public_key, &private_key));
+
+  // Serialize private key.
+  uint8_t encoded_private_key[XWING_PRIVATE_KEY_BYTES];
+  CBB cbb;
+  CBB_init_fixed(&cbb, encoded_private_key, XWING_PRIVATE_KEY_BYTES);
+  ASSERT_TRUE(XWING_marshal_private_key(&cbb, &private_key));
+  ASSERT_EQ(CBB_len(&cbb), (size_t)XWING_PRIVATE_KEY_BYTES);
+
+  // Parse private key.
+  XWING_private_key parsed_private_key;
+  CBS cbs;
+  CBS_init(&cbs, encoded_private_key, XWING_PRIVATE_KEY_BYTES);
+  ASSERT_TRUE(XWING_parse_private_key(&parsed_private_key, &cbs));
+
+  // Check that both have a consistent behavior.
+  uint8_t ciphertext[1120];
+  uint8_t shared_secret[32];
+  ASSERT_TRUE(XWING_encap(ciphertext, shared_secret, public_key));
+
+  uint8_t decapsulated[32];
+  ASSERT_TRUE(XWING_decap(decapsulated, ciphertext, &parsed_private_key));
+  EXPECT_EQ(Bytes(decapsulated), Bytes(shared_secret));
 }
 
 TEST(XWingTest, TestVector) {
@@ -264,8 +293,13 @@ TEST(XWingTest, TestVector) {
       0xb9, 0x7e, 0x63, 0xe0, 0xe4, 0x1d, 0x35, 0x42, 0x74, 0xa0, 0x79, 0xd3,
       0xe6, 0xfb, 0x2e, 0x15};
 
+  CBS cbs;
+  CBS_init(&cbs, kPrivateKey, sizeof(kPrivateKey));
+  XWING_private_key private_key;
+  ASSERT_TRUE(XWING_parse_private_key(&private_key, &cbs));
+
   uint8_t public_key[1216];
-  ASSERT_TRUE(XWING_public_from_private(public_key, kPrivateKey));
+  ASSERT_TRUE(XWING_public_from_private(public_key, &private_key));
   EXPECT_EQ(Bytes(public_key), Bytes(kExpectedPublicKey));
 
   uint8_t ciphertext[1120];
@@ -276,7 +310,7 @@ TEST(XWingTest, TestVector) {
   EXPECT_EQ(Bytes(shared_secret), Bytes(kExpectedSharedSecret));
 
   uint8_t decapsulated[32];
-  ASSERT_TRUE(XWING_decap(decapsulated, ciphertext, kPrivateKey));
+  ASSERT_TRUE(XWING_decap(decapsulated, ciphertext, &private_key));
   EXPECT_EQ(Bytes(decapsulated), Bytes(shared_secret));
 }
 
