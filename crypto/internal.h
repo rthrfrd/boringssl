@@ -1333,7 +1333,8 @@ OPENSSL_ATTR_CONST uint32_t OPENSSL_get_armcap(void);
 // CRYPTO_is_NEON_capable returns true if the current CPU has a NEON unit. If
 // this is known statically, it is a constant inline function.
 inline int CRYPTO_is_NEON_capable(void) {
-#if defined(OPENSSL_STATIC_ARMCAP_NEON) || defined(__ARM_NEON)
+#if (defined(OPENSSL_STATIC_ARMCAP_NEON) || defined(__ARM_NEON)) && \
+    !defined(OPENSSL_NO_STATIC_NEON_FOR_TESTING)
   return 1;
 #else
   return (OPENSSL_get_armcap() & ARMV7_NEON) != 0;
