@@ -17,7 +17,6 @@
 #include <openssl/ec_key.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/service_indicator.h>
 
 #include "../../evp/internal.h"
 #include "../../internal.h"
