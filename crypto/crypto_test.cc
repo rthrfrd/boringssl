@@ -17,16 +17,25 @@
 
 #include <string>
 
-#include <openssl/base.h>
 #include <openssl/aead.h>
-#include <openssl/crypto.h>
+#include <openssl/base.h>
 #include <openssl/cipher.h>
+#include <openssl/crypto.h>
 #include <openssl/mem.h>
 
 #include <gtest/gtest.h>
 
 #include "internal.h"
 
+#if (defined(OPENSSL_X86) || defined(OPENSSL_X86_64)) && \
+    defined(OPENSSL_LINUX) && !defined(BORINGSSL_SHARED_LIBRARY)
+#define TEST_CPUID_ENVVAR
+
+#include <unistd.h>
+#include <sys/wait.h>
+#include <errno.h>
+
+#endif
 
 // Test that OPENSSL_VERSION_NUMBER and OPENSSL_VERSION_TEXT are consistent.
 // Node.js parses the version out of OPENSSL_VERSION_TEXT instead of using
@@ -159,9 +168,7 @@ TEST(Crypto, QueryAlgorithmStatus) {
 }
 
 #if defined(BORINGSSL_FIPS) && !defined(OPENSSL_ASAN)
-TEST(Crypto, OnDemandIntegrityTest) {
-  BORINGSSL_integrity_test();
-}
+TEST(Crypto, OnDemandIntegrityTest) { BORINGSSL_integrity_test(); }
 #endif
 
 OPENSSL_DEPRECATED static void DeprecatedFunction() {}
@@ -172,3 +179,46 @@ TEST(CryptoTest, DeprecatedFunction) {
   DeprecatedFunction();
 }
 OPENSSL_END_ALLOW_DEPRECATED
+
+#if defined(TEST_CPUID_ENVVAR)
+TEST(Crypto, CPUIDEnvVariable) {
+  constexpr auto is_rdrand_set = []() -> bool {
+    return OPENSSL_get_ia32cap(1) & 0x40000000;
+  };
+
+  // This test execs itself and sets `CPUIDEnvVariable` in the child's
+  // environment. So, if that's set, this is the child process.
+  constexpr uint8_t kSuccessExitStatus = 81;
+  if (getenv("CPUIDEnvVariable")) {
+    _exit(is_rdrand_set() ? 1 : kSuccessExitStatus);
+  }
+
+  // If RDRAND isn't actually supported on this system, then this test is moot.
+  if (!is_rdrand_set()) {
+    GTEST_SKIP();
+  }
+
+  // Fork off a child process and set the `OPENSSL_ia32cap` environment
+  // variable such that RDRAND should _not_ be supported in the child.
+  const pid_t pid = fork();
+  if (pid == 0) {
+    const char *kArgs[] = {"/proc/self/exe",
+                           "--gtest_filter=Crypto.CPUIDEnvVariable", nullptr};
+    const char *kEnv[] = {"OPENSSL_ia32cap=~0x4000000000000000:0",
+                          "CPUIDEnvVariable=1", nullptr};
+    execve(kArgs[0], const_cast<char **>(kArgs), const_cast<char **>(kEnv));
+    _exit(1);
+  }
+
+  ASSERT_GT(pid, 0);
+  pid_t waited;
+  int status;
+  do {
+    waited = waitpid(pid, &status, 0);
+  } while (waited == -1 && errno == EINTR);
+
+  EXPECT_EQ(waited, pid);
+  EXPECT_TRUE(WIFEXITED(status));
+  EXPECT_EQ(WEXITSTATUS(status), kSuccessExitStatus);
+}
+#endif
