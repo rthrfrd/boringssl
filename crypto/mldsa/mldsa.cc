@@ -16,27 +16,21 @@
 
 #include "../fipsmodule/bcm_interface.h"
 
-static_assert(sizeof(BCM_mldsa65_private_key) == sizeof(MLDSA65_private_key),
-              "");
-static_assert(alignof(BCM_mldsa65_private_key) == alignof(MLDSA65_private_key),
-              "");
-static_assert(sizeof(BCM_mldsa65_public_key) == sizeof(MLDSA65_public_key), "");
-static_assert(alignof(BCM_mldsa65_public_key) == alignof(MLDSA65_public_key),
-              "");
-static_assert(sizeof(BCM_mldsa87_private_key) == sizeof(MLDSA87_private_key),
-              "");
-static_assert(alignof(BCM_mldsa87_private_key) == alignof(MLDSA87_private_key),
-              "");
-static_assert(sizeof(BCM_mldsa87_public_key) == sizeof(MLDSA87_public_key), "");
-static_assert(alignof(BCM_mldsa87_public_key) == alignof(MLDSA87_public_key),
-              "");
-static_assert(MLDSA_SEED_BYTES == BCM_MLDSA_SEED_BYTES, "");
-static_assert(MLDSA65_PRIVATE_KEY_BYTES == BCM_MLDSA65_PRIVATE_KEY_BYTES, "");
-static_assert(MLDSA65_PUBLIC_KEY_BYTES == BCM_MLDSA65_PUBLIC_KEY_BYTES, "");
-static_assert(MLDSA65_SIGNATURE_BYTES == BCM_MLDSA65_SIGNATURE_BYTES, "");
-static_assert(MLDSA87_PRIVATE_KEY_BYTES == BCM_MLDSA87_PRIVATE_KEY_BYTES, "");
-static_assert(MLDSA87_PUBLIC_KEY_BYTES == BCM_MLDSA87_PUBLIC_KEY_BYTES, "");
-static_assert(MLDSA87_SIGNATURE_BYTES == BCM_MLDSA87_SIGNATURE_BYTES, "");
+static_assert(sizeof(BCM_mldsa65_private_key) == sizeof(MLDSA65_private_key));
+static_assert(alignof(BCM_mldsa65_private_key) == alignof(MLDSA65_private_key));
+static_assert(sizeof(BCM_mldsa65_public_key) == sizeof(MLDSA65_public_key));
+static_assert(alignof(BCM_mldsa65_public_key) == alignof(MLDSA65_public_key));
+static_assert(sizeof(BCM_mldsa87_private_key) == sizeof(MLDSA87_private_key));
+static_assert(alignof(BCM_mldsa87_private_key) == alignof(MLDSA87_private_key));
+static_assert(sizeof(BCM_mldsa87_public_key) == sizeof(MLDSA87_public_key));
+static_assert(alignof(BCM_mldsa87_public_key) == alignof(MLDSA87_public_key));
+static_assert(MLDSA_SEED_BYTES == BCM_MLDSA_SEED_BYTES);
+static_assert(MLDSA65_PRIVATE_KEY_BYTES == BCM_MLDSA65_PRIVATE_KEY_BYTES);
+static_assert(MLDSA65_PUBLIC_KEY_BYTES == BCM_MLDSA65_PUBLIC_KEY_BYTES);
+static_assert(MLDSA65_SIGNATURE_BYTES == BCM_MLDSA65_SIGNATURE_BYTES);
+static_assert(MLDSA87_PRIVATE_KEY_BYTES == BCM_MLDSA87_PRIVATE_KEY_BYTES);
+static_assert(MLDSA87_PUBLIC_KEY_BYTES == BCM_MLDSA87_PUBLIC_KEY_BYTES);
+static_assert(MLDSA87_SIGNATURE_BYTES == BCM_MLDSA87_SIGNATURE_BYTES);
 
 int MLDSA65_generate_key(
     uint8_t out_encoded_public_key[MLDSA65_PUBLIC_KEY_BYTES],

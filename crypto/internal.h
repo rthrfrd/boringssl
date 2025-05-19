@@ -528,7 +528,7 @@ OPENSSL_EXPORT void CRYPTO_once(CRYPTO_once_t *once, void (*init)(void));
 
 using CRYPTO_atomic_u32 = std::atomic<uint32_t>;
 
-static_assert(sizeof(CRYPTO_atomic_u32) == sizeof(uint32_t), "");
+static_assert(sizeof(CRYPTO_atomic_u32) == sizeof(uint32_t));
 
 inline uint32_t CRYPTO_atomic_load_u32(const CRYPTO_atomic_u32 *val) {
   return val->load(std::memory_order_seq_cst);
