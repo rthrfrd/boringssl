@@ -94,7 +94,7 @@ static bool os_supports_avx512(uint64_t xcr0) {
 // and |out[1]|. See the comment in |OPENSSL_cpuid_setup| about this. The
 // |is_last| argument specifies whether the value is at the end of the string.
 // Otherwise it may be followed by a colon.
-static void handle_cpu_env(uint32_t *out, const char *in, bool is_last) {
+static void handle_cpu_env(uint32_t out[2], const char *in, bool is_last) {
   const int invert_op = in[0] == '~';
   const int or_op = in[0] == '|';
   const int skip_first_byte = invert_op || or_op;
@@ -122,6 +122,27 @@ static void handle_cpu_env(uint32_t *out, const char *in, bool is_last) {
   } else {
     out[0] = v;
     out[1] = v >> 32;
+  }
+}
+
+void OPENSSL_adjust_ia32cap(uint32_t cap[4], const char *env) {
+  // OPENSSL_ia32cap can contain zero, one or two values, separated with a ':'.
+  // Each value is a 64-bit, unsigned value which may start with "0x" to
+  // indicate a hex value. Prior to the 64-bit value, a '~' or '|' may be given.
+  //
+  // If the '~' prefix is present:
+  //   the value is inverted and ANDed with the probed CPUID result
+  // If the '|' prefix is present:
+  //   the value is ORed with the probed CPUID result
+  // Otherwise:
+  //   the value is taken as the result of the CPUID
+  //
+  // The first value determines OPENSSL_ia32cap_P[0] and [1]. The second [2]
+  // and [3].
+  handle_cpu_env(cap, env, /*is_last=*/false);
+  env = strchr(env, ':');
+  if (env != nullptr) {
+    handle_cpu_env(cap + 2, env + 1, /*is_last=*/true);
   }
 }
 
@@ -255,30 +276,9 @@ void OPENSSL_cpuid_setup(void) {
   OPENSSL_ia32cap_P[2] = extended_features[0];
   OPENSSL_ia32cap_P[3] = extended_features[1];
 
-  const char *env1, *env2;
-  env1 = getenv("OPENSSL_ia32cap");
-  if (env1 == NULL) {
-    return;
-  }
-
-  // OPENSSL_ia32cap can contain zero, one or two values, separated with a ':'.
-  // Each value is a 64-bit, unsigned value which may start with "0x" to
-  // indicate a hex value. Prior to the 64-bit value, a '~' or '|' may be given.
-  //
-  // If the '~' prefix is present:
-  //   the value is inverted and ANDed with the probed CPUID result
-  // If the '|' prefix is present:
-  //   the value is ORed with the probed CPUID result
-  // Otherwise:
-  //   the value is taken as the result of the CPUID
-  //
-  // The first value determines OPENSSL_ia32cap_P[0] and [1]. The second [2]
-  // and [3].
-
-  handle_cpu_env(&OPENSSL_ia32cap_P[0], env1, /*is_last=*/false);
-  env2 = strchr(env1, ':');
-  if (env2 != NULL) {
-    handle_cpu_env(&OPENSSL_ia32cap_P[2], env2 + 1, /*is_last=*/true);
+  const char *env = getenv("OPENSSL_ia32cap");
+  if (env != nullptr) {
+    OPENSSL_adjust_ia32cap(OPENSSL_ia32cap_P, env);
   }
 }
 

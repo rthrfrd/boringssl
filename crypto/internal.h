@@ -1106,6 +1106,11 @@ extern uint32_t OPENSSL_ia32cap_P[4];
 // calls can be merged by the compiler, at least when indices match.
 OPENSSL_ATTR_CONST uint32_t OPENSSL_get_ia32cap(int idx);
 
+// OPENSSL_adjust_ia32cap adjusts |cap|, which should contain
+// |OPENSSL_ia32cap_P|, based on the environment variable value in |env|. This
+// function is exposed for unit tests.
+void OPENSSL_adjust_ia32cap(uint32_t cap[4], const char *env);
+
 // See Intel manual, volume 2A, table 3-11.
 
 inline int CRYPTO_is_intel_cpu(void) {

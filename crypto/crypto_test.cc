@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <array>
 #include <string>
 
 #include <openssl/aead.h>
@@ -27,15 +28,6 @@
 
 #include "internal.h"
 
-#if (defined(OPENSSL_X86) || defined(OPENSSL_X86_64)) && \
-    defined(OPENSSL_LINUX) && !defined(BORINGSSL_SHARED_LIBRARY)
-#define TEST_CPUID_ENVVAR
-
-#include <unistd.h>
-#include <sys/wait.h>
-#include <errno.h>
-
-#endif
 
 // Test that OPENSSL_VERSION_NUMBER and OPENSSL_VERSION_TEXT are consistent.
 // Node.js parses the version out of OPENSSL_VERSION_TEXT instead of using
@@ -180,45 +172,76 @@ TEST(CryptoTest, DeprecatedFunction) {
 }
 OPENSSL_END_ALLOW_DEPRECATED
 
-#if defined(TEST_CPUID_ENVVAR)
+
+#if (defined(OPENSSL_X86) || defined(OPENSSL_X86_64)) && \
+    !defined(OPENSSL_NO_ASM) && !defined(BORINGSSL_SHARED_LIBRARY)
 TEST(Crypto, CPUIDEnvVariable) {
-  constexpr auto is_rdrand_set = []() -> bool {
-    return OPENSSL_get_ia32cap(1) & 0x40000000;
+  const struct {
+    std::array<uint32_t, 4> in;
+    const char *env;
+    std::array<uint32_t, 4> out;
+  } kTests[] = {
+      // It should be possible to disable RDRAND with OPENSSL_ia32cap_P.
+      {{0x12345678, 0xffffffff, 0x12345678, 0x12345678},
+       "~0x4000000000000000",
+       {0x12345678, 0xbfffffff, 0x12345678, 0x12345678}},
+
+      // Disable RDRAND in decimal and also all post-AVX extensions. RR does
+      // this, though they probably meant to just disable RDRAND.
+      {{0x12345678, 0xffffffff, 0x12345678, 0x12345678},
+       "~4611686018427387904:0",
+       {0x12345678, 0xbfffffff, 0x00000000, 0x00000000}},
+
+      // Set the bitmasks to something else.
+      {{0x12345678, 0x12345678, 0x12345678, 0x12345678},
+       "0x8877665544332211:0x1122334455667788",
+       {0x44332211, 0x88776655, 0x55667788, 0x11223344}},
+      {{0x12345678, 0x12345678, 0x12345678, 0x12345678},
+       "1",
+       {0x00000001, 0x00000000, 0x12345678, 0x12345678}},
+      {{0x12345678, 0x12345678, 0x12345678, 0x12345678},
+       "1:2",
+       {0x00000001, 0x00000000, 0x00000002, 0x00000000}},
+      {{0x12345678, 0x12345678, 0x12345678, 0x12345678},
+       "0:0",
+       {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
+
+      // Enable bits.
+      {{0x12345678, 0x12345678, 0x12345678, 0x12345678},
+        "|0xf0f0f0f0f0f0f0f0:|0x0f0f0f0f0f0f0f0f",
+       {0xf2f4f6f8, 0xf2f4f6f8, 0x1f3f5f7f, 0x1f3f5f7f}},
+
+      // Clear bits.
+      {{0x12345678, 0x12345678, 0x12345678, 0x12345678},
+        "~0xf0f0f0f0f0f0f0f0:~0x0f0f0f0f0f0f0f0f",
+       {0x02040608, 0x02040608, 0x10305070, 0x10305070}},
+
+      // Syntax errors are silently ignored.
+      // TODO(davidben): We should also test something like " 1: 2", but that
+      // currently fails because |strtoull| skips leading spaces.
+      {{0x12345678, 0x12345678, 0x12345678, 0x12345678},
+       "nope",
+       {0x12345678, 0x12345678, 0x12345678, 0x12345678}},
+      {{0x12345678, 0x12345678, 0x12345678, 0x12345678},
+       "1nope:2nope",
+       {0x12345678, 0x12345678, 0x12345678, 0x12345678}},
+
+      // Overflows are caught and silently ignored.
+      {{0x12345678, 0x12345678, 0x12345678, 0x12345678},
+       "0x10000000000000000:0x10000000000000000",
+       {0x12345678, 0x12345678, 0x12345678, 0x12345678}},
+      {{0x12345678, 0x12345678, 0x12345678, 0x12345678},
+       "~0x1ffffffffffffffff:~0x1ffffffffffffffff",
+       {0x12345678, 0x12345678, 0x12345678, 0x12345678}},
+      {{0x12345678, 0x12345678, 0x12345678, 0x12345678},
+       "|0x1ffffffffffffffff:|0x1ffffffffffffffff",
+       {0x12345678, 0x12345678, 0x12345678, 0x12345678}},
   };
-
-  // This test execs itself and sets `CPUIDEnvVariable` in the child's
-  // environment. So, if that's set, this is the child process.
-  constexpr uint8_t kSuccessExitStatus = 81;
-  if (getenv("CPUIDEnvVariable")) {
-    _exit(is_rdrand_set() ? 1 : kSuccessExitStatus);
+  for (const auto &t : kTests) {
+    SCOPED_TRACE(t.env);
+    std::array<uint32_t, 4> cap = t.in;
+    OPENSSL_adjust_ia32cap(cap.data(), t.env);
+    EXPECT_EQ(cap, t.out);
   }
-
-  // If RDRAND isn't actually supported on this system, then this test is moot.
-  if (!is_rdrand_set()) {
-    GTEST_SKIP();
-  }
-
-  // Fork off a child process and set the `OPENSSL_ia32cap` environment
-  // variable such that RDRAND should _not_ be supported in the child.
-  const pid_t pid = fork();
-  if (pid == 0) {
-    const char *kArgs[] = {"/proc/self/exe",
-                           "--gtest_filter=Crypto.CPUIDEnvVariable", nullptr};
-    const char *kEnv[] = {"OPENSSL_ia32cap=~0x4000000000000000:0",
-                          "CPUIDEnvVariable=1", nullptr};
-    execve(kArgs[0], const_cast<char **>(kArgs), const_cast<char **>(kEnv));
-    _exit(1);
-  }
-
-  ASSERT_GT(pid, 0);
-  pid_t waited;
-  int status;
-  do {
-    waited = waitpid(pid, &status, 0);
-  } while (waited == -1 && errno == EINTR);
-
-  EXPECT_EQ(waited, pid);
-  EXPECT_TRUE(WIFEXITED(status));
-  EXPECT_EQ(WEXITSTATUS(status), kSuccessExitStatus);
 }
 #endif
