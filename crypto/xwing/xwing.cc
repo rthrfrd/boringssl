@@ -21,7 +21,6 @@
 
 #include "../fipsmodule/bcm_interface.h"
 #include "../fipsmodule/keccak/internal.h"
-#include "../internal.h"
 
 struct private_key {
   MLKEM768_private_key mlkem_private_key;
