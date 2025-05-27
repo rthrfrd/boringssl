@@ -63,7 +63,7 @@ int BIO_free(BIO *bio) {
       bio->method->destroy(bio);
     }
 
-    CRYPTO_free_ex_data(&g_ex_data_class, bio, &bio->ex_data);
+    CRYPTO_free_ex_data(&g_ex_data_class, &bio->ex_data);
     OPENSSL_free(bio);
   }
   return 1;

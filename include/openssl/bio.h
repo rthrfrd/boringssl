@@ -657,6 +657,11 @@ OPENSSL_EXPORT int BIO_meth_set_create(BIO_METHOD *method,
 
 // BIO_meth_set_destroy sets a function to release data associated with a |BIO|
 // and returns one. The function's return value is ignored.
+//
+// As the |BIO| is about to be destroyed, it is not necessary for |destroy_func|
+// to clear the BIO's state with |BIO_set_data| or |BIO_set_init|. There is no
+// harm in clearing them, but the |BIO| will not be passed to |BIO| operations,
+// unless |destroy_func| itself does so.
 OPENSSL_EXPORT int BIO_meth_set_destroy(BIO_METHOD *method,
                                         int (*destroy_func)(BIO *));
 

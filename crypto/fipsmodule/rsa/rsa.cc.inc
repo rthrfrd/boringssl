@@ -183,10 +183,8 @@ RSA *RSA_new_method(const ENGINE *engine) {
   CRYPTO_new_ex_data(&rsa->ex_data);
 
   if (rsa->meth->init && !rsa->meth->init(rsa)) {
-    CRYPTO_free_ex_data(g_rsa_ex_data_class_bss_get(), rsa, &rsa->ex_data);
-    CRYPTO_MUTEX_cleanup(&rsa->lock);
-    METHOD_unref(rsa->meth);
-    OPENSSL_free(rsa);
+    rsa->meth = nullptr;
+    RSA_free(rsa);
     return NULL;
   }
 
@@ -212,12 +210,12 @@ void RSA_free(RSA *rsa) {
     return;
   }
 
-  if (rsa->meth->finish) {
+  if (rsa->meth != nullptr && rsa->meth->finish != nullptr) {
     rsa->meth->finish(rsa);
   }
   METHOD_unref(rsa->meth);
 
-  CRYPTO_free_ex_data(g_rsa_ex_data_class_bss_get(), rsa, &rsa->ex_data);
+  CRYPTO_free_ex_data(g_rsa_ex_data_class_bss_get(), &rsa->ex_data);
 
   BN_free(rsa->n);
   BN_free(rsa->e);

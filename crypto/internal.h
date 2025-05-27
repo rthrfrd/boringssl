@@ -760,10 +760,9 @@ OPENSSL_EXPORT void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int index);
 // CRYPTO_new_ex_data initialises a newly allocated |CRYPTO_EX_DATA|.
 OPENSSL_EXPORT void CRYPTO_new_ex_data(CRYPTO_EX_DATA *ad);
 
-// CRYPTO_free_ex_data frees |ad|, which is embedded inside |obj|, which is an
-// object of the given class.
+// CRYPTO_free_ex_data frees |ad|, which is an object of the given class.
 OPENSSL_EXPORT void CRYPTO_free_ex_data(CRYPTO_EX_DATA_CLASS *ex_data_class,
-                                        void *obj, CRYPTO_EX_DATA *ad);
+                                        CRYPTO_EX_DATA *ad);
 
 
 // Endianness conversions.

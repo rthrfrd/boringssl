@@ -71,9 +71,8 @@ OPENSSL_EXPORT void *TYPE_get_app_data(const TYPE *t);
 
 // Callback types.
 
-// TODO(davidben): This is only declared in public headers to be a parameter of
-// |CRYPTO_EX_*| callbacks. Callers cannot do anything useful with it, so we may
-// as well pass NULL and use an internal type for the actual storage.
+// CRYPTO_EX_DATA, in the public API, is an opaque struct that is never returned
+// from the library.
 typedef struct crypto_ex_data_st CRYPTO_EX_DATA;
 
 // CRYPTO_EX_free is a callback function that is called when an object of the
@@ -81,15 +80,18 @@ typedef struct crypto_ex_data_st CRYPTO_EX_DATA;
 // callback has been passed to |SSL_get_ex_new_index| then it may be called each
 // time an |SSL*| is destroyed.
 //
-// The callback is passed the to-be-destroyed object (i.e. the |SSL*|) in
-// |parent|. As |parent| will shortly be destroyed, callers must not perform
-// operations that would increment its reference count, pass ownership, or
-// assume the object outlives the function call. The arguments |argl| and |argp|
-// contain opaque values that were given to |CRYPTO_get_ex_new_index_ex|.
+// |parent| and |ad| will be NULL. Historically, the parent object was passed in
+// |parent|, but accessing the pointer was not safe because |parent| was in the
+// process of being destroyed. If the callback has access to some other pointer
+// to the parent object, it must not pass the pointer to any BoringSSL APIs.
+// Mid-destruction, invariants on the parent object no longer hold.
 //
-// This callback may be called with a NULL value for |ptr| if |parent| has no
+// The arguments |argl| and |argp| contain opaque values that were given to
+// |CRYPTO_get_ex_new_index_ex|.
+//
+// This callback may be called with a NULL value for |ptr| if the object has no
 // value set for this index. However, the callbacks may also be skipped entirely
-// if no extra data pointers are set on |parent| at all.
+// if no extra data pointers are set on the object at all.
 typedef void CRYPTO_EX_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                             int index, long argl, void *argp);
 

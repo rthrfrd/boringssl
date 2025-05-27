@@ -73,7 +73,7 @@ EC_KEY *EC_KEY_new_method(const ENGINE *engine) {
   CRYPTO_new_ex_data(&ret->ex_data);
 
   if (ret->ecdsa_meth && ret->ecdsa_meth->init && !ret->ecdsa_meth->init(ret)) {
-    CRYPTO_free_ex_data(g_ec_ex_data_class_bss_get(), ret, &ret->ex_data);
+    CRYPTO_free_ex_data(g_ec_ex_data_class_bss_get(), &ret->ex_data);
     if (ret->ecdsa_meth) {
       METHOD_unref(ret->ecdsa_meth);
     }
@@ -113,7 +113,7 @@ void EC_KEY_free(EC_KEY *r) {
     METHOD_unref(r->ecdsa_meth);
   }
 
-  CRYPTO_free_ex_data(g_ec_ex_data_class_bss_get(), r, &r->ex_data);
+  CRYPTO_free_ex_data(g_ec_ex_data_class_bss_get(), &r->ex_data);
 
   EC_GROUP_free(r->group);
   EC_POINT_free(r->pub_key);
