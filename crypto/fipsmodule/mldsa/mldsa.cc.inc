@@ -1812,7 +1812,7 @@ struct private_key<6, 5> *private_key_from_external_65(
                 "MLDSA65 private key size incorrect");
   static_assert(alignof(struct BCM_mldsa65_private_key) ==
                     alignof(struct private_key<6, 5>),
-                "MLDSA65 private key align incorrect");
+                "MLDSA65 private key alignment incorrect");
   return (struct private_key<6, 5> *)external;
 }
 
@@ -1823,19 +1823,19 @@ struct public_key<6> *public_key_from_external_65(
       "MLDSA65 public key size incorrect");
   static_assert(
       alignof(struct BCM_mldsa65_public_key) == alignof(struct public_key<6>),
-      "MLDSA65 public key align incorrect");
+      "MLDSA65 public key alignment incorrect");
   return (struct public_key<6> *)external;
 }
 
 struct prehash_context *prehash_context_from_external_65(
-    const struct BCM_mldsa65_prehash *external) {
+    struct BCM_mldsa65_prehash *external) {
   static_assert(
       sizeof(struct BCM_mldsa65_prehash) == sizeof(struct prehash_context),
       "MLDSA pre-hash context size incorrect");
   static_assert(
       alignof(struct BCM_mldsa65_prehash) == alignof(struct prehash_context),
-      "MLDSA pre-hash context align incorrect");
-  return (struct prehash_context *)external;
+      "MLDSA pre-hash context alignment incorrect");
+  return reinterpret_cast<prehash_context *>(external);
 }
 
 struct private_key<8, 7> *private_key_from_external_87(
@@ -1845,7 +1845,7 @@ struct private_key<8, 7> *private_key_from_external_87(
                 "MLDSA87 private key size incorrect");
   static_assert(alignof(struct BCM_mldsa87_private_key) ==
                     alignof(struct private_key<8, 7>),
-                "MLDSA87 private key align incorrect");
+                "MLDSA87 private key alignment incorrect");
   return (struct private_key<8, 7> *)external;
 }
 
@@ -1856,19 +1856,19 @@ struct public_key<8> *public_key_from_external_87(
       "MLDSA87 public key size incorrect");
   static_assert(
       alignof(struct BCM_mldsa87_public_key) == alignof(struct public_key<8>),
-      "MLDSA87 public key align incorrect");
+      "MLDSA87 public key alignment incorrect");
   return (struct public_key<8> *)external;
 }
 
 struct prehash_context *prehash_context_from_external_87(
-    const struct BCM_mldsa87_prehash *external) {
+    struct BCM_mldsa87_prehash *external) {
   static_assert(
       sizeof(struct BCM_mldsa87_prehash) == sizeof(struct prehash_context),
       "MLDSA pre-hash context size incorrect");
   static_assert(
       alignof(struct BCM_mldsa87_prehash) == alignof(struct prehash_context),
-      "MLDSA pre-hash context align incorrect");
-  return (struct prehash_context *)external;
+      "MLDSA pre-hash context alignment incorrect");
+  return reinterpret_cast<prehash_context *>(external);
 }
 
 namespace fips {
