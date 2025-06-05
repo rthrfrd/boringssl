@@ -19,7 +19,7 @@ BoringCrypto has undergone the following validations:
 
 ## Update stream
 
-On 2025-01-16, the FedRAMP Board published an [updated policy](https://www.fedramp.gov/updates/docs/cryptographic-module/) on cryptographic modules. That policy suggests that module vendors should “promote the use of update streams over the use of validated module streams”. An _update stream_ “contains the latest patches and updates to be applied to software, regardless of the FIPS-validation status of the changed software”.
+On 2025-01-16, the FedRAMP Board published an [updated policy](https://www.fedramp.gov/rev5/fips/) on cryptographic modules. That policy suggests that module vendors should “promote the use of update streams over the use of validated module streams”. An _update stream_ “contains the latest patches and updates to be applied to software, regardless of the FIPS-validation status of the changed software”.
 
 BoringSSL's `main` branch is the update stream for the module. We intend to perform validations such that all major changes to the module are submitted to the CMVP within six months, as required by FRR7.
 
