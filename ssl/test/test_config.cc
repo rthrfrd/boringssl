@@ -1242,7 +1242,7 @@ static ssl_private_key_result_t AsyncPrivateKeySign(
   // Configure additional signature parameters.
   if (SSL_is_signature_algorithm_rsa_pss(signature_algorithm)) {
     if (!EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) ||
-        !EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1 /* salt len = hash len */)) {
+        !EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, RSA_PSS_SALTLEN_DIGEST)) {
       return ssl_private_key_failure;
     }
   }
