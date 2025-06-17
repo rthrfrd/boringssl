@@ -24,6 +24,7 @@
 #include <openssl/mem.h>
 #include <openssl/nid.h>
 #include <openssl/rsa.h>
+#include <openssl/span.h>
 
 #include "../internal.h"
 #include "../mem_internal.h"
@@ -31,41 +32,30 @@
 #include "internal.h"
 
 
-typedef struct {
-  // Key gen parameters
-  int nbits;
-  BIGNUM *pub_exp;
-  // RSA padding mode
-  int pad_mode;
-  // message digest
-  const EVP_MD *md;
-  // message digest for MGF1
-  const EVP_MD *mgf1md;
-  // PSS salt length
-  int saltlen;
-  // OAEP label
-  uint8_t *oaep_label;
-  size_t oaep_labellen;
-} RSA_PKEY_CTX;
+namespace {
 
-typedef struct {
-  uint8_t *data;
-  size_t len;
-} RSA_OAEP_LABEL_PARAMS;
+struct RSA_PKEY_CTX {
+  // Key gen parameters
+  int nbits = 2048;
+  bssl::UniquePtr<BIGNUM> pub_exp;
+  // RSA padding mode
+  int pad_mode = RSA_PKCS1_PADDING;
+  // message digest
+  const EVP_MD *md = nullptr;
+  // message digest for MGF1
+  const EVP_MD *mgf1md = nullptr;
+  // PSS salt length
+  int saltlen = RSA_PSS_SALTLEN_AUTO;
+  bssl::Array<uint8_t> oaep_label;
+};
 
 static int pkey_rsa_init(EVP_PKEY_CTX *ctx) {
-  RSA_PKEY_CTX *rctx =
-      reinterpret_cast<RSA_PKEY_CTX *>(OPENSSL_zalloc(sizeof(RSA_PKEY_CTX)));
+  RSA_PKEY_CTX *rctx = bssl::New<RSA_PKEY_CTX>();
   if (!rctx) {
     return 0;
   }
 
-  rctx->nbits = 2048;
-  rctx->pad_mode = RSA_PKCS1_PADDING;
-  rctx->saltlen = RSA_PSS_SALTLEN_AUTO;
-
   ctx->data = rctx;
-
   return 1;
 }
 
@@ -78,7 +68,7 @@ static int pkey_rsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src) {
   dctx = reinterpret_cast<RSA_PKEY_CTX *>(dst->data);
   dctx->nbits = sctx->nbits;
   if (sctx->pub_exp) {
-    dctx->pub_exp = BN_dup(sctx->pub_exp);
+    dctx->pub_exp.reset(BN_dup(sctx->pub_exp.get()));
     if (!dctx->pub_exp) {
       return 0;
     }
@@ -88,29 +78,15 @@ static int pkey_rsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src) {
   dctx->md = sctx->md;
   dctx->mgf1md = sctx->mgf1md;
   dctx->saltlen = sctx->saltlen;
-  if (sctx->oaep_label) {
-    OPENSSL_free(dctx->oaep_label);
-    dctx->oaep_label = reinterpret_cast<uint8_t *>(
-        OPENSSL_memdup(sctx->oaep_label, sctx->oaep_labellen));
-    if (!dctx->oaep_label) {
-      return 0;
-    }
-    dctx->oaep_labellen = sctx->oaep_labellen;
+  if (!dctx->oaep_label.CopyFrom(sctx->oaep_label)) {
+    return 0;
   }
 
   return 1;
 }
 
 static void pkey_rsa_cleanup(EVP_PKEY_CTX *ctx) {
-  RSA_PKEY_CTX *rctx = reinterpret_cast<RSA_PKEY_CTX *>(ctx->data);
-
-  if (rctx == NULL) {
-    return;
-  }
-
-  BN_free(rctx->pub_exp);
-  OPENSSL_free(rctx->oaep_label);
-  OPENSSL_free(rctx);
+  bssl::Delete(reinterpret_cast<RSA_PKEY_CTX *>(ctx->data));
 }
 
 static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, uint8_t *sig, size_t *siglen,
@@ -265,9 +241,9 @@ static int pkey_rsa_encrypt(EVP_PKEY_CTX *ctx, uint8_t *out, size_t *outlen,
   if (rctx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
     bssl::Array<uint8_t> tbuf;
     if (!tbuf.InitForOverwrite(key_len) ||
-        !RSA_padding_add_PKCS1_OAEP_mgf1(tbuf.data(), tbuf.size(), in, inlen,
-                                         rctx->oaep_label, rctx->oaep_labellen,
-                                         rctx->md, rctx->mgf1md) ||
+        !RSA_padding_add_PKCS1_OAEP_mgf1(
+            tbuf.data(), tbuf.size(), in, inlen, rctx->oaep_label.data(),
+            rctx->oaep_label.size(), rctx->md, rctx->mgf1md) ||
         !RSA_encrypt(rsa, outlen, out, *outlen, tbuf.data(), tbuf.size(),
                      RSA_NO_PADDING)) {
       return 0;
@@ -300,9 +276,10 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx, uint8_t *out, size_t *outlen,
     if (!tbuf.InitForOverwrite(key_len) ||
         !RSA_decrypt(rsa, &padded_len, tbuf.data(), tbuf.size(), in, inlen,
                      RSA_NO_PADDING) ||
-        !RSA_padding_check_PKCS1_OAEP_mgf1(
-            out, outlen, key_len, tbuf.data(), padded_len, rctx->oaep_label,
-            rctx->oaep_labellen, rctx->md, rctx->mgf1md)) {
+        !RSA_padding_check_PKCS1_OAEP_mgf1(out, outlen, key_len, tbuf.data(),
+                                           padded_len, rctx->oaep_label.data(),
+                                           rctx->oaep_label.size(), rctx->md,
+                                           rctx->mgf1md)) {
       return 0;
     }
     return 1;
@@ -389,8 +366,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2) {
       if (!p2) {
         return 0;
       }
-      BN_free(rctx->pub_exp);
-      rctx->pub_exp = reinterpret_cast<BIGNUM *>(p2);
+      rctx->pub_exp.reset(reinterpret_cast<BIGNUM *>(p2));
       return 1;
 
     case EVP_PKEY_CTRL_RSA_OAEP_MD:
@@ -440,11 +416,10 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2) {
         OPENSSL_PUT_ERROR(EVP, EVP_R_INVALID_PADDING_MODE);
         return 0;
       }
-      OPENSSL_free(rctx->oaep_label);
-      RSA_OAEP_LABEL_PARAMS *params =
-          reinterpret_cast<RSA_OAEP_LABEL_PARAMS *>(p2);
-      rctx->oaep_label = params->data;
-      rctx->oaep_labellen = params->len;
+      // |EVP_PKEY_CTRL_RSA_OAEP_LABEL| takes ownership of |label|'s underlying
+      // buffer (via |Reset|), but only on success.
+      auto *label = reinterpret_cast<bssl::Span<uint8_t> *>(p2);
+      rctx->oaep_label.Reset(label->data(), label->size());
       return 1;
     }
 
@@ -453,7 +428,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2) {
         OPENSSL_PUT_ERROR(EVP, EVP_R_INVALID_PADDING_MODE);
         return 0;
       }
-      CBS_init((CBS *)p2, rctx->oaep_label, rctx->oaep_labellen);
+      *reinterpret_cast<CBS *>(p2) = CBS(rctx->oaep_label);
       return 1;
 
     default:
@@ -463,28 +438,28 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2) {
 }
 
 static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) {
-  RSA *rsa = NULL;
   RSA_PKEY_CTX *rctx = reinterpret_cast<RSA_PKEY_CTX *>(ctx->data);
-
   if (!rctx->pub_exp) {
-    rctx->pub_exp = BN_new();
-    if (!rctx->pub_exp || !BN_set_word(rctx->pub_exp, RSA_F4)) {
+    rctx->pub_exp.reset(BN_new());
+    if (!rctx->pub_exp || !BN_set_word(rctx->pub_exp.get(), RSA_F4)) {
       return 0;
     }
   }
-  rsa = RSA_new();
+  bssl::UniquePtr<RSA> rsa(RSA_new());
   if (!rsa) {
     return 0;
   }
 
-  if (!RSA_generate_key_ex(rsa, rctx->nbits, rctx->pub_exp, NULL)) {
-    RSA_free(rsa);
+  if (!RSA_generate_key_ex(rsa.get(), rctx->nbits, rctx->pub_exp.get(),
+                           nullptr)) {
     return 0;
   }
 
-  EVP_PKEY_assign_RSA(pkey, rsa);
+  EVP_PKEY_assign_RSA(pkey, rsa.release());
   return 1;
 }
+
+}  // namespace
 
 const EVP_PKEY_METHOD rsa_pkey_meth = {
     EVP_PKEY_RSA,
@@ -573,9 +548,9 @@ int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **out_md) {
 
 int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, uint8_t *label,
                                      size_t label_len) {
-  RSA_OAEP_LABEL_PARAMS params = {label, label_len};
+  bssl::Span span(label, label_len);
   return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,
-                           EVP_PKEY_CTRL_RSA_OAEP_LABEL, 0, &params);
+                           EVP_PKEY_CTRL_RSA_OAEP_LABEL, 0, &span);
 }
 
 int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx,
