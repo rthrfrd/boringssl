@@ -26,6 +26,7 @@
 #include <openssl/rsa.h>
 
 #include "../internal.h"
+#include "../mem_internal.h"
 #include "../rsa/internal.h"
 #include "internal.h"
 
@@ -42,9 +43,6 @@ typedef struct {
   const EVP_MD *mgf1md;
   // PSS salt length
   int saltlen;
-  // tbuf is a buffer which is either NULL, or is the size of the RSA modulus.
-  // It's used to store the output of RSA operations.
-  uint8_t *tbuf;
   // OAEP label
   uint8_t *oaep_label;
   size_t oaep_labellen;
@@ -111,21 +109,8 @@ static void pkey_rsa_cleanup(EVP_PKEY_CTX *ctx) {
   }
 
   BN_free(rctx->pub_exp);
-  OPENSSL_free(rctx->tbuf);
   OPENSSL_free(rctx->oaep_label);
   OPENSSL_free(rctx);
-}
-
-static int setup_tbuf(RSA_PKEY_CTX *ctx, EVP_PKEY_CTX *pk) {
-  if (ctx->tbuf) {
-    return 1;
-  }
-  ctx->tbuf = reinterpret_cast<uint8_t *>(
-      OPENSSL_malloc(EVP_PKEY_size(pk->pkey.get())));
-  if (!ctx->tbuf) {
-    return 0;
-  }
-  return 1;
 }
 
 static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, uint8_t *sig, size_t *siglen,
@@ -187,12 +172,13 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx, const uint8_t *sig, size_t siglen,
 
   size_t rslen;
   const size_t key_len = EVP_PKEY_size(ctx->pkey.get());
-  if (!setup_tbuf(rctx, ctx) ||
-      !RSA_verify_raw(rsa, &rslen, rctx->tbuf, key_len, sig, siglen,
+  bssl::Array<uint8_t> tbuf;
+  if (!tbuf.InitForOverwrite(key_len) ||
+      !RSA_verify_raw(rsa, &rslen, tbuf.data(), tbuf.size(), sig, siglen,
                       rctx->pad_mode)) {
     return 0;
   }
-  if (rslen != tbslen || CRYPTO_memcmp(tbs, rctx->tbuf, rslen) != 0) {
+  if (rslen != tbslen || CRYPTO_memcmp(tbs, tbuf.data(), rslen) != 0) {
     OPENSSL_PUT_ERROR(RSA, RSA_R_BAD_SIGNATURE);
     return 0;
   }
@@ -232,33 +218,28 @@ static int pkey_rsa_verify_recover(EVP_PKEY_CTX *ctx, uint8_t *out,
   uint8_t *asn1_prefix;
   size_t asn1_prefix_len;
   int asn1_prefix_allocated;
-  if (!setup_tbuf(rctx, ctx) ||
-      !RSA_add_pkcs1_prefix(&asn1_prefix, &asn1_prefix_len,
+  if (!RSA_add_pkcs1_prefix(&asn1_prefix, &asn1_prefix_len,
                             &asn1_prefix_allocated, EVP_MD_type(rctx->md),
                             kDummyHash, hash_len)) {
     return 0;
   }
+  bssl::UniquePtr<uint8_t> free_asn1_prefix(asn1_prefix_allocated ? asn1_prefix
+                                                                  : nullptr);
 
+  bssl::Array<uint8_t> tbuf;
   size_t rslen;
-  int ok = 1;
-  if (!RSA_verify_raw(rsa, &rslen, rctx->tbuf, key_len, sig, sig_len,
+  if (!tbuf.InitForOverwrite(key_len) ||
+      !RSA_verify_raw(rsa, &rslen, tbuf.data(), tbuf.size(), sig, sig_len,
                       RSA_PKCS1_PADDING) ||
       rslen != asn1_prefix_len ||
       // Compare all but the hash suffix.
-      CRYPTO_memcmp(rctx->tbuf, asn1_prefix, asn1_prefix_len - hash_len) != 0) {
-    ok = 0;
-  }
-
-  if (asn1_prefix_allocated) {
-    OPENSSL_free(asn1_prefix);
-  }
-
-  if (!ok) {
+      CRYPTO_memcmp(tbuf.data(), asn1_prefix, asn1_prefix_len - hash_len) !=
+          0) {
     return 0;
   }
 
   if (out != NULL) {
-    OPENSSL_memcpy(out, rctx->tbuf + rslen - hash_len, hash_len);
+    OPENSSL_memcpy(out, tbuf.data() + rslen - hash_len, hash_len);
   }
   *out_len = hash_len;
 
@@ -282,11 +263,12 @@ static int pkey_rsa_encrypt(EVP_PKEY_CTX *ctx, uint8_t *out, size_t *outlen,
   }
 
   if (rctx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
-    if (!setup_tbuf(rctx, ctx) ||
-        !RSA_padding_add_PKCS1_OAEP_mgf1(rctx->tbuf, key_len, in, inlen,
+    bssl::Array<uint8_t> tbuf;
+    if (!tbuf.InitForOverwrite(key_len) ||
+        !RSA_padding_add_PKCS1_OAEP_mgf1(tbuf.data(), tbuf.size(), in, inlen,
                                          rctx->oaep_label, rctx->oaep_labellen,
                                          rctx->md, rctx->mgf1md) ||
-        !RSA_encrypt(rsa, outlen, out, *outlen, rctx->tbuf, key_len,
+        !RSA_encrypt(rsa, outlen, out, *outlen, tbuf.data(), tbuf.size(),
                      RSA_NO_PADDING)) {
       return 0;
     }
@@ -313,12 +295,13 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx, uint8_t *out, size_t *outlen,
   }
 
   if (rctx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
+    bssl::Array<uint8_t> tbuf;
     size_t padded_len;
-    if (!setup_tbuf(rctx, ctx) ||
-        !RSA_decrypt(rsa, &padded_len, rctx->tbuf, key_len, in, inlen,
+    if (!tbuf.InitForOverwrite(key_len) ||
+        !RSA_decrypt(rsa, &padded_len, tbuf.data(), tbuf.size(), in, inlen,
                      RSA_NO_PADDING) ||
         !RSA_padding_check_PKCS1_OAEP_mgf1(
-            out, outlen, key_len, rctx->tbuf, padded_len, rctx->oaep_label,
+            out, outlen, key_len, tbuf.data(), padded_len, rctx->oaep_label,
             rctx->oaep_labellen, rctx->md, rctx->mgf1md)) {
       return 0;
     }
