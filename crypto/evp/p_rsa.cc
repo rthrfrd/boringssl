@@ -385,7 +385,9 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2) {
       if (type == EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN) {
         *(int *)p2 = rctx->saltlen;
       } else {
-        if (p1 < -2) {
+        // Negative salt lengths are special values.
+        if (p1 < 0 &&
+            (p1 != RSA_PSS_SALTLEN_DIGEST && p1 != RSA_PSS_SALTLEN_AUTO)) {
           return 0;
         }
         rctx->saltlen = p1;
