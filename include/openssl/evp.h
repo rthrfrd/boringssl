@@ -692,12 +692,10 @@ OPENSSL_EXPORT int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx,
 // recovered from the signature when verifying. Otherwise the value gives the
 // size of the salt in bytes.
 //
-// If unsure, use |RSA_PSS_SALTLEN_DIGEST|.
+// If unsure, use |RSA_PSS_SALTLEN_DIGEST|, which is the default. Note this
+// differs from OpenSSL, which defaults to |RSA_PSS_SALTLEN_AUTO|.
 //
 // Returns one on success or zero on error.
-//
-// TODO(davidben): The default is currently |RSA_PSS_SALTLEN_AUTO|. Switch it to
-// |RSA_PSS_SALTLEN_DIGEST|.
 OPENSSL_EXPORT int EVP_PKEY_CTX_set_rsa_pss_saltlen(EVP_PKEY_CTX *ctx,
                                                     int salt_len);
 

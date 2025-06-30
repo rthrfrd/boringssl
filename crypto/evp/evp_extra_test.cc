@@ -1307,3 +1307,17 @@ TEST(EVPExtraTest, RawKeyUnsupported) {
   EXPECT_FALSE(
       EVP_PKEY_new_raw_private_key(EVP_PKEY_RSA, nullptr, kKey, sizeof(kKey)));
 }
+
+// The default salt length for PSS should be |RSA_PSS_SALTLEN_DIGEST|.
+TEST(EVPExtraTest, PSSDefaultSaltLen) {
+  bssl::UniquePtr<EVP_PKEY> key = LoadExampleRSAKey();
+  ASSERT_TRUE(key);
+  bssl::ScopedEVP_MD_CTX ctx;
+  EVP_PKEY_CTX *pctx;
+  ASSERT_TRUE(
+      EVP_DigestSignInit(ctx.get(), &pctx, EVP_sha256(), nullptr, key.get()));
+  ASSERT_TRUE(EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING));
+  int salt_len;
+  ASSERT_TRUE(EVP_PKEY_CTX_get_rsa_pss_saltlen(pctx, &salt_len));
+  EXPECT_EQ(salt_len, RSA_PSS_SALTLEN_DIGEST);
+}

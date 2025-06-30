@@ -305,7 +305,9 @@ OPENSSL_EXPORT int RSA_sign(int hash_nid, const uint8_t *digest,
 // length. This is recommended.
 #define RSA_PSS_SALTLEN_DIGEST (-1)
 // RSA_PSS_SALTLEN_AUTO indicates a maximum possible PSS salt length when
-// signing, and automatically detecting the salt length when verifying.
+// signing, and automatically detecting the salt length when verifying. This is
+// not recommended. Neither the signing nor verifying behaviors are compliant
+// with FIPS 186-5.
 #define RSA_PSS_SALTLEN_AUTO (-2)
 
 // RSA_sign_pss_mgf1 signs |digest_len| bytes from |digest| with the public key

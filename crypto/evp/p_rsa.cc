@@ -45,7 +45,7 @@ struct RSA_PKEY_CTX {
   // message digest for MGF1
   const EVP_MD *mgf1md = nullptr;
   // PSS salt length
-  int saltlen = RSA_PSS_SALTLEN_AUTO;
+  int saltlen = RSA_PSS_SALTLEN_DIGEST;
   bssl::Array<uint8_t> oaep_label;
 };
 
