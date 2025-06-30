@@ -768,6 +768,14 @@ OPENSSL_EXPORT int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx,
 
 // EC specific control functions.
 
+// EVP_PKEY_get_ec_curve_nid returns |pkey|'s curve as a NID constant, such as
+// |NID_X9_62_prime256v1|, or |NID_undef| if |pkey| is not an EC key.
+OPENSSL_EXPORT int EVP_PKEY_get_ec_curve_nid(const EVP_PKEY *pkey);
+
+// EVP_PKEY_get_ec_point_conv_form returns |pkey|'s point conversion form as a
+// |POINT_CONVERSION_*| constant, or zero if |pkey| is not an EC key.
+OPENSSL_EXPORT int EVP_PKEY_get_ec_point_conv_form(const EVP_PKEY *pkey);
+
 // EVP_PKEY_CTX_set_ec_paramgen_curve_nid sets the curve used for
 // |EVP_PKEY_keygen| or |EVP_PKEY_paramgen| operations to |nid|. It returns one
 // on success and zero on error.

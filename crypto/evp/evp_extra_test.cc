@@ -1004,6 +1004,7 @@ static void ExpectECGroupOnly(const EVP_PKEY *pkey, int nid) {
   const EC_GROUP *group = EC_KEY_get0_group(ec);
   ASSERT_TRUE(group);
   EXPECT_EQ(nid, EC_GROUP_get_curve_name(group));
+  EXPECT_EQ(nid, EVP_PKEY_get_ec_curve_nid(pkey));
   EXPECT_FALSE(EC_KEY_get0_public_key(ec));
   EXPECT_FALSE(EC_KEY_get0_private_key(ec));
 }
@@ -1014,6 +1015,7 @@ static void ExpectECGroupAndKey(const EVP_PKEY *pkey, int nid) {
   const EC_GROUP *group = EC_KEY_get0_group(ec);
   ASSERT_TRUE(group);
   EXPECT_EQ(nid, EC_GROUP_get_curve_name(group));
+  EXPECT_EQ(nid, EVP_PKEY_get_ec_curve_nid(pkey));
   EXPECT_TRUE(EC_KEY_get0_public_key(ec));
   EXPECT_TRUE(EC_KEY_get0_private_key(ec));
 }
