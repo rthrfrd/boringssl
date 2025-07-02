@@ -129,11 +129,13 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CLANG)
     # See http://llvm.org/viewvc/llvm-project?view=revision&revision=319116
     set(C_CXX_FLAGS "${C_CXX_FLAGS} -W3 -Wno-unused-parameter -fmsc-version=1900")
   else()
-    if(EMSCRIPTEN)
-      # emscripten's emcc/clang does not accept the "-ggdb" flag.
-      set(C_CXX_FLAGS "${C_CXX_FLAGS} -g")
-    else()
-      set(C_CXX_FLAGS "${C_CXX_FLAGS} -ggdb")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+      if(EMSCRIPTEN)
+        # emscripten's emcc/clang does not accept the "-ggdb" flag.
+        set(C_CXX_FLAGS "${C_CXX_FLAGS} -g")
+      else()
+        set(C_CXX_FLAGS "${C_CXX_FLAGS} -ggdb")
+      endif()
     endif()
 
     set(C_CXX_FLAGS "${C_CXX_FLAGS} -Wall -fvisibility=hidden -fno-common")
